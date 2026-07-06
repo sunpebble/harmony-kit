@@ -41,7 +41,7 @@ interface ReadingMemory {
 }
 
 PersistentStorage.persistProp('steady.tab.v1', 'Timeline')
-PersistentStorage.persistProp('steady.nextId.v1', 4)
+PersistentStorage.persistProp('steady.nextId.v1', 1)
 PersistentStorage.persistProp('steady.selectedKind.v1', 'Blood pressure')
 PersistentStorage.persistProp('steady.draftPrimary.v1', '')
 PersistentStorage.persistProp('steady.draftSecondary.v1', '')
@@ -67,7 +67,7 @@ PersistentStorage.persistProp('steady.targetWeightHigh.v1', '')
 struct Index {
   private kinds: string[] = ['Blood pressure', 'Blood glucose', 'Weight', 'Heart rate', 'Blood oxygen']
   @StorageLink('steady.tab.v1') private tab: string = 'Timeline'
-  @StorageLink('steady.nextId.v1') private nextId: number = 4
+  @StorageLink('steady.nextId.v1') private nextId: number = 1
   @StorageLink('steady.selectedKind.v1') private selectedKind: string = 'Blood pressure'
   @StorageLink('steady.draftPrimary.v1') private draftPrimary: string = ''
   @StorageLink('steady.draftSecondary.v1') private draftSecondary: string = ''
@@ -108,48 +108,33 @@ struct Index {
     }
   }
 
-  private defaultReadings(): Reading[] {
-    return [
-      { id: 1, kind: 'Blood pressure', value: '128/84', unit: 'mmHg', context: 'Today · morning' },
-      { id: 2, kind: 'Blood glucose', value: '105', unit: 'mg/dL', context: 'Fasting' },
-      { id: 3, kind: 'Heart rate', value: '72', unit: 'bpm', context: 'Resting' }
-    ]
-  }
-
-  private defaultMeds(): Medication[] {
-    return [
-      { name: 'Metformin', dose: '500mg', times: ['08:00'], takenSlots: ['08:00'] },
-      { name: 'Vitamin D', dose: '1000 IU', times: ['20:00'], takenSlots: [] }
-    ]
-  }
-
   private loadReadings(): void {
     if (this.readingsJson.length === 0) {
-      this.readings = this.defaultReadings()
+      this.readings = []
       this.saveReadings()
       return
     }
     try {
       const parsed = JSON.parse(this.readingsJson) as Reading[]
-      this.readings = parsed.length > 0 ? parsed : this.defaultReadings()
+      this.readings = parsed
     } catch (_error) {
-      this.readings = this.defaultReadings()
+      this.readings = []
       this.saveReadings()
     }
   }
 
   private loadMeds(): void {
     if (this.medsJson.length === 0) {
-      this.meds = this.defaultMeds()
+      this.meds = []
       this.saveMeds()
       return
     }
     try {
       const parsed = JSON.parse(this.medsJson) as Medication[]
-      this.meds = parsed.length > 0 ? this.normalizeMeds(parsed) : this.defaultMeds()
+      this.meds = this.normalizeMeds(parsed)
       this.saveMeds()
     } catch (_error) {
-      this.meds = this.defaultMeds()
+      this.meds = []
       this.saveMeds()
     }
   }
