@@ -242,7 +242,7 @@ struct Index {
         name: med.name,
         dose: med.dose,
         times,
-        takenLog: this.takenLogFor(med).filter((key: string) => times.includes(this.medLogTime(key))),
+        takenLog: this.takenLogFor(med),
         archived: med.archived === true
       }
       return normalized
@@ -471,7 +471,7 @@ struct Index {
     const times = this.medTimesFor(med)
     const today = this.todayKey()
     if (med.takenLog) {
-      return med.takenLog.filter((key: string) => times.includes(this.medLogTime(key)))
+      return med.takenLog
     }
     if (med.takenSlots) {
       return med.takenSlots
@@ -681,7 +681,7 @@ struct Index {
           name: nextMed.name,
           dose: nextMed.dose,
           times,
-          takenLog: this.takenLogFor(existing).filter((key: string) => times.includes(this.medLogTime(key))),
+          takenLog: this.takenLogFor(existing),
           archived: existing.archived === true
         }
         this.meds = next
