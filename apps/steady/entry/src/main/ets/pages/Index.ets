@@ -1626,6 +1626,24 @@ struct Index {
       }) {
         Column({ space: SunSpacing.md }) {
           Scroll() {
+            Column() {
+              if (this.tab === 'Timeline') {
+                this.timeline()
+              } else if (this.tab === 'Trends') {
+                this.trends()
+              } else if (this.tab === 'Meds') {
+                this.medsView()
+              } else {
+                this.settings()
+              }
+            }
+            .width('100%')
+            .padding({ bottom: 116 })
+          }
+          .width('100%')
+          .layoutWeight(1)
+
+          Scroll() {
             Row({ space: SunSpacing.sm }) {
               this.tabButton('Timeline')
               this.tabButton('Trends')
@@ -1637,20 +1655,6 @@ struct Index {
           .height(44)
           .scrollable(ScrollDirection.Horizontal)
           .scrollBar(BarState.Off)
-
-          Scroll() {
-            if (this.tab === 'Timeline') {
-              this.timeline()
-            } else if (this.tab === 'Trends') {
-              this.trends()
-            } else if (this.tab === 'Meds') {
-              this.medsView()
-            } else {
-              this.settings()
-            }
-          }
-          .width('100%')
-          .layoutWeight(1)
         }
         .width('100%')
         .height('100%')
@@ -1690,7 +1694,7 @@ struct Index {
           .onClick(() => this.quickActionsOpen = !this.quickActionsOpen)
       }
       .alignItems(HorizontalAlign.End)
-      .margin({ right: SunSpacing.xl, bottom: SunSpacing.xl })
+      .margin({ right: SunSpacing.xl, bottom: 88 })
     }
     .width('100%')
     .height('100%')
