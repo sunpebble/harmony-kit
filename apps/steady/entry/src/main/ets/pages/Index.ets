@@ -32,6 +32,7 @@ interface Medication {
   times?: string[]
   taken?: boolean
   takenSlots?: string[]
+  takenLog?: string[]
 }
 
 interface Symptom {
@@ -210,7 +211,7 @@ struct Index {
         name: med.name,
         dose: med.dose,
         times,
-        takenSlots: med.takenSlots ? med.takenSlots.filter((time: string) => times.includes(time)) : (med.taken ? [times[0]] : [])
+        takenLog: this.takenLogFor(med).filter((key: string) => times.includes(this.medLogTime(key)))
       }
       return normalized
     })
@@ -385,11 +386,37 @@ struct Index {
   }
 
   private takenSlotsFor(med: Medication): string[] {
+    const today = this.todayKey()
+    return this.takenLogFor(med)
+      .filter((key: string) => key.startsWith(`${today}|`))
+      .map((key: string) => this.medLogTime(key))
+  }
+
+  private takenLogFor(med: Medication): string[] {
     const times = this.medTimesFor(med)
-    if (med.takenSlots) {
-      return med.takenSlots.filter((time: string) => times.includes(time))
+    const today = this.todayKey()
+    if (med.takenLog) {
+      return med.takenLog.filter((key: string) => times.includes(this.medLogTime(key)))
     }
-    return med.taken ? [times[0]] : []
+    if (med.takenSlots) {
+      return med.takenSlots
+        .filter((time: string) => times.includes(time))
+        .map((time: string) => this.medLogKey(today, time))
+    }
+    return med.taken ? [this.medLogKey(today, times[0])] : []
+  }
+
+  private todayKey(): string {
+    return this.dateLabel(Date.now())
+  }
+
+  private medLogKey(date: string, time: string): string {
+    return `${date}|${time}`
+  }
+
+  private medLogTime(key: string): string {
+    const parts = key.split('|')
+    return parts.length > 1 ? parts[1] : key
   }
 
   private timesLabel(med: Medication): string {
@@ -418,11 +445,12 @@ struct Index {
     const med = this.meds[index]
     const times = this.medTimesFor(med)
     const slot = times.includes(time) ? time : times[0]
-    const taken = this.takenSlotsFor(med)
-    const updatedTaken = taken.includes(slot)
-      ? taken.filter((takenSlot: string) => takenSlot !== slot)
-      : [...taken, slot].sort((a: string, b: string) => a.localeCompare(b))
-    const updated: Medication = { name: med.name, dose: med.dose, times, takenSlots: updatedTaken }
+    const logKey = this.medLogKey(this.todayKey(), slot)
+    const takenLog = this.takenLogFor(med)
+    const updatedTaken = takenLog.includes(logKey)
+      ? takenLog.filter((takenSlot: string) => takenSlot !== logKey)
+      : [...takenLog, logKey].sort((a: string, b: string) => a.localeCompare(b))
+    const updated: Medication = { name: med.name, dose: med.dose, times, takenLog: updatedTaken }
     const next = [...this.meds]
     next[index] = updated
     this.meds = next
@@ -457,7 +485,7 @@ struct Index {
       name,
       dose: this.medDose.trim().length > 0 ? this.medDose.trim() : 'Dose',
       times,
-      takenSlots: []
+      takenLog: []
     }
     if (this.editingMedKey.length > 0) {
       const index = this.meds.findIndex((med: Medication) => this.medKey(med) === this.editingMedKey)
@@ -468,7 +496,7 @@ struct Index {
           name: nextMed.name,
           dose: nextMed.dose,
           times,
-          takenSlots: this.takenSlotsFor(existing).filter((time: string) => times.includes(time))
+          takenLog: this.takenLogFor(existing).filter((key: string) => times.includes(this.medLogTime(key)))
         }
         this.meds = next
       } else {
@@ -605,6 +633,12 @@ struct Index {
     return `${this.dateLabel(this.reportCutoffTime())} - ${this.dateLabel(Date.now())}`
   }
 
+  private reportDays(): number {
+    const start = new Date(this.dateLabel(this.reportCutoffTime())).getTime()
+    const end = new Date(this.todayKey()).getTime()
+    return Math.max(1, Math.floor((end - start) / this.dayMs()) + 1)
+  }
+
   private targetRangeLabel(kind: string): string {
     if (!this.hasTargetRange(kind)) {
       return 'Not set'
@@ -693,9 +727,16 @@ struct Index {
     if (this.meds.length === 0) {
       return 'No medications set up.'
     }
-    const expected = this.meds.reduce((total: number, med: Medication) => total + this.medTimesFor(med).length, 0)
-    const taken = this.meds.reduce((total: number, med: Medication) => total + this.takenSlotsFor(med).length, 0)
-    return `${taken} of ${expected} scheduled doses logged today`
+    const start = this.dateLabel(this.reportCutoffTime())
+    const end = this.todayKey()
+    const expected = this.meds.reduce((total: number, med: Medication) => total + this.medTimesFor(med).length * this.reportDays(), 0)
+    const taken = this.meds.reduce((total: number, med: Medication) => {
+      return total + this.takenLogFor(med).filter((key: string) => {
+        const date = key.split('|')[0]
+        return date >= start && date <= end
+      }).length
+    }, 0)
+    return `${taken} of ${expected} scheduled doses logged`
   }
 
   private symptomReportLines(): string {
