@@ -115,6 +115,19 @@ struct Index {
     this.confirmingDelete = false
   }
 
+  private composeToday(): void {
+    const today = this.dateKey(new Date())
+    const entry = this.entries.find((item: RollEntry) => item.date === today)
+    if (entry) {
+      this.editEntry(entry)
+      return
+    }
+    this.editingDate = ''
+    this.mood = '😐'
+    this.draftLine = ''
+    this.confirmingDelete = false
+  }
+
   private activeDate(): string {
     return this.editingDate.length > 0 ? this.editingDate : this.dateKey(new Date())
   }
@@ -999,7 +1012,7 @@ struct Index {
             .fontSize(28)
             .fontWeight(FontWeight.Bold)
             .alignSelf(ItemAlign.Center)
-            .onClick(() => this.saveToday())
+            .onClick(() => this.composeToday())
 
           SunButton({
             label: this.reminderOpen ? 'Hide Reminder' : 'Reminder',
