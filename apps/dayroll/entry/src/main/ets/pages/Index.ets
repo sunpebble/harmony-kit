@@ -119,6 +119,13 @@ struct Index {
     this.composerOpen = true
   }
 
+  private cancelComposer(): void {
+    this.draftLine = ''
+    this.editingDate = ''
+    this.confirmingDelete = false
+    this.composerOpen = false
+  }
+
   private composeToday(): void {
     const today = this.dateKey(new Date())
     const entry = this.entries.find((item: RollEntry) => item.date === today)
@@ -670,13 +677,19 @@ struct Index {
             action: () => this.saveToday()
           })
 
-          if (this.hasActiveEntry()) {
-            SunButton({
-              label: 'Delete Entry',
-              role: SunButtonRole.Danger,
-              action: () => this.confirmingDelete = true
-            })
-          }
+          SunButton({
+            label: 'Cancel',
+            role: SunButtonRole.Secondary,
+            action: () => this.cancelComposer()
+          })
+        }
+
+        if (this.hasActiveEntry()) {
+          SunButton({
+            label: 'Delete Entry',
+            role: SunButtonRole.Danger,
+            action: () => this.confirmingDelete = true
+          })
         }
       }
     }
