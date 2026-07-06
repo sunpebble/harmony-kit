@@ -1933,19 +1933,6 @@ struct Index {
     Column({ space: SunSpacing.md }) {
       SunCard() {
         Column({ space: SunSpacing.sm }) {
-          if (!this.proUnlocked) {
-            SunButton({
-              label: 'Steady Pro…',
-              role: SunButtonRole.Secondary,
-              action: () => this.showPaywall()
-            })
-          } else {
-            SunListRow({
-              title: 'Steady Pro — unlocked'
-            })
-          }
-          this.paywallPanel()
-
           SunButton({
             label: this.reportOpen ? 'Hide Doctor report' : 'Doctor report',
             role: SunButtonRole.Secondary,
@@ -2067,6 +2054,24 @@ struct Index {
         .fontSize(12)
         .fontColor(SunColor.pebble)
         .lineHeight(18)
+
+      SunCard() {
+        Column({ space: SunSpacing.sm }) {
+          if (!this.proUnlocked) {
+            SunButton({
+              label: 'Steady Pro…',
+              role: SunButtonRole.Secondary,
+              action: () => this.showPaywall()
+            })
+          } else {
+            SunListRow({
+              title: 'Steady Pro — unlocked'
+            })
+          }
+          this.paywallPanel()
+        }
+        .width('100%')
+      }
     }
   }
 
