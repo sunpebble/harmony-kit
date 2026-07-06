@@ -33,6 +33,7 @@ interface Medication {
   taken?: boolean
   takenSlots?: string[]
   takenLog?: string[]
+  archived?: boolean
 }
 
 interface Symptom {
@@ -215,7 +216,8 @@ struct Index {
         name: med.name,
         dose: med.dose,
         times,
-        takenLog: this.takenLogFor(med).filter((key: string) => times.includes(this.medLogTime(key)))
+        takenLog: this.takenLogFor(med).filter((key: string) => times.includes(this.medLogTime(key))),
+        archived: med.archived === true
       }
       return normalized
     })
@@ -460,6 +462,10 @@ struct Index {
     return this.medTimesFor(med).join(', ')
   }
 
+  private activeMeds(): Medication[] {
+    return this.meds.filter((med: Medication) => med.archived !== true)
+  }
+
   private medKey(med: Medication): string {
     return `${med.name}|${med.dose}|${this.timesLabel(med)}`
   }
@@ -487,7 +493,7 @@ struct Index {
     const updatedTaken = takenLog.includes(logKey)
       ? takenLog.filter((takenSlot: string) => takenSlot !== logKey)
       : [...takenLog, logKey].sort((a: string, b: string) => a.localeCompare(b))
-    const updated: Medication = { name: med.name, dose: med.dose, times, takenLog: updatedTaken }
+    const updated: Medication = { name: med.name, dose: med.dose, times, takenLog: updatedTaken, archived: med.archived === true }
     const next = [...this.meds]
     next[index] = updated
     this.meds = next
@@ -533,7 +539,8 @@ struct Index {
           name: nextMed.name,
           dose: nextMed.dose,
           times,
-          takenLog: this.takenLogFor(existing).filter((key: string) => times.includes(this.medLogTime(key)))
+          takenLog: this.takenLogFor(existing).filter((key: string) => times.includes(this.medLogTime(key))),
+          archived: existing.archived === true
         }
         this.meds = next
       } else {
@@ -553,7 +560,13 @@ struct Index {
 
   private deleteMedication(target: Medication): void {
     const targetKey = this.medKey(target)
-    this.meds = this.meds.filter((med: Medication) => this.medKey(med) !== targetKey)
+    this.meds = this.meds.map((med: Medication) => this.medKey(med) === targetKey ? {
+      name: med.name,
+      dose: med.dose,
+      times: this.medTimesFor(med),
+      takenLog: this.takenLogFor(med),
+      archived: true
+    } : med)
     if (this.editingMedKey === targetKey) {
       this.resetMedicationForm()
     }
@@ -762,12 +775,13 @@ struct Index {
   }
 
   private medicationReportLine(): string {
-    if (this.meds.length === 0) {
-      return 'No medications set up.'
+    const activeMeds = this.activeMeds()
+    if (activeMeds.length === 0) {
+      return ''
     }
     const start = this.dateLabel(this.reportCutoffTime())
     const end = this.todayKey()
-    const expected = this.meds.reduce((total: number, med: Medication) => total + this.medTimesFor(med).length * this.reportDays(), 0)
+    const expected = activeMeds.reduce((total: number, med: Medication) => total + this.medTimesFor(med).length * this.reportDays(), 0)
     const taken = this.meds.reduce((total: number, med: Medication) => {
       return total + this.takenLogFor(med).filter((key: string) => {
         const date = key.split('|')[0]
@@ -783,7 +797,7 @@ struct Index {
       .filter((symptom: Symptom) => this.dateTime(symptom.date) >= cutoff)
       .sort((a: Symptom, b: Symptom) => this.dateTime(a.date) - this.dateTime(b.date))
     if (symptoms.length === 0) {
-      return 'No symptoms logged.'
+      return ''
     }
     return symptoms.map((symptom: Symptom) => {
       return `${this.dateLabel(this.dateTime(symptom.date))} - ${symptom.name} (${symptom.severity}/3) · ${symptom.context}`
@@ -793,17 +807,22 @@ struct Index {
   private doctorReportText(): string {
     const sections = this.kinds.map((kind: string) => this.reportKindSection(kind))
       .filter((section: string) => section.length > 0)
-    return [
+    const medication = this.medicationReportLine()
+    const symptoms = this.symptomReportLines()
+    const report = [
       'Steady - Health record',
       'Last 30 days',
       this.reportDateRangeLabel(),
-      ...sections,
-      'Medication',
-      this.medicationReportLine(),
-      'Symptoms',
-      this.symptomReportLines(),
-      'Steady is a record-keeping tool, not a medical device. It does not diagnose, treat, or give medical advice. Target ranges shown are the ones you entered yourself. Always consult your doctor about your readings.'
-    ].join('\n\n')
+      ...sections
+    ]
+    if (medication.length > 0) {
+      report.push('Medication', medication)
+    }
+    if (symptoms.length > 0) {
+      report.push('Symptoms', symptoms)
+    }
+    report.push('Steady is a record-keeping tool, not a medical device. It does not diagnose, treat, or give medical advice. Target ranges shown are the ones you entered yourself. Always consult your doctor about your readings.')
+    return report.join('\n\n')
   }
 
   private csvKind(kind: string): string {
@@ -884,7 +903,8 @@ struct Index {
   private async syncReminders(showMeasurementToast: boolean = false): Promise<void> {
     try {
       await reminderAgentManager.cancelAllReminders()
-      if (!this.reminderEnabled && this.meds.length === 0) {
+      const activeMeds = this.activeMeds()
+      if (!this.reminderEnabled && activeMeds.length === 0) {
         return
       }
       if (!await this.requestNotificationAccess()) {
@@ -893,7 +913,7 @@ struct Index {
         return
       }
       let notificationId = 210000
-      for (const med of this.meds) {
+      for (const med of activeMeds) {
         for (const time of this.medTimesFor(med)) {
           const parts = time.split(':')
           const hour = Number(parts[0])
@@ -1461,7 +1481,7 @@ struct Index {
             .letterSpacing(1.4)
             .fontColor(SunColor.pebble)
 
-          ForEach(this.meds, (med: Medication) => {
+          ForEach(this.activeMeds(), (med: Medication) => {
             Column({ space: SunSpacing.sm }) {
               SunListRow({
                 title: med.name,
@@ -1508,7 +1528,7 @@ struct Index {
             .border({ width: { bottom: 1 }, color: SunColor.border })
           }, (med: Medication) => `${this.medKey(med)}-${this.medRevision}`)
 
-          if (this.meds.length === 0) {
+          if (this.activeMeds().length === 0) {
             Text('No medications set up.')
               .fontSize(SunType.body)
               .fontColor(SunColor.pebble)
