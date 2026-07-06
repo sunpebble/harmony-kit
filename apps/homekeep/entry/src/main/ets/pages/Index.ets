@@ -510,10 +510,18 @@ struct Index {
           }
           .width('100%')
 
-          this.customTaskCard()
-
           Scroll() {
-            this.taskList()
+            Column({ space: SunSpacing.md }) {
+              if (this.tasks.length === 0) {
+                this.customTaskCard()
+                this.taskList()
+              } else {
+                this.taskList()
+                this.customTaskCard()
+              }
+            }
+            .width('100%')
+            .padding({ bottom: SunSpacing.lg })
           }
           .width('100%')
           .layoutWeight(1)
