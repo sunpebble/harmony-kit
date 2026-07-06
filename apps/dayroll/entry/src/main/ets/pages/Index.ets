@@ -57,6 +57,7 @@ struct Index {
   @State private composerOpen: boolean = false
   @State private selectedMonth: string = ''
   @State private paywallOpen: boolean = false
+  @State private paywallIntent: string = ''
   @State private entries: RollEntry[] = []
 
   aboutToAppear(): void {
@@ -485,6 +486,12 @@ struct Index {
   private unlockPro(): void {
     this.proUnlocked = true
     this.paywallOpen = false
+    if (this.paywallIntent === 'Stats') {
+      this.statsOpen = true
+    } else if (this.paywallIntent === 'Export') {
+      this.exportOpen = true
+    }
+    this.paywallIntent = ''
     this.showToast('Dayroll Pro unlocked on this device.')
   }
 
@@ -495,6 +502,7 @@ struct Index {
   private toggleStats(): void {
     if (!this.proUnlocked) {
       this.statsOpen = false
+      this.paywallIntent = 'Stats'
       this.showPaywall()
       return
     }
@@ -504,6 +512,7 @@ struct Index {
   private toggleExport(): void {
     if (!this.proUnlocked) {
       this.exportOpen = false
+      this.paywallIntent = 'Export'
       this.showPaywall()
       return
     }
