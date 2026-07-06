@@ -655,11 +655,20 @@ struct Index {
       } else {
         ForEach(this.months(), (month: string) => {
           Column({ space: SunSpacing.sm }) {
-            Text(month)
-              .fontSize(11)
-              .fontWeight(FontWeight.Bold)
-              .letterSpacing(1.5)
-              .fontColor(SunColor.pebble)
+            Row() {
+              Text(month)
+                .fontSize(11)
+                .fontWeight(FontWeight.Bold)
+                .letterSpacing(1.5)
+                .fontColor(SunColor.pebble)
+
+              Blank().layoutWeight(1)
+
+              Text(`${this.entriesForMonth(month).length} DAYS`)
+                .fontSize(11)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(SunColor.pebble)
+            }
               .width('100%')
 
             ForEach(this.entriesForMonth(month), (entry: RollEntry) => {
@@ -671,7 +680,7 @@ struct Index {
                   .width(68)
                 Text(entry.mood)
                   .fontSize(14)
-                Text(entry.line)
+                Text(entry.line.length === 0 ? '—' : entry.line)
                   .fontSize(13)
                   .fontColor(SunColor.ink)
                   .layoutWeight(1)
