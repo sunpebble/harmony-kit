@@ -1484,7 +1484,7 @@ struct Index {
           .onChange((value: string) => this.symptomNote = value)
 
         SunButton({
-          label: 'Save symptom',
+          label: 'Save',
           role: SunButtonRole.Secondary,
           action: () => this.logSymptom()
         })
@@ -1545,9 +1545,18 @@ struct Index {
       SunCard() {
         Column({ space: SunSpacing.sm }) {
           if (this.readings.length === 0 && this.symptoms.length === 0) {
-            Text('Log your first reading with Quick Log.')
-              .fontSize(SunType.body)
-              .fontColor(SunColor.pebble)
+            Column({ space: SunSpacing.xs }) {
+              Text('Nothing yet')
+                .fontSize(SunType.body)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(SunColor.ink)
+
+              Text('Log your first reading with Quick Log.')
+                .fontSize(SunType.caption)
+                .fontColor(SunColor.pebble)
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
           } else {
             ForEach(this.readings, (reading: Reading) => {
               Column({ space: SunSpacing.xs }) {
