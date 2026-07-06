@@ -41,6 +41,9 @@ PersistentStorage.persistProp('steady.draftNote.v1', '')
 PersistentStorage.persistProp('steady.readings.v1', '')
 PersistentStorage.persistProp('steady.meds.v1', '')
 PersistentStorage.persistProp('steady.symptoms.v1', '')
+PersistentStorage.persistProp('steady.reminderEnabled.v1', false)
+PersistentStorage.persistProp('steady.reminderHour.v1', 8)
+PersistentStorage.persistProp('steady.reminderMinute.v1', 0)
 
 @Entry
 @Component
@@ -55,6 +58,9 @@ struct Index {
   @StorageLink('steady.readings.v1') private readingsJson: string = ''
   @StorageLink('steady.meds.v1') private medsJson: string = ''
   @StorageLink('steady.symptoms.v1') private symptomsJson: string = ''
+  @StorageLink('steady.reminderEnabled.v1') private reminderEnabled: boolean = false
+  @StorageLink('steady.reminderHour.v1') private reminderHour: number = 8
+  @StorageLink('steady.reminderMinute.v1') private reminderMinute: number = 0
   @State private readings: Reading[] = []
   @State private meds: Medication[] = []
   @State private medName: string = ''
@@ -265,6 +271,21 @@ struct Index {
     return [...readingRows, ...symptomRows].join('\n')
   }
 
+  private reminderLabel(): string {
+    if (!this.reminderEnabled) {
+      return 'Paused'
+    }
+    return `${this.pad(this.reminderHour)}:${this.pad(this.reminderMinute)}`
+  }
+
+  private pad(value: number): string {
+    return value < 10 ? `0${value}` : `${value}`
+  }
+
+  private testMeasurementReminder(): void {
+    this.showToast('Measurement time: take a minute to log your readings.')
+  }
+
   @Builder
   private tabButton(label: string) {
     Button(label)
@@ -318,6 +339,23 @@ struct Index {
       .fontWeight(FontWeight.Bold)
       .border({ width: 1, color: SunColor.border })
       .onClick(() => this.symptomSeverity = severity)
+  }
+
+  @Builder
+  private reminderTimeButton(label: string, hour: number, minute: number) {
+    Button(label)
+      .height(34)
+      .padding({ left: 12, right: 12 })
+      .borderRadius(999)
+      .backgroundColor(this.reminderHour === hour && this.reminderMinute === minute ? SunColor.sun : SunColor.white)
+      .fontColor(SunColor.ink)
+      .fontSize(12)
+      .fontWeight(FontWeight.Bold)
+      .border({ width: 1, color: SunColor.border })
+      .onClick(() => {
+        this.reminderHour = hour
+        this.reminderMinute = minute
+      })
   }
 
   @Builder
@@ -613,13 +651,50 @@ struct Index {
             title: 'Export CSV',
             caption: this.csvPreview()
           })
+        }
+        .width('100%')
+      }
+
+      SunCard() {
+        Column({ space: SunSpacing.md }) {
+          Text('MEASUREMENT REMINDER')
+            .fontSize(10)
+            .fontWeight(FontWeight.Bold)
+            .letterSpacing(1.4)
+            .fontColor(SunColor.pebble)
+
+          Button(this.reminderEnabled ? 'Daily reminder on' : 'Daily reminder off')
+            .height(42)
+            .width('100%')
+            .borderRadius(999)
+            .backgroundColor(this.reminderEnabled ? SunColor.sun : SunColor.white)
+            .fontColor(SunColor.ink)
+            .fontSize(13)
+            .fontWeight(FontWeight.Bold)
+            .border({ width: 1, color: SunColor.border })
+            .onClick(() => this.reminderEnabled = !this.reminderEnabled)
+
+          Row({ space: SunSpacing.sm }) {
+            this.reminderTimeButton('08:00', 8, 0)
+            this.reminderTimeButton('09:30', 9, 30)
+            this.reminderTimeButton('20:00', 20, 0)
+          }
+          .width('100%')
+
           SunListRow({
             title: 'Measurement reminder',
-            value: '09:30',
+            value: this.reminderLabel(),
             caption: 'Take a minute to log your readings.'
+          })
+
+          SunButton({
+            label: 'Test Reminder',
+            role: SunButtonRole.Secondary,
+            action: () => this.testMeasurementReminder()
           })
         }
         .width('100%')
+        .alignItems(HorizontalAlign.Start)
       }
 
       Text('Steady is a record-keeping tool, not a medical device. It does not diagnose, treat, or give medical advice.')
