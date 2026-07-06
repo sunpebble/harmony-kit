@@ -113,6 +113,8 @@ struct Index {
   @State private symptomSeverity: number = 1
   @State private symptomNote: string = ''
   @State private draftReadingAt: number = 0
+  @State private reportStartAt: number = 0
+  @State private reportEndAt: number = 0
   @State private reportOpen: boolean = false
   @State private confirmingTimelineDeleteKey: string = ''
   @State private quickActionsOpen: boolean = false
@@ -736,18 +738,43 @@ struct Index {
     return this.draftReadingAt > 0 ? this.dateTimeLabel(this.draftReadingAt) : 'Now'
   }
 
-  private reportCutoffTime(): number {
-    return Date.now() - 30 * this.dayMs()
+  private startOfDay(time: number): number {
+    const date = new Date(time)
+    date.setHours(0, 0, 0, 0)
+    return date.getTime()
+  }
+
+  private reportStartCandidateTime(): number {
+    return this.reportStartAt > 0 ? this.reportStartAt : this.startOfDay(Date.now() - 30 * this.dayMs())
+  }
+
+  private reportEndCandidateTime(): number {
+    return this.reportEndAt > 0 ? this.reportEndAt : this.startOfDay(Date.now())
+  }
+
+  private reportStartTime(): number {
+    return Math.min(this.startOfDay(this.reportStartCandidateTime()), this.startOfDay(this.reportEndCandidateTime()))
+  }
+
+  private reportEndTime(): number {
+    return Math.max(this.startOfDay(this.reportStartCandidateTime()), this.startOfDay(this.reportEndCandidateTime()))
+  }
+
+  private reportEndExclusiveTime(): number {
+    return this.reportEndTime() + this.dayMs()
+  }
+
+  private reportDateInRange(value?: string): boolean {
+    const time = this.dateTime(value)
+    return time >= this.reportStartTime() && time < this.reportEndExclusiveTime()
   }
 
   private reportDateRangeLabel(): string {
-    return `${this.dateLabel(this.reportCutoffTime())} - ${this.dateLabel(Date.now())}`
+    return `${this.dateLabel(this.reportStartTime())} - ${this.dateLabel(this.reportEndTime())}`
   }
 
   private reportDays(): number {
-    const start = new Date(this.dateLabel(this.reportCutoffTime())).getTime()
-    const end = new Date(this.todayKey()).getTime()
-    return Math.max(1, Math.floor((end - start) / this.dayMs()) + 1)
+    return Math.max(1, Math.floor((this.reportEndTime() - this.reportStartTime()) / this.dayMs()) + 1)
   }
 
   private targetRangeLabel(kind: string): string {
@@ -831,9 +858,8 @@ struct Index {
   }
 
   private reportKindSection(kind: string): string {
-    const cutoff = this.reportCutoffTime()
     const readings = this.readingsForKind(kind)
-      .filter((reading: Reading) => this.dateTime(reading.date) >= cutoff)
+      .filter((reading: Reading) => this.reportDateInRange(reading.date))
       .sort((a: Reading, b: Reading) => this.dateTime(a.date) - this.dateTime(b.date))
     if (readings.length === 0) {
       return ''
@@ -859,8 +885,8 @@ struct Index {
     if (activeMeds.length === 0) {
       return ''
     }
-    const start = this.dateLabel(this.reportCutoffTime())
-    const end = this.todayKey()
+    const start = this.dateLabel(this.reportStartTime())
+    const end = this.dateLabel(this.reportEndTime())
     const expected = activeMeds.reduce((total: number, med: Medication) => total + this.medTimesFor(med).length * this.reportDays(), 0)
     const taken = this.meds.reduce((total: number, med: Medication) => {
       return total + this.takenLogFor(med).filter((key: string) => {
@@ -872,9 +898,8 @@ struct Index {
   }
 
   private symptomReportLines(): string {
-    const cutoff = this.reportCutoffTime()
     const symptoms = this.symptoms
-      .filter((symptom: Symptom) => this.dateTime(symptom.date) >= cutoff)
+      .filter((symptom: Symptom) => this.reportDateInRange(symptom.date))
       .sort((a: Symptom, b: Symptom) => this.dateTime(a.date) - this.dateTime(b.date))
     if (symptoms.length === 0) {
       return ''
@@ -891,7 +916,6 @@ struct Index {
     const symptoms = this.symptomReportLines()
     const report = [
       'Steady - Health record',
-      'Last 30 days',
       this.reportDateRangeLabel(),
       ...sections
     ]
@@ -1207,6 +1231,27 @@ struct Index {
       })
     } catch (_error) {
       this.showToast('Time picker unavailable.')
+    }
+  }
+
+  private pickReportDate(target: string): void {
+    const selected = target === 'start' ? this.reportStartTime() : this.reportEndTime()
+    try {
+      this.getUIContext().showDatePickerDialog({
+        start: new Date('2000-01-01T00:00:00'),
+        end: new Date('2100-12-31T23:59:59'),
+        selected: new Date(selected),
+        onDateAccept: (value: Date) => {
+          const time = this.startOfDay(value.getTime())
+          if (target === 'start') {
+            this.reportStartAt = time
+          } else {
+            this.reportEndAt = time
+          }
+        }
+      })
+    } catch (_error) {
+      this.showToast('Date picker unavailable.')
     }
   }
 
@@ -1728,6 +1773,21 @@ struct Index {
           })
 
           if (this.reportOpen && this.proUnlocked) {
+            Row({ space: SunSpacing.sm }) {
+              SunButton({
+                label: `From ${this.dateLabel(this.reportStartTime())}`,
+                role: SunButtonRole.Secondary,
+                action: () => this.pickReportDate('start')
+              })
+
+              SunButton({
+                label: `To ${this.dateLabel(this.reportEndTime())}`,
+                role: SunButtonRole.Secondary,
+                action: () => this.pickReportDate('end')
+              })
+            }
+            .width('100%')
+
             Text(this.doctorReportText())
               .width('100%')
               .fontSize(12)
