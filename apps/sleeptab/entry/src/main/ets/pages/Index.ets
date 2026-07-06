@@ -291,6 +291,10 @@ struct Index {
     return list.reduce((total: number, night: SleepNight) => total + night.hours, 0) / list.length
   }
 
+  private hasNightsForDays(days: string[]): boolean {
+    return this.shownNights().some((night: SleepNight) => days.includes(night.day))
+  }
+
   private bedtimeMinutes(time: string): number {
     const parts = time.split(':')
     if (parts.length < 2) {
@@ -524,10 +528,16 @@ struct Index {
         if (this.proUnlocked) {
           this.insightRow('BEST NIGHT', this.bestNightText())
           this.insightRow('ROUGHEST', this.roughestNightText())
-          this.insightRow('WEEKDAY AVG', this.hoursText(this.averageForDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])))
-          this.insightRow('WEEKEND AVG', this.hoursText(this.averageForDays(['SAT', 'SUN'])))
-          this.insightRow('AVG BEDTIME', this.clockText(this.averageBedtimeMinutes()))
-          this.insightRow('CONSISTENCY', `± ${this.hoursText(this.consistencyMinutes() / 60)}`)
+          if (this.hasNightsForDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])) {
+            this.insightRow('WEEKDAY AVG', this.hoursText(this.averageForDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])))
+          }
+          if (this.hasNightsForDays(['SAT', 'SUN'])) {
+            this.insightRow('WEEKEND AVG', this.hoursText(this.averageForDays(['SAT', 'SUN'])))
+          }
+          if (this.shownNights().length >= 2) {
+            this.insightRow('AVG BEDTIME', this.clockText(this.averageBedtimeMinutes()))
+            this.insightRow('CONSISTENCY', `± ${this.hoursText(this.consistencyMinutes() / 60)}`)
+          }
         } else {
           Text('Weekday vs weekend, best & roughest nights - unlock with Pro')
             .fontSize(12)
