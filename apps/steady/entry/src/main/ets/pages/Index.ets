@@ -445,8 +445,8 @@ struct Index {
     this.medTimes = [...this.medTimes, time].sort((a: string, b: string) => a.localeCompare(b))
   }
 
-  private toggleMedSlot(name: string, time: string): void {
-    const index = this.meds.findIndex((med: Medication) => med.name === name)
+  private toggleMedSlot(targetKey: string, time: string): void {
+    const index = this.meds.findIndex((med: Medication) => this.medKey(med) === targetKey)
     if (index < 0) {
       return
     }
@@ -1029,7 +1029,7 @@ struct Index {
   }
 
   @Builder
-  private medDoseRow(name: string, time: string, taken: boolean) {
+  private medDoseRow(name: string, targetKey: string, time: string, taken: boolean) {
     Button(`${name} · ${time} · ${taken ? 'Taken' : 'Due'}`)
       .height(42)
       .width('100%')
@@ -1039,7 +1039,7 @@ struct Index {
       .fontSize(13)
       .fontWeight(FontWeight.Medium)
       .border({ width: 1, color: SunColor.border })
-      .onClick(() => this.toggleMedSlot(name, time))
+      .onClick(() => this.toggleMedSlot(targetKey, time))
   }
 
   @Builder
@@ -1441,8 +1441,8 @@ struct Index {
               })
 
               ForEach(this.medTimesFor(med), (time: string) => {
-                this.medDoseRow(med.name, time, this.takenSlotsFor(med).includes(time))
-              }, (time: string) => `${med.name}-${time}-${this.medRevision}`)
+                this.medDoseRow(med.name, this.medKey(med), time, this.takenSlotsFor(med).includes(time))
+              }, (time: string) => `${this.medKey(med)}-${time}-${this.medRevision}`)
 
               if (this.confirmingDeleteMedKey === this.medKey(med)) {
                 Row({ space: SunSpacing.sm }) {
@@ -1477,7 +1477,7 @@ struct Index {
             .width('100%')
             .padding({ bottom: SunSpacing.sm })
             .border({ width: { bottom: 1 }, color: SunColor.border })
-          }, (med: Medication) => `${med.name}-${this.timesLabel(med)}-${this.medRevision}`)
+          }, (med: Medication) => `${this.medKey(med)}-${this.medRevision}`)
 
           if (this.meds.length === 0) {
             Text('No medications set up.')
