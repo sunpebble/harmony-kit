@@ -37,6 +37,7 @@ struct Index {
   @StorageLink('dayroll.reminderEnabled.v1') private reminderEnabled: boolean = false
   @StorageLink('dayroll.reminderHour.v1') private reminderHour: number = 21
   @State private draftLine: string = ''
+  @State private editingDate: string = ''
   @State private entries: RollEntry[] = []
 
   aboutToAppear(): void {
@@ -63,22 +64,36 @@ struct Index {
 
   private saveToday(): void {
     const line = this.draftLine.trim()
-    if (line.length === 0) {
-      return
-    }
-    const now = new Date()
-    const date = this.dateKey(now)
-    const today: RollEntry = { date, day: this.dayLabel(now), month: this.monthLabel(now), mood: this.mood, line }
-    const rest = this.entries.filter((entry: RollEntry) => entry.date !== date)
-    this.entries = this.sortEntries([today, ...rest])
+    const date = this.activeDate()
+    const day = this.dateFromKey(date)
+    const entry: RollEntry = { date, day: this.dayLabel(day), month: this.monthLabel(day), mood: this.mood, line }
+    const rest = this.entries.filter((item: RollEntry) => item.date !== date)
+    this.entries = this.sortEntries([entry, ...rest])
     this.draftLine = ''
+    this.editingDate = ''
     this.saveEntries()
   }
 
   private deleteToday(): void {
-    const today = this.dateKey(new Date())
-    this.entries = this.entries.filter((entry: RollEntry) => entry.date !== today)
+    const date = this.activeDate()
+    this.entries = this.entries.filter((entry: RollEntry) => entry.date !== date)
+    this.draftLine = ''
+    this.editingDate = ''
     this.saveEntries()
+  }
+
+  private editEntry(entry: RollEntry): void {
+    this.editingDate = entry.date
+    this.mood = entry.mood
+    this.draftLine = entry.line
+  }
+
+  private activeDate(): string {
+    return this.editingDate.length > 0 ? this.editingDate : this.dateKey(new Date())
+  }
+
+  private composerTitle(): string {
+    return this.editingDate.length > 0 ? this.dayLabel(this.dateFromKey(this.editingDate)) : 'TODAY'
   }
 
   private streak(): number {
@@ -282,7 +297,7 @@ struct Index {
   @Builder
   private composer() {
     Column({ space: SunSpacing.md }) {
-      Text('TODAY')
+      Text(this.composerTitle())
         .fontSize(12)
         .fontWeight(FontWeight.Bold)
         .fontColor(SunColor.pebble)
@@ -317,7 +332,7 @@ struct Index {
         })
 
         SunButton({
-          label: 'Delete Today',
+          label: 'Delete Entry',
           role: SunButtonRole.Danger,
           action: () => this.deleteToday()
         })
@@ -366,6 +381,7 @@ struct Index {
               }
               .width('100%')
               .padding({ top: SunSpacing.xs, bottom: SunSpacing.xs })
+              .onClick(() => this.editEntry(entry))
             }, (entry: RollEntry) => entry.date)
           }
           .width('100%')
