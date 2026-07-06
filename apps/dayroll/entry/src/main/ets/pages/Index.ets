@@ -164,6 +164,12 @@ struct Index {
     return index < 0 ? 0 : this.moods.length - index
   }
 
+  private moodRaw(mood: string): string {
+    const labels: string[] = ['great', 'good', 'meh', 'bad', 'awful']
+    const index = this.moods.indexOf(mood)
+    return index < 0 ? mood : labels[index]
+  }
+
   private moodForScore(score: number): string {
     if (score <= 0) {
       return '-'
@@ -217,12 +223,12 @@ struct Index {
     }
     if (this.exportFormat === 'CSV') {
       const rows = sorted.map((entry: RollEntry) => {
-        return `${entry.date},${entry.mood},${this.csvValue(entry.line)}`
+        return `${entry.date},${this.moodRaw(entry.mood)},${this.csvValue(entry.line)}`
       })
       return ['date,mood,line', ...rows].join('\n')
     }
     return sorted.map((entry: RollEntry) => {
-      return `${entry.date} [${entry.mood}] ${entry.line}`
+      return `${entry.date} [${this.moodRaw(entry.mood)}] ${entry.line}`
     }).join('\n')
   }
 
