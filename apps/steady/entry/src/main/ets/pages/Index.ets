@@ -91,6 +91,10 @@ PersistentStorage.persistProp('steady.targetGlucoseLow.v1', '')
 PersistentStorage.persistProp('steady.targetGlucoseHigh.v1', '')
 PersistentStorage.persistProp('steady.targetWeightLow.v1', '')
 PersistentStorage.persistProp('steady.targetWeightHigh.v1', '')
+PersistentStorage.persistProp('steady.targetHeartRateLow.v1', '')
+PersistentStorage.persistProp('steady.targetHeartRateHigh.v1', '')
+PersistentStorage.persistProp('steady.targetOxygenLow.v1', '')
+PersistentStorage.persistProp('steady.targetOxygenHigh.v1', '')
 
 @Entry
 @Component
@@ -119,6 +123,10 @@ struct Index {
   @StorageLink('steady.targetGlucoseHigh.v1') private targetGlucoseHigh: string = ''
   @StorageLink('steady.targetWeightLow.v1') private targetWeightLow: string = ''
   @StorageLink('steady.targetWeightHigh.v1') private targetWeightHigh: string = ''
+  @StorageLink('steady.targetHeartRateLow.v1') private targetHeartRateLow: string = ''
+  @StorageLink('steady.targetHeartRateHigh.v1') private targetHeartRateHigh: string = ''
+  @StorageLink('steady.targetOxygenLow.v1') private targetOxygenLow: string = ''
+  @StorageLink('steady.targetOxygenHigh.v1') private targetOxygenHigh: string = ''
   @State private readings: Reading[] = []
   @State private meds: Medication[] = []
   @State private medName: string = ''
@@ -749,6 +757,12 @@ struct Index {
     if (kind === 'Weight') {
       return this.targetWeightLow
     }
+    if (kind === 'Heart rate') {
+      return this.targetHeartRateLow
+    }
+    if (kind === 'Blood oxygen') {
+      return this.targetOxygenLow
+    }
     return ''
   }
 
@@ -762,6 +776,12 @@ struct Index {
     if (kind === 'Weight') {
       return this.targetWeightHigh
     }
+    if (kind === 'Heart rate') {
+      return this.targetHeartRateHigh
+    }
+    if (kind === 'Blood oxygen') {
+      return this.targetOxygenHigh
+    }
     return ''
   }
 
@@ -772,6 +792,10 @@ struct Index {
       this.targetGlucoseLow = value
     } else if (kind === 'Weight') {
       this.targetWeightLow = value
+    } else if (kind === 'Heart rate') {
+      this.targetHeartRateLow = value
+    } else if (kind === 'Blood oxygen') {
+      this.targetOxygenLow = value
     }
   }
 
@@ -782,6 +806,10 @@ struct Index {
       this.targetGlucoseHigh = value
     } else if (kind === 'Weight') {
       this.targetWeightHigh = value
+    } else if (kind === 'Heart rate') {
+      this.targetHeartRateHigh = value
+    } else if (kind === 'Blood oxygen') {
+      this.targetOxygenHigh = value
     }
   }
 
@@ -2213,7 +2241,7 @@ struct Index {
             .letterSpacing(1.4)
             .fontColor(SunColor.pebble)
 
-          ForEach(this.kinds.slice(0, 3), (kind: string) => {
+          ForEach(this.kinds, (kind: string) => {
             this.targetRangeEditor(kind)
           }, (kind: string) => kind)
 
