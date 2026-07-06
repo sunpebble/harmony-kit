@@ -647,7 +647,8 @@ struct Index {
   }
 
   private trendSummary(kind: string): string {
-    const readings = this.readingsForKind(kind).slice(0, this.trendLimit())
+    const cutoff = Date.now() - this.trendDays() * this.dayMs()
+    const readings = this.readingsForKind(kind).filter((reading: Reading) => this.dateTime(reading.date) >= cutoff)
     if (readings.length === 0 || !this.hasTargetRange(kind)) {
       return `${readings.length} logs`
     }
@@ -817,7 +818,7 @@ struct Index {
     return ['date,kind,value,secondary,mealtime,note', ...readingRows].join('\n')
   }
 
-  private trendLimit(): number {
+  private trendDays(): number {
     if (this.trendRange === '90D') {
       return 90
     }
