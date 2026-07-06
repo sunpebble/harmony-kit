@@ -57,6 +57,9 @@ struct Index {
   @StorageLink('steady.symptoms.v1') private symptomsJson: string = ''
   @State private readings: Reading[] = []
   @State private meds: Medication[] = []
+  @State private medName: string = ''
+  @State private medDose: string = ''
+  @State private medTime: string = '08:00'
   @State private symptoms: Symptom[] = []
 
   aboutToAppear(): void {
@@ -205,7 +208,22 @@ struct Index {
   }
 
   private addMedication(): void {
-    this.meds = [...this.meds, { name: 'Medication', dose: 'Dose', time: '21:00', taken: false }]
+    const name = this.medName.trim()
+    if (name.length === 0) {
+      this.showToast('Enter medication name first.')
+      return
+    }
+    this.meds = [
+      ...this.meds,
+      {
+        name,
+        dose: this.medDose.trim().length > 0 ? this.medDose.trim() : 'Dose',
+        time: this.medTime,
+        taken: false
+      }
+    ]
+    this.medName = ''
+    this.medDose = ''
     this.saveMeds()
   }
 
@@ -257,6 +275,20 @@ struct Index {
       .fontSize(12)
       .border({ width: 1, color: SunColor.border })
       .onClick(() => this.selectedKind = kind)
+  }
+
+  @Builder
+  private medTimeButton(time: string) {
+    Button(time)
+      .height(34)
+      .padding({ left: 12, right: 12 })
+      .borderRadius(999)
+      .backgroundColor(this.medTime === time ? SunColor.sun : SunColor.white)
+      .fontColor(SunColor.ink)
+      .fontSize(12)
+      .fontWeight(FontWeight.Bold)
+      .border({ width: 1, color: SunColor.border })
+      .onClick(() => this.medTime = time)
   }
 
   @Builder
@@ -410,6 +442,52 @@ struct Index {
   private medsView() {
     Column({ space: SunSpacing.md }) {
       SunCard() {
+        Column({ space: SunSpacing.md }) {
+          Text('NEW MEDICATION')
+            .fontSize(10)
+            .fontWeight(FontWeight.Bold)
+            .letterSpacing(1.4)
+            .fontColor(SunColor.pebble)
+
+          TextInput({ placeholder: 'Name', text: this.medName })
+            .height(46)
+            .width('100%')
+            .fontSize(14)
+            .fontColor(SunColor.ink)
+            .backgroundColor(SunColor.white)
+            .borderRadius(8)
+            .border({ width: 1, color: SunColor.border })
+            .onChange((value: string) => this.medName = value)
+
+          TextInput({ placeholder: 'Dose', text: this.medDose })
+            .height(46)
+            .width('100%')
+            .fontSize(14)
+            .fontColor(SunColor.ink)
+            .backgroundColor(SunColor.white)
+            .borderRadius(8)
+            .border({ width: 1, color: SunColor.border })
+            .onChange((value: string) => this.medDose = value)
+
+          Row({ space: SunSpacing.sm }) {
+            this.medTimeButton('08:00')
+            this.medTimeButton('12:00')
+            this.medTimeButton('20:00')
+            this.medTimeButton('21:00')
+          }
+          .width('100%')
+
+          SunButton({
+            label: 'Add Medication',
+            role: SunButtonRole.Secondary,
+            action: () => this.addMedication()
+          })
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Start)
+      }
+
+      SunCard() {
         Column({ space: SunSpacing.sm }) {
           Text('TODAY')
             .fontSize(10)
@@ -447,12 +525,6 @@ struct Index {
         .width('100%')
         .alignItems(HorizontalAlign.Start)
       }
-
-      SunButton({
-        label: 'Add medication',
-        role: SunButtonRole.Secondary,
-        action: () => this.addMedication()
-      })
     }
   }
 
