@@ -112,12 +112,13 @@ struct Index {
       }
       usedIds.push(id)
       nextId = Math.max(nextId, id + 1)
+      const cadence = task.cadence > 0 ? task.cadence : 30
       const taskWithId: KeepTask = {
         id,
-        title: task.title,
-        area: task.area,
+        title: task.title && task.title.length > 0 ? task.title : 'Home task',
+        area: task.area && task.area.length > 0 ? task.area : 'Home',
         dueAt: this.dueAt(task),
-        cadence: task.cadence
+        cadence
       }
       return taskWithId
     })
