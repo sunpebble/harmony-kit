@@ -59,6 +59,7 @@ PersistentStorage.persistProp('simmer.timers.v1', '')
 PersistentStorage.persistProp('simmer.customMinutes.v1', 5)
 PersistentStorage.persistProp('simmer.customSeconds.v1', 0)
 PersistentStorage.persistProp('simmer.customEmoji.v1', '🍲')
+PersistentStorage.persistProp('simmer.customLabel.v1', '')
 PersistentStorage.persistProp('simmer.savedPresets.v1', '')
 PersistentStorage.persistProp('simmer.nextPresetId.v1', 1)
 
@@ -187,6 +188,7 @@ struct Index {
   @StorageLink('simmer.customMinutes.v1') private customMinutes: number = 5
   @StorageLink('simmer.customSeconds.v1') private customSeconds: number = 0
   @StorageLink('simmer.customEmoji.v1') private customEmoji: string = '🍲'
+  @StorageLink('simmer.customLabel.v1') private customLabelText: string = ''
   @StorageLink('simmer.savedPresets.v1') private savedPresetsJson: string = ''
   @StorageLink('simmer.nextPresetId.v1') private nextPresetId: number = 1
   @State private customOpen: boolean = false
@@ -225,7 +227,7 @@ struct Index {
     if (seconds <= 0) {
       return
     }
-    this.startTimer('Custom', this.customEmoji, seconds)
+    this.startTimer(this.customLabel(), this.customEmoji, seconds)
     this.customOpen = false
   }
 
@@ -236,7 +238,7 @@ struct Index {
     }
     this.savedPresets = [
       ...this.savedPresets,
-      { id: this.nextPresetId, emoji: this.customEmoji, label: 'Custom', seconds }
+      { id: this.nextPresetId, emoji: this.customEmoji, label: this.customLabel(), seconds }
     ]
     this.nextPresetId += 1
     this.saveSavedPresets()
@@ -249,6 +251,11 @@ struct Index {
 
   private customSecondsTotal(): number {
     return this.customMinutes * 60 + this.customSeconds
+  }
+
+  private customLabel(): string {
+    const label = this.customLabelText.trim()
+    return label.length > 0 ? label : 'Custom'
   }
 
   private adjustCustomMinutes(delta: number): void {
@@ -533,6 +540,16 @@ struct Index {
         }
         .width('100%')
         .justifyContent(FlexAlign.Center)
+
+        TextInput({ placeholder: 'Label (optional)', text: this.customLabelText })
+          .height(44)
+          .width('100%')
+          .fontSize(14)
+          .fontColor(SunColor.ink)
+          .backgroundColor(SunColor.white)
+          .borderRadius(8)
+          .border({ width: 1, color: '#D8CFBD' })
+          .onChange((value: string) => this.customLabelText = value)
 
         Row({ space: SunSpacing.sm }) {
           Button('Save Preset')
