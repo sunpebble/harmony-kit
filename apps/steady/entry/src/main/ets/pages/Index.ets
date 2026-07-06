@@ -1911,7 +1911,7 @@ struct Index {
               .lineHeight(18)
 
             SunButton({
-              label: 'Share Doctor Report',
+              label: 'Share report',
               role: SunButtonRole.Secondary,
               action: () => {
                 this.shareDoctorReport()
