@@ -990,7 +990,7 @@ struct Index {
           .letterSpacing(2)
           .fontColor(SunColor.pebble)
 
-        Button(this.reminderEnabled ? 'Reminder On' : 'Reminder Off')
+        Button('REMIND ME TO LOG')
           .height(42)
           .width('100%')
           .borderRadius(999)
