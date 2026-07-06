@@ -51,9 +51,7 @@ struct Index {
     }
     try {
       const parsed = JSON.parse(this.nightsJson) as SleepNight[]
-      if (parsed.length > 0) {
-        this.nights = parsed
-      }
+      this.nights = parsed.length > 0 ? parsed : this.defaultNights()
     } catch (_error) {
       this.nights = this.defaultNights()
       this.saveNights()
@@ -100,6 +98,45 @@ struct Index {
 
   private roughestHours(): number {
     return this.shownNights().reduce((worst: number, night: SleepNight) => Math.min(worst, night.hours), 24)
+  }
+
+  private averageForDays(days: string[]): number {
+    const list = this.shownNights().filter((night: SleepNight) => days.includes(night.day))
+    if (list.length === 0) {
+      return 0
+    }
+    return list.reduce((total: number, night: SleepNight) => total + night.hours, 0) / list.length
+  }
+
+  private bedtimeMinutes(time: string): number {
+    const parts = time.split(':')
+    if (parts.length < 2) {
+      return 0
+    }
+    const hour = Number(parts[0])
+    const minute = Number(parts[1])
+    return (hour < 12 ? hour + 24 : hour) * 60 + minute
+  }
+
+  private averageBedtimeMinutes(): number {
+    const list = this.shownNights()
+    if (list.length === 0) {
+      return 0
+    }
+    return list.reduce((total: number, night: SleepNight) => total + this.bedtimeMinutes(night.bedtime), 0) / list.length
+  }
+
+  private consistencyMinutes(): number {
+    const average = this.averageBedtimeMinutes()
+    return this.shownNights().reduce((spread: number, night: SleepNight) => {
+      return Math.max(spread, Math.abs(this.bedtimeMinutes(night.bedtime) - average))
+    }, 0)
+  }
+
+  private clockText(totalMinutes: number): string {
+    const rounded = Math.round(totalMinutes)
+    const normalized = ((rounded % 1440) + 1440) % 1440
+    return `${this.pad(Math.floor(normalized / 60))}:${this.pad(normalized % 60)}`
   }
 
   private hoursText(hours: number): string {
@@ -240,7 +277,10 @@ struct Index {
 
         this.insightRow('BEST NIGHT', this.hoursText(this.bestHours()))
         this.insightRow('ROUGHEST', this.hoursText(this.roughestHours()))
-        this.insightRow('AVG BEDTIME', this.shownNights()[this.shownNights().length - 1].bedtime)
+        this.insightRow('WEEKDAY AVG', this.hoursText(this.averageForDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])))
+        this.insightRow('WEEKEND AVG', this.hoursText(this.averageForDays(['SAT', 'SUN'])))
+        this.insightRow('AVG BEDTIME', this.clockText(this.averageBedtimeMinutes()))
+        this.insightRow('CONSISTENCY', `± ${this.hoursText(this.consistencyMinutes() / 60)}`)
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
