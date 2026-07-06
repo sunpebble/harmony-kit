@@ -1267,7 +1267,7 @@ struct Index {
 
   @Builder
   private medDoseRow(name: string, targetKey: string, time: string, taken: boolean) {
-    Button(`${name} · ${time} · ${taken ? 'Taken' : 'Due'}`)
+    Button(`${name} · ${time}`)
       .height(42)
       .width('100%')
       .borderRadius(999)
