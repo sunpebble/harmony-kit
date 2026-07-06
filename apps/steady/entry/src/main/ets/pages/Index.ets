@@ -244,6 +244,7 @@ struct Index {
 
   private normalizeReading(reading: Reading): Reading {
     const kind = this.kinds.includes(reading.kind) ? reading.kind : 'Blood pressure'
+    const context = reading.context === 'Just now' ? '' : (reading.context ? reading.context : '')
     const normalized: Reading = {
       id: this.normalizeEntityId(reading.id),
       date: reading.date ? reading.date : new Date().toISOString(),
@@ -251,7 +252,7 @@ struct Index {
       value: reading.value,
       unit: reading.unit ? reading.unit : this.unitForKind(kind),
       mealtime: kind === 'Blood glucose' ? this.validMealtime(reading.mealtime) : '',
-      context: reading.context ? reading.context : 'Just now'
+      context
     }
     return normalized
   }
@@ -299,7 +300,7 @@ struct Index {
           : this.cleanNumber(primary),
         unit: this.unitForKind(this.selectedKind),
         mealtime: this.selectedKind === 'Blood glucose' ? this.validMealtime(this.selectedMealtime) : '',
-        context: note.length > 0 ? note : 'Just now'
+        context: note
       },
       ...this.readings
     ]
@@ -963,7 +964,14 @@ struct Index {
   }
 
   private readingNote(reading: Reading): string {
-    return reading.context === 'Just now' ? '' : reading.context
+    return reading.context === 'Just now' ? '' : reading.context.trim()
+  }
+
+  private readingTimelineCaption(reading: Reading): string {
+    const mealtime = this.validMealtime(reading.mealtime)
+    const note = this.readingNote(reading)
+    const detail = mealtime.length > 0 ? mealtime : note
+    return detail.length > 0 ? `${reading.kind} · ${detail}` : reading.kind
   }
 
   private csvPreview(): string {
@@ -1501,7 +1509,7 @@ struct Index {
               Column({ space: SunSpacing.xs }) {
                 SunListRow({
                   title: `${reading.value} ${reading.unit}`,
-                  caption: `${reading.kind} · ${reading.context}`
+                  caption: this.readingTimelineCaption(reading)
                 })
 
                 if (this.confirmingTimelineDeleteKey === this.readingDeleteKey(reading)) {
