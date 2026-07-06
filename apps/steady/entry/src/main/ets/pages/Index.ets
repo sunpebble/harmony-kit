@@ -37,6 +37,12 @@ interface Medication {
   archived?: boolean
 }
 
+interface MedicationTimelineLog {
+  key: string
+  title: string
+  caption: string
+}
+
 interface Symptom {
   id: number
   date?: string
@@ -482,6 +488,23 @@ struct Index {
 
   private activeMeds(): Medication[] {
     return this.meds.filter((med: Medication) => med.archived !== true)
+  }
+
+  private medicationTimelineLogs(): MedicationTimelineLog[] {
+    const logs: MedicationTimelineLog[] = []
+    this.activeMeds().forEach((med: Medication) => {
+      this.takenLogFor(med).forEach((key: string) => {
+        const parts = key.split('|')
+        const date = parts.length > 0 ? parts[0] : this.todayKey()
+        const time = this.medLogTime(key)
+        logs.push({
+          key: `${this.medKey(med)}|${key}`,
+          title: `${med.name} — taken`,
+          caption: `${date} ${time}${med.dose.length > 0 ? ` · ${med.dose}` : ''}`
+        })
+      })
+    })
+    return logs.sort((a: MedicationTimelineLog, b: MedicationTimelineLog) => b.caption.localeCompare(a.caption))
   }
 
   private medKey(med: Medication): string {
@@ -1520,7 +1543,7 @@ struct Index {
 
       SunCard() {
         Column({ space: SunSpacing.sm }) {
-          if (this.readings.length === 0 && this.symptoms.length === 0) {
+          if (this.readings.length === 0 && this.symptoms.length === 0 && this.medicationTimelineLogs().length === 0) {
             Column({ space: SunSpacing.xs }) {
               Text('Nothing yet')
                 .fontSize(SunType.body)
@@ -1599,6 +1622,13 @@ struct Index {
               }
               .width('100%')
             }, (symptom: Symptom) => symptom.id.toString())
+
+            ForEach(this.medicationTimelineLogs(), (log: MedicationTimelineLog) => {
+              SunListRow({
+                title: log.title,
+                caption: log.caption
+              })
+            }, (log: MedicationTimelineLog) => log.key)
           }
         }
         .width('100%')
