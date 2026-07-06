@@ -61,6 +61,9 @@ struct Index {
   @State private medDose: string = ''
   @State private medTime: string = '08:00'
   @State private symptoms: Symptom[] = []
+  @State private symptomName: string = ''
+  @State private symptomSeverity: number = 1
+  @State private symptomNote: string = ''
 
   aboutToAppear(): void {
     this.loadReadings()
@@ -228,11 +231,23 @@ struct Index {
   }
 
   private logSymptom(): void {
+    const name = this.symptomName.trim()
+    if (name.length === 0) {
+      this.showToast('Enter symptom first.')
+      return
+    }
     this.symptoms = [
-      { id: this.nextId, name: 'Headache', severity: 2, context: 'Just now' },
+      {
+        id: this.nextId,
+        name,
+        severity: this.symptomSeverity,
+        context: this.symptomNote.trim().length > 0 ? this.symptomNote.trim() : 'Just now'
+      },
       ...this.symptoms
     ]
     this.nextId += 1
+    this.symptomName = ''
+    this.symptomNote = ''
     this.saveSymptoms()
   }
 
@@ -289,6 +304,20 @@ struct Index {
       .fontWeight(FontWeight.Bold)
       .border({ width: 1, color: SunColor.border })
       .onClick(() => this.medTime = time)
+  }
+
+  @Builder
+  private symptomSeverityButton(label: string, severity: number) {
+    Button(label)
+      .height(34)
+      .padding({ left: 12, right: 12 })
+      .borderRadius(999)
+      .backgroundColor(this.symptomSeverity === severity ? SunColor.sun : SunColor.white)
+      .fontColor(SunColor.ink)
+      .fontSize(12)
+      .fontWeight(FontWeight.Bold)
+      .border({ width: 1, color: SunColor.border })
+      .onClick(() => this.symptomSeverity = severity)
   }
 
   @Builder
@@ -369,15 +398,58 @@ struct Index {
   }
 
   @Builder
+  private symptomLogCard() {
+    SunCard() {
+      Column({ space: SunSpacing.md }) {
+        Text('SYMPTOM')
+          .fontSize(10)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(1.4)
+          .fontColor(SunColor.pebble)
+
+        TextInput({ placeholder: 'Symptom (e.g. headache)', text: this.symptomName })
+          .height(46)
+          .width('100%')
+          .fontSize(14)
+          .fontColor(SunColor.ink)
+          .backgroundColor(SunColor.white)
+          .borderRadius(8)
+          .border({ width: 1, color: SunColor.border })
+          .onChange((value: string) => this.symptomName = value)
+
+        Row({ space: SunSpacing.sm }) {
+          this.symptomSeverityButton('Mild', 1)
+          this.symptomSeverityButton('Moderate', 2)
+          this.symptomSeverityButton('Severe', 3)
+        }
+        .width('100%')
+
+        TextInput({ placeholder: 'Note', text: this.symptomNote })
+          .height(46)
+          .width('100%')
+          .fontSize(14)
+          .fontColor(SunColor.ink)
+          .backgroundColor(SunColor.white)
+          .borderRadius(8)
+          .border({ width: 1, color: SunColor.border })
+          .onChange((value: string) => this.symptomNote = value)
+
+        SunButton({
+          label: 'Save symptom',
+          role: SunButtonRole.Secondary,
+          action: () => this.logSymptom()
+        })
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
+  }
+
+  @Builder
   private timeline() {
     Column({ space: SunSpacing.md }) {
       this.quickLogCard()
-
-      SunButton({
-        label: 'Log symptom',
-        role: SunButtonRole.Secondary,
-        action: () => this.logSymptom()
-      })
+      this.symptomLogCard()
 
       SunCard() {
         Column({ space: SunSpacing.sm }) {
