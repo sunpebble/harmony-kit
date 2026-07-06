@@ -55,6 +55,7 @@ struct Index {
   @State private editingDate: string = ''
   @State private confirmingDelete: boolean = false
   @State private composerOpen: boolean = false
+  @State private selectedMonth: string = ''
   @State private entries: RollEntry[] = []
 
   aboutToAppear(): void {
@@ -310,6 +311,19 @@ struct Index {
       }
     })
     return months
+  }
+
+  private visibleMonths(): string[] {
+    const months = this.months()
+    return this.selectedMonth.length > 0 && months.includes(this.selectedMonth) ? [this.selectedMonth] : months
+  }
+
+  private toggleMonth(month: string): void {
+    this.selectedMonth = this.selectedMonth === month ? '' : month
+  }
+
+  private monthIndexLabel(month: string): string {
+    return month.startsWith('JANUARY ') ? month.slice(month.length - 2) : month.slice(0, 1)
   }
 
   private entriesForMonth(month: string): RollEntry[] {
@@ -699,61 +713,86 @@ struct Index {
 
   @Builder
   private rollList() {
-    Column({ space: SunSpacing.md }) {
-      if (this.entries.length === 0) {
-        Text('NO ENTRIES YET\nTAP + TO LOG TODAY')
-          .fontSize(13)
-          .fontColor(SunColor.pebble)
-          .textAlign(TextAlign.Center)
-          .lineHeight(22)
-          .width('100%')
-          .padding({ top: 30, bottom: 30 })
-      } else {
-        ForEach(this.months(), (month: string) => {
-          Column({ space: SunSpacing.sm }) {
-            Row() {
-              Text(month)
-                .fontSize(11)
-                .fontWeight(FontWeight.Bold)
-                .letterSpacing(1.5)
-                .fontColor(SunColor.pebble)
+    Row({ space: SunSpacing.xs }) {
+      Column({ space: SunSpacing.md }) {
+        if (this.entries.length === 0) {
+          Text('NO ENTRIES YET\nTAP + TO LOG TODAY')
+            .fontSize(13)
+            .fontColor(SunColor.pebble)
+            .textAlign(TextAlign.Center)
+            .lineHeight(22)
+            .width('100%')
+            .padding({ top: 30, bottom: 30 })
+        } else {
+          ForEach(this.visibleMonths(), (month: string) => {
+            Column({ space: SunSpacing.sm }) {
+              Row() {
+                Text(month)
+                  .fontSize(11)
+                  .fontWeight(FontWeight.Bold)
+                  .letterSpacing(1.5)
+                  .fontColor(SunColor.pebble)
 
-              Blank().layoutWeight(1)
+                Blank().layoutWeight(1)
 
-              Text(`${this.entriesForMonth(month).length} DAYS`)
-                .fontSize(11)
-                .fontWeight(FontWeight.Bold)
-                .fontColor(SunColor.pebble)
-            }
-              .width('100%')
-
-            ForEach(this.entriesForMonth(month), (entry: RollEntry) => {
-              Row({ space: 10 }) {
-                Text(entry.day)
-                  .fontSize(12)
+                Text(`${this.entriesForMonth(month).length} DAYS`)
+                  .fontSize(11)
                   .fontWeight(FontWeight.Bold)
                   .fontColor(SunColor.pebble)
-                  .width(68)
-                Text(this.moodMark(entry.mood))
-                  .fontSize(14)
-                Text(entry.line.length === 0 ? '—' : entry.line)
-                  .fontSize(13)
-                  .fontColor(SunColor.ink)
-                  .layoutWeight(1)
-                  .maxLines(2)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
               }
-              .width('100%')
-              .padding({ top: SunSpacing.xs, bottom: SunSpacing.xs })
-              .onClick(() => this.editEntry(entry))
-            }, (entry: RollEntry) => entry.date)
-          }
-          .width('100%')
-          .alignItems(HorizontalAlign.Start)
-        }, (month: string) => month)
+                .width('100%')
+
+              ForEach(this.entriesForMonth(month), (entry: RollEntry) => {
+                Row({ space: 10 }) {
+                  Text(entry.day)
+                    .fontSize(12)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor(SunColor.pebble)
+                    .width(68)
+                  Text(this.moodMark(entry.mood))
+                    .fontSize(14)
+                  Text(entry.line.length === 0 ? '—' : entry.line)
+                    .fontSize(13)
+                    .fontColor(SunColor.ink)
+                    .layoutWeight(1)
+                    .maxLines(2)
+                    .textOverflow({ overflow: TextOverflow.Ellipsis })
+                }
+                .width('100%')
+                .padding({ top: SunSpacing.xs, bottom: SunSpacing.xs })
+                .onClick(() => this.editEntry(entry))
+              }, (entry: RollEntry) => entry.date)
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }, (month: string) => month)
+        }
+      }
+      .layoutWeight(1)
+
+      if (this.months().length > 1) {
+        this.monthIndexStrip()
       }
     }
     .width('100%')
+  }
+
+  @Builder
+  private monthIndexStrip() {
+    Column() {
+      ForEach(this.months(), (month: string) => {
+        Button(this.monthIndexLabel(month))
+          .width(24)
+          .height(18)
+          .borderRadius(6)
+          .backgroundColor(this.selectedMonth === month ? SunColor.ink : SunColor.cream)
+          .fontColor(this.selectedMonth === month ? SunColor.cream : (month.startsWith('JANUARY ') ? SunColor.ink : SunColor.pebble))
+          .fontSize(9)
+          .fontWeight(month.startsWith('JANUARY ') ? FontWeight.Bold : FontWeight.Medium)
+          .onClick(() => this.toggleMonth(month))
+      }, (month: string) => month)
+    }
+    .width(24)
   }
 
   @Builder
