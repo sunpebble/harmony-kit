@@ -110,7 +110,7 @@ struct Index {
 
   private editEntry(entry: RollEntry): void {
     this.editingDate = entry.date
-    this.mood = entry.mood
+    this.mood = this.validMood(entry.mood) || '😐'
     this.draftLine = entry.line
     this.confirmingDelete = false
   }
@@ -175,10 +175,18 @@ struct Index {
     return index < 0 ? 0 : this.moods.length - index
   }
 
+  private validMood(mood: string): string {
+    return this.moods.includes(mood) ? mood : ''
+  }
+
   private moodRaw(mood: string): string {
     const labels: string[] = ['great', 'good', 'meh', 'bad', 'awful']
     const index = this.moods.indexOf(mood)
-    return index < 0 ? mood : labels[index]
+    return index < 0 ? '' : labels[index]
+  }
+
+  private moodMark(mood: string): string {
+    return this.validMood(mood) || '·'
   }
 
   private moodForScore(score: number): string {
@@ -206,12 +214,13 @@ struct Index {
       const month = new Date(cursor.getFullYear(), cursor.getMonth() - offset, 1)
       const key = this.monthKey(month)
       const entries = this.entries.filter((entry: RollEntry) => entry.date.startsWith(key))
-      const scoreTotal = entries.reduce((total: number, entry: RollEntry) => total + this.moodScore(entry.mood), 0)
+      const scores = entries.map((entry: RollEntry) => this.moodScore(entry.mood)).filter((score: number) => score > 0)
+      const scoreTotal = scores.reduce((total: number, score: number) => total + score, 0)
       const stat: MonthStat = {
         key,
         label: this.monthShortLabel(month),
         logged: entries.length,
-        avgMood: entries.length > 0 ? scoreTotal / entries.length : 0
+        avgMood: scores.length > 0 ? scoreTotal / scores.length : 0
       }
       stats.push(stat)
     }
@@ -226,7 +235,8 @@ struct Index {
     const sorted = [...this.entries].sort((a: RollEntry, b: RollEntry) => a.date.localeCompare(b.date))
     if (this.exportFormat === 'Markdown') {
       return sorted.map((entry: RollEntry) => {
-        return `- **${entry.date}** ${entry.mood} ${entry.line}`
+        const mood = this.validMood(entry.mood)
+        return `- **${entry.date}**${mood.length > 0 ? ` ${mood}` : ''} ${entry.line}`
       }).join('\n')
     }
     if (this.exportFormat === 'CSV') {
@@ -236,7 +246,8 @@ struct Index {
       return ['date,mood,line', ...rows].join('\n')
     }
     return sorted.map((entry: RollEntry) => {
-      return `${entry.date} [${this.moodRaw(entry.mood)}] ${entry.line}`
+      const mood = this.moodRaw(entry.mood)
+      return `${entry.date}${mood.length > 0 ? ` [${mood}]` : ''} ${entry.line}`
     }).join('\n')
   }
 
@@ -247,7 +258,7 @@ struct Index {
       date,
       day: this.dayLabel(parsed),
       month: this.monthLabel(parsed),
-      mood: entry.mood,
+      mood: this.validMood(entry.mood),
       line: entry.line
     }
   }
@@ -594,7 +605,7 @@ struct Index {
                 .fontColor(SunColor.pebble)
                 .width(72)
 
-              Text(memory.mood)
+              Text(this.moodMark(memory.mood))
                 .fontSize(13)
 
               Text(memory.line.length === 0 ? '-' : memory.line)
@@ -683,7 +694,7 @@ struct Index {
                   .fontWeight(FontWeight.Bold)
                   .fontColor(SunColor.pebble)
                   .width(68)
-                Text(entry.mood)
+                Text(this.moodMark(entry.mood))
                   .fontSize(14)
                 Text(entry.line.length === 0 ? '—' : entry.line)
                   .fontSize(13)
