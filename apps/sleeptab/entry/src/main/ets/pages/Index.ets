@@ -117,17 +117,14 @@ struct Index {
     this.saveNights()
   }
 
-  @Builder
-  private bedtimeButton(time: string) {
-    Button(time)
-      .height(34)
-      .padding({ left: 12, right: 12 })
-      .borderRadius(999)
-      .backgroundColor(this.draftBedtime === time ? '#F7B733' : '#31354A')
-      .fontColor(this.draftBedtime === time ? SunColor.night : '#BFB8AA')
-      .fontSize(12)
-      .fontWeight(FontWeight.Bold)
-      .onClick(() => this.draftBedtime = time)
+  private draftBedtimeDate(): Date {
+    const bedtime = this.validBedtime(this.draftBedtime) || '23:30'
+    const parts = bedtime.split(':')
+    return new Date(2024, 0, 1, Number(parts[0]), Number(parts[1]), 0)
+  }
+
+  private setDraftBedtime(hour: number, minute: number): void {
+    this.draftBedtime = `${this.pad(Math.max(0, Math.min(23, hour)))}:${this.pad(Math.max(0, Math.min(59, minute)))}`
   }
 
   @Builder
@@ -169,14 +166,12 @@ struct Index {
         }
         .width('100%')
 
-        Row({ space: SunSpacing.sm }) {
-          this.bedtimeButton('22:30')
-          this.bedtimeButton('23:00')
-          this.bedtimeButton('23:30')
-          this.bedtimeButton('00:00')
-          this.bedtimeButton('00:30')
-        }
-        .width('100%')
+        TimePicker({ selected: this.draftBedtimeDate() })
+          .width('100%')
+          .height(120)
+          .selectedTextStyle({ color: SunColor.cream, font: { size: 22, weight: FontWeight.Bold } })
+          .textStyle({ color: '#BFB8AA', font: { size: 18, weight: FontWeight.Medium } })
+          .onChange((value: TimePickerResult) => this.setDraftBedtime(value.hour, value.minute))
 
         if (this.hasTodayNight()) {
           Column({ space: SunSpacing.sm }) {
