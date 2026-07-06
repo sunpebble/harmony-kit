@@ -441,32 +441,6 @@ struct Index {
     this.showToast('Daily reminder off.')
   }
 
-  private testReminder(): void {
-    this.scheduleTestReminder()
-  }
-
-  private async scheduleTestReminder(): Promise<void> {
-    try {
-      if (!await this.requestNotificationAccess()) {
-        this.showToast('Enable notifications to test reminders.')
-        return
-      }
-      const request: reminderAgentManager.ReminderRequestTimer = {
-        reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_TIMER,
-        triggerTimeInSeconds: 3,
-        title: 'Dayroll',
-        content: 'One line about today?',
-        expiredContent: 'Dayroll reminder missed.',
-        notificationId: 1002,
-        tapDismissed: true
-      }
-      await reminderAgentManager.publishReminder(request)
-      this.showToast('Test reminder scheduled.')
-    } catch (_error) {
-      this.showToast('Enable notifications to test reminders.')
-    }
-  }
-
   private async requestNotificationAccess(): Promise<boolean> {
     const context = this.getUIContext().getHostContext()
     if (!context) {
@@ -1028,11 +1002,6 @@ struct Index {
           .width('100%')
           .textAlign(TextAlign.Center)
 
-        SunButton({
-          label: 'Test Reminder',
-          role: SunButtonRole.Secondary,
-          action: () => this.testReminder()
-        })
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
