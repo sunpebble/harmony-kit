@@ -343,8 +343,8 @@ struct Index {
     return label.length > 0 ? label : 'Timer'
   }
 
-  private adjustCustomMinutes(delta: number): void {
-    this.customMinutes = Math.max(0, Math.min(180, this.customMinutes + delta))
+  private setCustomMinutes(minutes: number): void {
+    this.customMinutes = Math.max(0, Math.min(180, Math.round(minutes)))
   }
 
   private setCustomSeconds(seconds: number): void {
@@ -669,30 +669,31 @@ struct Index {
         .scrollable(ScrollDirection.Horizontal)
         .scrollBar(BarState.Off)
 
-        Row({ space: SunSpacing.md }) {
-          Button('-')
-            .width(38)
-            .height(38)
-            .borderRadius(999)
-            .backgroundColor(SunColor.white)
-            .fontColor(SunColor.ink)
-            .border({ width: 1, color: '#D8CFBD' })
-            .onClick(() => this.adjustCustomMinutes(-1))
-
+        Column({ space: SunSpacing.xs }) {
           Text(`${this.customMinutes}m ${this.pad(this.customSeconds)}s`)
             .fontSize(22)
             .fontWeight(FontWeight.Bold)
             .fontColor(SunColor.ink)
-            .layoutWeight(1)
             .textAlign(TextAlign.Center)
 
-          Button('+')
-            .width(38)
-            .height(38)
-            .borderRadius(999)
-            .backgroundColor(SunColor.sun)
-            .fontColor(SunColor.ink)
-            .onClick(() => this.adjustCustomMinutes(1))
+          Slider({ value: this.customMinutes, min: 0, max: 180, step: 1, style: SliderStyle.InSet })
+            .width('100%')
+            .selectedColor(SunColor.sun)
+            .trackColor('#D8CFBD')
+            .blockColor(SunColor.ink)
+            .showTips(true)
+            .onChange((value: number) => this.setCustomMinutes(value))
+
+          Row() {
+            Text('0 min')
+              .fontSize(10)
+              .fontColor(SunColor.pebble)
+            Blank()
+            Text('180 min')
+              .fontSize(10)
+              .fontColor(SunColor.pebble)
+          }
+          .width('100%')
         }
         .width('100%')
 
