@@ -1283,24 +1283,16 @@ struct Index {
       .onClick(() => this.symptomSeverity = severity)
   }
 
-  @Builder
-  private reminderTimeButton(label: string, hour: number, minute: number) {
-    Button(label)
-      .height(34)
-      .padding({ left: 12, right: 12 })
-      .borderRadius(999)
-      .backgroundColor(this.reminderHour === hour && this.reminderMinute === minute ? SunColor.sun : SunColor.white)
-      .fontColor(SunColor.ink)
-      .fontSize(12)
-      .fontWeight(FontWeight.Bold)
-      .border({ width: 1, color: SunColor.border })
-      .onClick(() => {
-        this.reminderHour = hour
-        this.reminderMinute = minute
-        if (this.reminderEnabled) {
-          this.syncReminders(true)
-        }
-      })
+  private reminderDate(): Date {
+    return new Date(2024, 0, 1, this.reminderHour, this.reminderMinute, 0)
+  }
+
+  private setReminderTime(hour: number, minute: number): void {
+    this.reminderHour = Math.max(0, Math.min(23, hour))
+    this.reminderMinute = Math.max(0, Math.min(59, minute))
+    if (this.reminderEnabled) {
+      this.syncReminders(true)
+    }
   }
 
   @Builder
@@ -1865,12 +1857,12 @@ struct Index {
               }
             })
 
-          Row({ space: SunSpacing.sm }) {
-            this.reminderTimeButton('08:00', 8, 0)
-            this.reminderTimeButton('09:30', 9, 30)
-            this.reminderTimeButton('20:00', 20, 0)
-          }
-          .width('100%')
+          TimePicker({ selected: this.reminderDate() })
+            .width('100%')
+            .height(120)
+            .selectedTextStyle({ color: SunColor.ink, font: { size: 22, weight: FontWeight.Bold } })
+            .textStyle({ color: SunColor.pebble, font: { size: 18, weight: FontWeight.Medium } })
+            .onChange((value: TimePickerResult) => this.setReminderTime(value.hour, value.minute))
 
           SunListRow({
             title: 'Measurement reminder',
