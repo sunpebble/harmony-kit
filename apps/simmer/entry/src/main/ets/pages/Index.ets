@@ -215,6 +215,7 @@ struct Index {
   @State private timers: KitchenTimer[] = []
   @State private savedPresets: SavedPresetTimer[] = []
   @State private nowMs: number = Date.now()
+  @State private confirmingPresetId: number = -1
 
   aboutToAppear(): void {
     this.loadTimers()
@@ -236,10 +237,12 @@ struct Index {
   }
 
   private startSavedPreset(preset: SavedPresetTimer): void {
+    this.confirmingPresetId = -1
     this.startTimer(preset.label, preset.emoji, preset.seconds)
   }
 
   private startCustom(): void {
+    this.confirmingPresetId = -1
     this.customOpen = !this.customOpen
   }
 
@@ -267,11 +270,13 @@ struct Index {
       { id: this.nextPresetId, emoji: this.customEmoji, label: this.customLabel(), seconds }
     ]
     this.nextPresetId += 1
+    this.confirmingPresetId = -1
     this.saveSavedPresets()
   }
 
   private removeSavedPreset(id: number): void {
     this.savedPresets = this.savedPresets.filter((preset: SavedPresetTimer) => preset.id !== id)
+    this.confirmingPresetId = -1
     this.saveSavedPresets()
   }
 
@@ -695,29 +700,55 @@ struct Index {
           .onClick(() => this.startCustom())
 
         ForEach(this.savedPresets, (preset: SavedPresetTimer) => {
-          Row({ space: 4 }) {
-            Button(`${preset.emoji}  ${preset.label} · ${this.timerText(preset.seconds)}`)
-              .height(44)
-              .padding({ left: 16, right: 12 })
-              .borderRadius(SunRadius.pill)
-              .backgroundColor(SunColor.sun)
-              .fontColor(SunColor.ink)
-              .fontSize(13)
-              .fontWeight(FontWeight.Medium)
-              .onClick(() => this.startSavedPreset(preset))
+          if (this.confirmingPresetId === preset.id) {
+            Row({ space: 4 }) {
+              Button('Confirm')
+                .height(34)
+                .padding({ left: 12, right: 12 })
+                .borderRadius(999)
+                .backgroundColor(SunColor.danger)
+                .fontColor(SunColor.white)
+                .fontSize(12)
+                .fontWeight(FontWeight.Bold)
+                .onClick(() => this.removeSavedPreset(preset.id))
 
-            Button('×')
-              .width(34)
-              .height(34)
-              .borderRadius(999)
-              .backgroundColor(SunColor.white)
-              .fontColor(SunColor.danger)
-              .fontSize(16)
-              .fontWeight(FontWeight.Bold)
-              .border({ width: 1, color: '#D8CFBD' })
-              .onClick(() => this.removeSavedPreset(preset.id))
+              Button('Cancel')
+                .height(34)
+                .padding({ left: 12, right: 12 })
+                .borderRadius(999)
+                .backgroundColor(SunColor.white)
+                .fontColor(SunColor.ink)
+                .fontSize(12)
+                .fontWeight(FontWeight.Bold)
+                .border({ width: 1, color: '#D8CFBD' })
+                .onClick(() => this.confirmingPresetId = -1)
+            }
+            .height(56)
+          } else {
+            Row({ space: 4 }) {
+              Button(`${preset.emoji}  ${preset.label} · ${this.timerText(preset.seconds)}`)
+                .height(44)
+                .padding({ left: 16, right: 12 })
+                .borderRadius(SunRadius.pill)
+                .backgroundColor(SunColor.sun)
+                .fontColor(SunColor.ink)
+                .fontSize(13)
+                .fontWeight(FontWeight.Medium)
+                .onClick(() => this.startSavedPreset(preset))
+
+              Button('×')
+                .width(34)
+                .height(34)
+                .borderRadius(999)
+                .backgroundColor(SunColor.white)
+                .fontColor(SunColor.danger)
+                .fontSize(16)
+                .fontWeight(FontWeight.Bold)
+                .border({ width: 1, color: '#D8CFBD' })
+                .onClick(() => this.confirmingPresetId = preset.id)
+            }
+            .height(56)
           }
-          .height(56)
         }, (preset: SavedPresetTimer) => preset.id.toString())
 
         ForEach(this.presets, (preset: PresetTimer) => {
