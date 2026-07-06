@@ -15,6 +15,13 @@ interface RollEntry {
   line: string
 }
 
+interface MonthStat {
+  key: string
+  label: string
+  logged: number
+  avgMood: number
+}
+
 PersistentStorage.persistProp('dayroll.mood.v1', '😐')
 PersistentStorage.persistProp('dayroll.entries.v1', '')
 PersistentStorage.persistProp('dayroll.exportOpen.v1', false)
@@ -140,6 +147,52 @@ struct Index {
 
   private moodCount(mood: string): number {
     return this.entries.filter((entry: RollEntry) => entry.mood === mood).length
+  }
+
+  private moodScore(mood: string): number {
+    const index = this.moods.indexOf(mood)
+    return index < 0 ? 0 : this.moods.length - index
+  }
+
+  private moodForScore(score: number): string {
+    if (score <= 0) {
+      return '-'
+    }
+    const index = Math.max(0, Math.min(this.moods.length - 1, this.moods.length - Math.round(score)))
+    return this.moods[index]
+  }
+
+  private monthKey(date: Date): string {
+    return `${date.getFullYear()}-${this.pad(date.getMonth() + 1)}`
+  }
+
+  private monthShortLabel(date: Date): string {
+    const months: string[] = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+    return months[date.getMonth()]
+  }
+
+  private monthlyStats(): MonthStat[] {
+    const cursor = new Date()
+    cursor.setDate(1)
+    const stats: MonthStat[] = []
+    for (let offset = 11; offset >= 0; offset--) {
+      const month = new Date(cursor.getFullYear(), cursor.getMonth() - offset, 1)
+      const key = this.monthKey(month)
+      const entries = this.entries.filter((entry: RollEntry) => entry.date.startsWith(key))
+      const scoreTotal = entries.reduce((total: number, entry: RollEntry) => total + this.moodScore(entry.mood), 0)
+      const stat: MonthStat = {
+        key,
+        label: this.monthShortLabel(month),
+        logged: entries.length,
+        avgMood: entries.length > 0 ? scoreTotal / entries.length : 0
+      }
+      stats.push(stat)
+    }
+    return stats
+  }
+
+  private maxMonthlyLogged(): number {
+    return Math.max(1, ...this.monthlyStats().map((stat: MonthStat) => stat.logged))
   }
 
   private exportText(): string {
@@ -544,6 +597,63 @@ struct Index {
           this.statPill('STREAK', this.streak().toString())
           Blank().layoutWeight(1)
           this.statPill('BEST', this.longestStreak().toString())
+        }
+        .width('100%')
+
+        this.perforation()
+
+        Text('DAYS LOGGED - LAST 12 MONTHS')
+          .fontSize(10)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(1.5)
+          .fontColor(SunColor.pebble)
+          .width('100%')
+
+        ForEach(this.monthlyStats(), (stat: MonthStat) => {
+          Row({ space: SunSpacing.sm }) {
+            Text(stat.label)
+              .fontSize(10)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(SunColor.pebble)
+              .width(18)
+            Blank()
+              .height(8)
+              .layoutWeight(Math.max(1, stat.logged))
+              .backgroundColor(stat.logged > 0 ? SunColor.ink : '#D8CCBA')
+            Blank()
+              .height(8)
+              .layoutWeight(Math.max(1, this.maxMonthlyLogged() - stat.logged + 1))
+            Text(stat.logged.toString())
+              .fontSize(11)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(SunColor.ink)
+              .width(22)
+          }
+          .width('100%')
+        }, (stat: MonthStat) => stat.key)
+
+        this.perforation()
+
+        Text('MOOD TREND - LAST 12 MONTHS')
+          .fontSize(10)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(1.5)
+          .fontColor(SunColor.pebble)
+          .width('100%')
+
+        Row({ space: SunSpacing.sm }) {
+          ForEach(this.monthlyStats(), (stat: MonthStat) => {
+            Column({ space: 4 }) {
+              Text(this.moodForScore(stat.avgMood))
+                .fontSize(14)
+              Text(stat.label)
+                .fontSize(9)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(SunColor.pebble)
+            }
+            .layoutWeight(1)
+            .alignItems(HorizontalAlign.Center)
+          }, (stat: MonthStat) => stat.key)
         }
         .width('100%')
 
