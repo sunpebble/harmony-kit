@@ -1551,7 +1551,7 @@ struct Index {
                 .fontWeight(FontWeight.Bold)
                 .fontColor(SunColor.ink)
 
-              Text('Log your first reading with Quick Log.')
+              Text('Log your first reading with the + button.')
                 .fontSize(SunType.caption)
                 .fontColor(SunColor.pebble)
             }
