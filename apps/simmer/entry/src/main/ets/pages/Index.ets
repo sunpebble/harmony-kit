@@ -65,6 +65,7 @@ PersistentStorage.persistProp('simmer.customEmoji.v1', '🍲')
 PersistentStorage.persistProp('simmer.customLabel.v1', '')
 PersistentStorage.persistProp('simmer.savedPresets.v1', '')
 PersistentStorage.persistProp('simmer.nextPresetId.v1', 1)
+PersistentStorage.persistProp('simmer.proUnlocked.v1', false)
 
 @Component
 struct Burner {
@@ -209,6 +210,7 @@ struct Index {
   @StorageLink('simmer.customLabel.v1') private customLabelText: string = ''
   @StorageLink('simmer.savedPresets.v1') private savedPresetsJson: string = ''
   @StorageLink('simmer.nextPresetId.v1') private nextPresetId: number = 1
+  @StorageLink('simmer.proUnlocked.v1') private proUnlocked: boolean = false
   @State private customOpen: boolean = false
   @State private timers: KitchenTimer[] = []
   @State private savedPresets: SavedPresetTimer[] = []
@@ -246,11 +248,16 @@ struct Index {
     if (seconds <= 0) {
       return
     }
-    this.startTimer(this.customLabel(), this.customEmoji, seconds)
-    this.customOpen = false
+    if (this.startTimer(this.customLabel(), this.customEmoji, seconds)) {
+      this.customOpen = false
+    }
   }
 
   private saveCustomPreset(): void {
+    if (!this.proUnlocked) {
+      this.showToast('Simmer Pro unlocks saved custom presets.')
+      return
+    }
     const seconds = this.customSecondsTotal()
     if (seconds <= 0) {
       return
@@ -285,13 +292,23 @@ struct Index {
     this.customSeconds = seconds
   }
 
-  private startTimer(label: string, emoji: string, seconds: number): void {
+  private startTimer(label: string, emoji: string, seconds: number): boolean {
+    if (!this.proUnlocked && this.timers.length > 0) {
+      this.showToast('Simmer Pro unlocks every burner at once.')
+      return false
+    }
     this.timers = [
       new KitchenTimer(this.nextId, label, emoji, seconds, seconds, true, false, Date.now() + seconds * 1000, 0),
       ...this.timers
     ]
     this.nextId += 1
     this.saveTimers()
+    return true
+  }
+
+  private unlockPro(): void {
+    this.proUnlocked = true
+    this.showToast('Simmer Pro unlocked on this device.')
   }
 
   private toggleTimer(id: number): void {
@@ -445,15 +462,19 @@ struct Index {
     return Math.max(0, Math.ceil((timer.endAt - now) / 1000))
   }
 
-  private showDone(label: string): void {
+  private showToast(message: string): void {
     try {
       this.getUIContext().getPromptAction().showToast({
-        message: `${label} is done`,
+        message,
         duration: 2000
       })
     } catch (_error) {
-      // ponytail: toast is best-effort; visible Done state is the fallback.
+      // ponytail: visible state is the fallback if toast is unavailable.
     }
+  }
+
+  private showDone(label: string): void {
+    this.showToast(`${label} is done`)
   }
 
   private timerText(seconds: number): string {
@@ -589,7 +610,7 @@ struct Index {
           .onChange((value: string) => this.customLabelText = value)
 
         Row({ space: SunSpacing.sm }) {
-          Button('Save Preset')
+          Button(this.proUnlocked ? 'Save Preset' : 'Save Preset Pro')
             .height(44)
             .layoutWeight(1)
             .borderRadius(SunRadius.pill)
@@ -611,6 +632,18 @@ struct Index {
             .onClick(() => this.startCustomTimer())
         }
         .width('100%')
+
+        if (!this.proUnlocked) {
+          Button('Unlock Pro')
+            .height(38)
+            .width('100%')
+            .borderRadius(SunRadius.pill)
+            .backgroundColor(SunColor.sun)
+            .fontColor(SunColor.ink)
+            .fontSize(12)
+            .fontWeight(FontWeight.Bold)
+            .onClick(() => this.unlockPro())
+        }
       }
       .width('100%')
       .padding(SunSpacing.lg)
