@@ -197,7 +197,8 @@ struct Index {
     { emoji: '🥔', label: 'Potatoes', seconds: 20 * 60 },
     { emoji: '🍞', label: 'Oven', seconds: 25 * 60 }
   ]
-  private customEmojis: string[] = ['🍲', '🍳', '🥚', '🍝', '🍚', '🥩', '🍞', '🍵']
+  private customEmojis: string[] = ['🍲', '🍳', '🥚', '🍝', '🍚', '🥩', '🍞', '🍵', '🧁', '🥦', '🍕', '🦐']
+  private customSecondOptions: number[] = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
   private intervalId: number = -1
 
   @StorageLink('simmer.nextId.v1') private nextId: number = 1
@@ -520,18 +521,23 @@ struct Index {
           .letterSpacing(2)
           .fontColor(SunColor.pebble)
 
-        Row({ space: SunSpacing.sm }) {
-          ForEach(this.customEmojis, (emoji: string) => {
-            Button(emoji)
-              .width(38)
-              .height(38)
-              .borderRadius(999)
-              .backgroundColor(this.customEmoji === emoji ? SunColor.sun : SunColor.white)
-              .fontSize(20)
-              .onClick(() => this.customEmoji = emoji)
-          }, (emoji: string) => emoji)
+        Scroll() {
+          Row({ space: SunSpacing.sm }) {
+            ForEach(this.customEmojis, (emoji: string) => {
+              Button(emoji)
+                .width(38)
+                .height(38)
+                .borderRadius(999)
+                .backgroundColor(this.customEmoji === emoji ? SunColor.sun : SunColor.white)
+                .fontSize(20)
+                .onClick(() => this.customEmoji = emoji)
+            }, (emoji: string) => emoji)
+          }
         }
         .width('100%')
+        .height(42)
+        .scrollable(ScrollDirection.Horizontal)
+        .scrollBar(BarState.Off)
 
         Row({ space: SunSpacing.md }) {
           Button('-')
@@ -560,14 +566,17 @@ struct Index {
         }
         .width('100%')
 
-        Row({ space: SunSpacing.sm }) {
-          this.secondsButton(0)
-          this.secondsButton(15)
-          this.secondsButton(30)
-          this.secondsButton(45)
+        Scroll() {
+          Row({ space: SunSpacing.sm }) {
+            ForEach(this.customSecondOptions, (seconds: number) => {
+              this.secondsButton(seconds)
+            }, (seconds: number) => seconds.toString())
+          }
         }
         .width('100%')
-        .justifyContent(FlexAlign.Center)
+        .height(40)
+        .scrollable(ScrollDirection.Horizontal)
+        .scrollBar(BarState.Off)
 
         TextInput({ placeholder: 'Label (optional)', text: this.customLabelText })
           .height(44)
