@@ -49,6 +49,9 @@ class KitchenTimer {
 
 PersistentStorage.persistProp('simmer.nextId.v1', 1)
 PersistentStorage.persistProp('simmer.timers.v1', '')
+PersistentStorage.persistProp('simmer.customMinutes.v1', 5)
+PersistentStorage.persistProp('simmer.customSeconds.v1', 0)
+PersistentStorage.persistProp('simmer.customEmoji.v1', '🍲')
 
 @Component
 struct Burner {
@@ -167,10 +170,15 @@ struct Index {
     { emoji: '🥔', label: 'Potatoes', seconds: 20 * 60 },
     { emoji: '🍞', label: 'Oven', seconds: 25 * 60 }
   ]
+  private customEmojis: string[] = ['🍲', '🍳', '🥚', '🍝', '🍚', '🥩', '🍞', '🍵']
   private intervalId: number = -1
 
   @StorageLink('simmer.nextId.v1') private nextId: number = 1
   @StorageLink('simmer.timers.v1') private timersJson: string = ''
+  @StorageLink('simmer.customMinutes.v1') private customMinutes: number = 5
+  @StorageLink('simmer.customSeconds.v1') private customSeconds: number = 0
+  @StorageLink('simmer.customEmoji.v1') private customEmoji: string = '🍲'
+  @State private customOpen: boolean = false
   @State private timers: KitchenTimer[] = []
 
   aboutToAppear(): void {
@@ -192,7 +200,24 @@ struct Index {
   }
 
   private startCustom(): void {
-    this.startTimer('Timer', '🍲', 5 * 60)
+    this.customOpen = !this.customOpen
+  }
+
+  private startCustomTimer(): void {
+    const seconds = this.customMinutes * 60 + this.customSeconds
+    if (seconds <= 0) {
+      return
+    }
+    this.startTimer('Custom', this.customEmoji, seconds)
+    this.customOpen = false
+  }
+
+  private adjustCustomMinutes(delta: number): void {
+    this.customMinutes = Math.max(0, Math.min(180, this.customMinutes + delta))
+  }
+
+  private setCustomSeconds(seconds: number): void {
+    this.customSeconds = seconds
   }
 
   private startTimer(label: string, emoji: string, seconds: number): void {
@@ -395,6 +420,97 @@ struct Index {
   }
 
   @Builder
+  private customPanel() {
+    if (this.customOpen) {
+      Column({ space: SunSpacing.md }) {
+        Text('CUSTOM TIMER')
+          .fontSize(12)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(2)
+          .fontColor(SunColor.pebble)
+
+        Row({ space: SunSpacing.sm }) {
+          ForEach(this.customEmojis, (emoji: string) => {
+            Button(emoji)
+              .width(38)
+              .height(38)
+              .borderRadius(999)
+              .backgroundColor(this.customEmoji === emoji ? SunColor.sun : SunColor.white)
+              .fontSize(20)
+              .onClick(() => this.customEmoji = emoji)
+          }, (emoji: string) => emoji)
+        }
+        .width('100%')
+
+        Row({ space: SunSpacing.md }) {
+          Button('-')
+            .width(38)
+            .height(38)
+            .borderRadius(999)
+            .backgroundColor(SunColor.white)
+            .fontColor(SunColor.ink)
+            .border({ width: 1, color: '#D8CFBD' })
+            .onClick(() => this.adjustCustomMinutes(-1))
+
+          Text(`${this.customMinutes}m ${this.pad(this.customSeconds)}s`)
+            .fontSize(22)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(SunColor.ink)
+            .layoutWeight(1)
+            .textAlign(TextAlign.Center)
+
+          Button('+')
+            .width(38)
+            .height(38)
+            .borderRadius(999)
+            .backgroundColor(SunColor.sun)
+            .fontColor(SunColor.ink)
+            .onClick(() => this.adjustCustomMinutes(1))
+        }
+        .width('100%')
+
+        Row({ space: SunSpacing.sm }) {
+          this.secondsButton(0)
+          this.secondsButton(15)
+          this.secondsButton(30)
+          this.secondsButton(45)
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+
+        Button('Start Custom')
+          .height(44)
+          .width('100%')
+          .borderRadius(SunRadius.pill)
+          .backgroundColor(SunColor.ink)
+          .fontColor(SunColor.cream)
+          .fontSize(13)
+          .fontWeight(FontWeight.Bold)
+          .onClick(() => this.startCustomTimer())
+      }
+      .width('100%')
+      .padding(SunSpacing.lg)
+      .backgroundColor('#F7F0E5')
+      .border({ width: 1, color: '#D8CFBD' })
+      .borderRadius(18)
+    }
+  }
+
+  @Builder
+  private secondsButton(seconds: number) {
+    Button(`${seconds}s`)
+      .height(32)
+      .padding({ left: 12, right: 12 })
+      .borderRadius(SunRadius.pill)
+      .backgroundColor(this.customSeconds === seconds ? SunColor.sun : SunColor.white)
+      .fontColor(SunColor.ink)
+      .fontSize(11)
+      .fontWeight(FontWeight.Bold)
+      .border({ width: 1, color: '#D8CFBD' })
+      .onClick(() => this.setCustomSeconds(seconds))
+  }
+
+  @Builder
   private presetBar() {
     Scroll() {
       Row({ space: 10 }) {
@@ -443,6 +559,7 @@ struct Index {
             this.burnerList()
           }
 
+          this.customPanel()
           this.presetBar()
         }
         .width('100%')
