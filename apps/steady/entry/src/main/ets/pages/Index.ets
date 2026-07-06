@@ -912,7 +912,15 @@ struct Index {
   }
 
   private trendChartValues(): number[] {
-    return this.trendChartReadings().map((reading: Reading) => this.readingNumber(reading))
+    const values: number[] = []
+    this.trendChartReadings().forEach((reading: Reading) => {
+      values.push(this.readingNumber(reading))
+      const secondary = this.readingSecondaryNumber(reading)
+      if (!Number.isNaN(secondary)) {
+        values.push(secondary)
+      }
+    })
+    return values
   }
 
   private trendChartBarHeight(reading: Reading): number {
@@ -926,6 +934,28 @@ struct Index {
       return 80
     }
     return 28 + Math.round((this.readingNumber(reading) - min) / (max - min) * 96)
+  }
+
+  private readingSecondaryNumber(reading: Reading): number {
+    const value = Number(this.readingSecondary(reading))
+    return value > 0 ? value : Number.NaN
+  }
+
+  private trendChartSecondaryHeight(reading: Reading): number {
+    const secondary = this.readingSecondaryNumber(reading)
+    if (Number.isNaN(secondary)) {
+      return 0
+    }
+    const values = this.trendChartValues()
+    if (values.length <= 1) {
+      return 80
+    }
+    const min = Math.min(...values)
+    const max = Math.max(...values)
+    if (max === min) {
+      return 80
+    }
+    return 28 + Math.round((secondary - min) / (max - min) * 96)
   }
 
   private trendChartColor(reading: Reading): ResourceColor {
@@ -1856,11 +1886,24 @@ struct Index {
       Row({ space: 4 }) {
         ForEach(this.trendChartReadings(), (reading: Reading) => {
           Column() {
-            Blank()
+            Row({ space: 2 }) {
+              Blank()
+                .width(8)
+                .height(this.trendChartBarHeight(reading))
+                .backgroundColor(this.trendChartColor(reading))
+                .borderRadius(4)
+
+              if (this.trendChartSecondaryHeight(reading) > 0) {
+                Blank()
+                  .width(6)
+                  .height(this.trendChartSecondaryHeight(reading))
+                  .backgroundColor(SunColor.pebble)
+                  .borderRadius(4)
+              }
+            }
               .width('100%')
-              .height(this.trendChartBarHeight(reading))
-              .backgroundColor(this.trendChartColor(reading))
-              .borderRadius(4)
+              .alignItems(VerticalAlign.Bottom)
+              .justifyContent(FlexAlign.Center)
           }
           .layoutWeight(1)
           .height(136)
