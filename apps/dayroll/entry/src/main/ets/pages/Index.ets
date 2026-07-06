@@ -103,6 +103,11 @@ struct Index {
     return this.editingDate.length > 0 ? this.editingDate : this.dateKey(new Date())
   }
 
+  private hasActiveEntry(): boolean {
+    const date = this.activeDate()
+    return this.entries.some((entry: RollEntry) => entry.date === date)
+  }
+
   private composerTitle(): string {
     return this.editingDate.length > 0 ? this.dayLabel(this.dateFromKey(this.editingDate)) : 'TODAY'
   }
@@ -477,11 +482,13 @@ struct Index {
           action: () => this.saveToday()
         })
 
-        SunButton({
-          label: 'Delete Entry',
-          role: SunButtonRole.Danger,
-          action: () => this.deleteToday()
-        })
+        if (this.hasActiveEntry()) {
+          SunButton({
+            label: 'Delete Entry',
+            role: SunButtonRole.Danger,
+            action: () => this.deleteToday()
+          })
+        }
       }
     }
     .width('100%')
