@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "Homekeep"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Homekeep"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Homekeep"
+    }
+  ]
+}

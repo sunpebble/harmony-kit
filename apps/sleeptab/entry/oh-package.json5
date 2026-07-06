@@ -1,0 +1,11 @@
+{
+  "name": "entry",
+  "version": "0.1.0",
+  "description": "Sleeptab entry module.",
+  "main": "",
+  "author": "Sunpebble",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "sunpebble_ui": "file:../../../packages/sunpebble_ui"
+  }
+}

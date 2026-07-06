@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "Steady"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Steady"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Steady"
+    }
+  ]
+}

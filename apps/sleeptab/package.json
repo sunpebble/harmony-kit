@@ -1,0 +1,16 @@
+{
+  "name": "sleeptab-harmony",
+  "version": "0.1.0",
+  "ohos": {
+    "org": "huawei",
+    "buildTool": "hvigor",
+    "directoryLevel": "project"
+  },
+  "description": "Sleep debt from recent nights",
+  "repository": {},
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@ohos/hvigor": "6.23.6",
+    "@ohos/hvigor-ohos-plugin": "6.23.6"
+  }
+}

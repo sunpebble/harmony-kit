@@ -10,6 +10,7 @@ many apps. The first app should prove the loop; only then add release automation
 ```text
 HarmonyKit/
   packages/sunpebble_ui/   ArkUI tokens, components, and shell
+  apps/                     Simmer, Sleeptab, Steady, Dayroll, Homekeep
   templates/tool-app/      Copyable app starter
   scripts/new-app.mjs      Template copier
 ```
@@ -22,12 +23,12 @@ node HarmonyKit/scripts/new-app.mjs Simmer --tagline "Parallel kitchen timers" -
 
 The command writes `HarmonyKit/apps/simmer` from `templates/tool-app`.
 
-## First App Order
+## Apps
 
-1. Simmer: timers, presets, card, notification.
-2. Sleeptab: sleep record, debt, weekly insight, card.
-3. Steady: meds, readings, reminders, export.
-4. Dayroll: daily entry, mood, export.
+1. Simmer: timers, presets, burner countdown.
+2. Sleeptab: sleep debt, night ranges, insights, sleep need.
+3. Steady: readings, trends, meds, settings/export preview.
+4. Dayroll: daily entry, mood, streak, export preview.
 5. Homekeep: household maintenance reminders.
 
 Skipped for now: auth, payments, analytics, CI release, and AppGallery metadata
