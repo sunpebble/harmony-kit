@@ -402,11 +402,6 @@ struct Index {
   }
 
   private toggleDoctorReport(): void {
-    if (!this.proUnlocked) {
-      this.reportOpen = false
-      this.showPaywall()
-      return
-    }
     this.reportOpen = !this.reportOpen
   }
 
@@ -2144,7 +2139,7 @@ struct Index {
             action: () => this.toggleDoctorReport()
           })
 
-          if (this.reportOpen && this.proUnlocked) {
+          if (this.reportOpen) {
             Row({ space: SunSpacing.sm }) {
               SunButton({
                 label: `From ${this.dateLabel(this.reportStartTime())}`,
@@ -2160,19 +2155,27 @@ struct Index {
             }
             .width('100%')
 
-            Text(this.doctorReportText())
-              .width('100%')
-              .fontSize(12)
-              .fontColor(SunColor.ink)
-              .lineHeight(18)
+            if (this.proUnlocked) {
+              Text(this.doctorReportText())
+                .width('100%')
+                .fontSize(12)
+                .fontColor(SunColor.ink)
+                .lineHeight(18)
 
-            SunButton({
-              label: 'Share report',
-              role: SunButtonRole.Secondary,
-              action: () => {
-                this.shareDoctorReport()
-              }
-            })
+              SunButton({
+                label: 'Share report',
+                role: SunButtonRole.Secondary,
+                action: () => {
+                  this.shareDoctorReport()
+                }
+              })
+            } else {
+              SunButton({
+                label: 'Generate report',
+                role: SunButtonRole.Secondary,
+                action: () => this.showPaywall()
+              })
+            }
           }
 
           SunButton({
