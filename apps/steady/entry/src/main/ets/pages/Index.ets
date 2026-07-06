@@ -93,6 +93,7 @@ struct Index {
   @State private medDose: string = ''
   @State private medTimes: string[] = ['08:00']
   @State private editingMedKey: string = ''
+  @State private confirmingDeleteMedKey: string = ''
   @State private medRevision: number = 0
   @State private symptoms: Symptom[] = []
   @State private symptomName: string = ''
@@ -348,6 +349,7 @@ struct Index {
 
   private editMedication(med: Medication): void {
     this.editingMedKey = this.medKey(med)
+    this.confirmingDeleteMedKey = ''
     this.medName = med.name
     this.medDose = med.dose
     this.medTimes = this.medTimesFor(med)
@@ -358,6 +360,7 @@ struct Index {
     this.medDose = ''
     this.medTimes = ['08:00']
     this.editingMedKey = ''
+    this.confirmingDeleteMedKey = ''
   }
 
   private addMedication(): void {
@@ -396,12 +399,17 @@ struct Index {
     this.medRevision += 1
   }
 
+  private startDeleteMedication(target: Medication): void {
+    this.confirmingDeleteMedKey = this.medKey(target)
+  }
+
   private deleteMedication(target: Medication): void {
     const targetKey = this.medKey(target)
     this.meds = this.meds.filter((med: Medication) => this.medKey(med) !== targetKey)
     if (this.editingMedKey === targetKey) {
       this.resetMedicationForm()
     }
+    this.confirmingDeleteMedKey = ''
     this.saveMeds()
     this.medRevision += 1
   }
@@ -1035,14 +1043,35 @@ struct Index {
                 this.medDoseRow(med.name, time, this.takenSlotsFor(med).includes(time))
               }, (time: string) => `${med.name}-${time}-${this.medRevision}`)
 
-              Button('Delete')
-                .height(34)
-                .padding({ left: 12, right: 12 })
-                .borderRadius(999)
-                .backgroundColor(SunColor.white)
-                .fontColor(SunColor.danger)
-                .border({ width: 1, color: SunColor.border })
-                .onClick(() => this.deleteMedication(med))
+              if (this.confirmingDeleteMedKey === this.medKey(med)) {
+                Row({ space: SunSpacing.sm }) {
+                  Button('Confirm Delete')
+                    .height(34)
+                    .padding({ left: 12, right: 12 })
+                    .borderRadius(999)
+                    .backgroundColor(SunColor.danger)
+                    .fontColor(SunColor.white)
+                    .onClick(() => this.deleteMedication(med))
+
+                  Button('Cancel')
+                    .height(34)
+                    .padding({ left: 12, right: 12 })
+                    .borderRadius(999)
+                    .backgroundColor(SunColor.white)
+                    .fontColor(SunColor.ink)
+                    .border({ width: 1, color: SunColor.border })
+                    .onClick(() => this.confirmingDeleteMedKey = '')
+                }
+              } else {
+                Button('Delete')
+                  .height(34)
+                  .padding({ left: 12, right: 12 })
+                  .borderRadius(999)
+                  .backgroundColor(SunColor.white)
+                  .fontColor(SunColor.danger)
+                  .border({ width: 1, color: SunColor.border })
+                  .onClick(() => this.startDeleteMedication(med))
+              }
             }
             .width('100%')
             .padding({ bottom: SunSpacing.sm })
