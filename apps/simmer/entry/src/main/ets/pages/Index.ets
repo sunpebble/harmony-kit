@@ -818,7 +818,7 @@ struct Index {
         ForEach(this.savedPresets, (preset: SavedPresetTimer) => {
           if (this.confirmingPresetId === preset.id) {
             Row({ space: 4 }) {
-              Button('Confirm')
+              Button('Remove Preset')
                 .height(34)
                 .padding({ left: 12, right: 12 })
                 .borderRadius(999)
