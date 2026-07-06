@@ -193,6 +193,11 @@ struct Index {
     this.medsJson = JSON.stringify(this.meds)
   }
 
+  private saveMedsAndSyncReminders(): void {
+    this.saveMeds()
+    this.syncReminders()
+  }
+
   private normalizeMeds(meds: Medication[]): Medication[] {
     return meds.map((med: Medication) => {
       const times = this.medTimesFor(med)
@@ -437,7 +442,7 @@ struct Index {
       this.meds = [...this.meds, nextMed]
     }
     this.resetMedicationForm()
-    this.saveMeds()
+    this.saveMedsAndSyncReminders()
     this.medRevision += 1
   }
 
@@ -452,7 +457,7 @@ struct Index {
       this.resetMedicationForm()
     }
     this.confirmingDeleteMedKey = ''
-    this.saveMeds()
+    this.saveMedsAndSyncReminders()
     this.medRevision += 1
   }
 
@@ -697,34 +702,62 @@ struct Index {
   }
 
   private enableMeasurementReminder(): void {
-    this.scheduleMeasurementReminder()
+    this.reminderEnabled = true
+    this.syncReminders(true)
   }
 
-  private async scheduleMeasurementReminder(): Promise<void> {
+  private async syncReminders(showMeasurementToast: boolean = false): Promise<void> {
     try {
-      if (!await this.requestNotificationAccess()) {
-        this.reminderEnabled = false
-        this.showToast('Enable notifications to use measurement reminders.')
+      await reminderAgentManager.cancelAllReminders()
+      if (!this.reminderEnabled && this.meds.length === 0) {
         return
       }
-      await reminderAgentManager.cancelAllReminders()
-      const request: reminderAgentManager.ReminderRequestAlarm = {
-        reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_ALARM,
-        hour: this.reminderHour,
-        minute: this.reminderMinute,
-        daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
-        title: 'Steady',
-        content: 'Measurement time: take a minute to log your readings.',
-        expiredContent: 'Steady reminder missed.',
-        notificationId: 2001,
-        tapDismissed: true
+      if (!await this.requestNotificationAccess()) {
+        this.reminderEnabled = false
+        this.showToast('Enable notifications to use reminders.')
+        return
       }
-      await reminderAgentManager.publishReminder(request)
-      this.reminderEnabled = true
-      this.showToast(`Daily reminder set for ${this.reminderLabel()}.`)
+      let notificationId = 210000
+      for (const med of this.meds) {
+        for (const time of this.medTimesFor(med)) {
+          const parts = time.split(':')
+          const hour = Number(parts[0])
+          const minute = Number(parts[1])
+          const request: reminderAgentManager.ReminderRequestAlarm = {
+            reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_ALARM,
+            hour,
+            minute,
+            daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
+            title: med.name,
+            content: `Time for ${med.dose.length > 0 ? med.dose : med.name}.`,
+            expiredContent: `${med.name} reminder missed.`,
+            notificationId,
+            tapDismissed: true
+          }
+          notificationId += 1
+          await reminderAgentManager.publishReminder(request)
+        }
+      }
+      if (this.reminderEnabled) {
+        const request: reminderAgentManager.ReminderRequestAlarm = {
+          reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_ALARM,
+          hour: this.reminderHour,
+          minute: this.reminderMinute,
+          daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
+          title: 'Steady',
+          content: 'Measurement time: take a minute to log your readings.',
+          expiredContent: 'Steady reminder missed.',
+          notificationId: 2001,
+          tapDismissed: true
+        }
+        await reminderAgentManager.publishReminder(request)
+      }
+      if (showMeasurementToast) {
+        this.showToast(`Daily reminder set for ${this.reminderLabel()}.`)
+      }
     } catch (_error) {
       this.reminderEnabled = false
-      this.showToast('Enable notifications to use measurement reminders.')
+      this.showToast('Enable notifications to use reminders.')
     }
   }
 
@@ -735,10 +768,11 @@ struct Index {
   private async cancelMeasurementReminder(): Promise<void> {
     try {
       await reminderAgentManager.cancelAllReminders()
+      this.reminderEnabled = false
+      this.syncReminders()
     } catch (_error) {
       // ponytail: stale reminder ids should not block the visible off state.
     }
-    this.reminderEnabled = false
     this.showToast('Daily reminder off.')
   }
 
@@ -888,7 +922,7 @@ struct Index {
         this.reminderHour = hour
         this.reminderMinute = minute
         if (this.reminderEnabled) {
-          this.scheduleMeasurementReminder()
+          this.syncReminders(true)
         }
       })
   }
