@@ -17,6 +17,8 @@ interface RollEntry {
 PersistentStorage.persistProp('dayroll.mood.v1', '😐')
 PersistentStorage.persistProp('dayroll.entries.v1', '')
 PersistentStorage.persistProp('dayroll.exportOpen.v1', false)
+PersistentStorage.persistProp('dayroll.statsOpen.v1', false)
+PersistentStorage.persistProp('dayroll.exportFormat.v1', 'Plain Text')
 
 @Entry
 @Component
@@ -25,6 +27,8 @@ struct Index {
   @StorageLink('dayroll.mood.v1') private mood: string = '😐'
   @StorageLink('dayroll.entries.v1') private entriesJson: string = ''
   @StorageLink('dayroll.exportOpen.v1') private exportOpen: boolean = false
+  @StorageLink('dayroll.statsOpen.v1') private statsOpen: boolean = false
+  @StorageLink('dayroll.exportFormat.v1') private exportFormat: string = 'Plain Text'
   @State private draftLine: string = ''
   @State private entries: RollEntry[] = []
 
@@ -69,9 +73,28 @@ struct Index {
     return this.entries.length
   }
 
+  private longestStreak(): number {
+    return this.entries.length
+  }
+
+  private moodCount(mood: string): number {
+    return this.entries.filter((entry: RollEntry) => entry.mood === mood).length
+  }
+
   private exportText(): string {
     if (this.entries.length === 0) {
       return 'No entries yet.'
+    }
+    if (this.exportFormat === 'Markdown') {
+      return this.entries.map((entry: RollEntry) => {
+        return `- **${entry.day}** ${entry.mood} ${entry.line}`
+      }).join('\n')
+    }
+    if (this.exportFormat === 'CSV') {
+      const rows = this.entries.map((entry: RollEntry) => {
+        return `${entry.day},${entry.mood},${entry.line.replaceAll('"', '""')}`
+      })
+      return ['day,mood,line', ...rows].join('\n')
     }
     return this.entries.map((entry: RollEntry) => {
       return `${entry.day} ${entry.mood} ${entry.line}`
@@ -223,6 +246,13 @@ struct Index {
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.5)
           .fontColor(SunColor.pebble)
+
+        Row({ space: SunSpacing.sm }) {
+          this.formatButton('Plain Text')
+          this.formatButton('Markdown')
+          this.formatButton('CSV')
+        }
+
         Text(this.exportText())
           .fontSize(12)
           .fontColor(SunColor.ink)
@@ -234,6 +264,91 @@ struct Index {
       .padding(SunSpacing.md)
       .backgroundColor('#FFFDF7')
       .border({ width: 1, color: '#C8BDAA' })
+    }
+  }
+
+  @Builder
+  private formatButton(label: string) {
+    Button(label)
+      .height(34)
+      .padding({ left: 12, right: 12 })
+      .borderRadius(999)
+      .backgroundColor(this.exportFormat === label ? SunColor.ink : '#F5EBD9')
+      .fontColor(this.exportFormat === label ? SunColor.cream : SunColor.ink)
+      .fontSize(11)
+      .fontWeight(FontWeight.Bold)
+      .onClick(() => this.exportFormat = label)
+  }
+
+  @Builder
+  private statsPreview() {
+    if (this.statsOpen) {
+      Column({ space: SunSpacing.md }) {
+        Text('YOUR TAPE, COUNTED')
+          .fontSize(14)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(3)
+          .fontColor(SunColor.ink)
+
+        Row() {
+          this.statPill('TOTAL', this.entries.length.toString())
+          Blank().layoutWeight(1)
+          this.statPill('STREAK', this.streak().toString())
+          Blank().layoutWeight(1)
+          this.statPill('BEST', this.longestStreak().toString())
+        }
+        .width('100%')
+
+        this.perforation()
+
+        Text('MOOD MIX · ALL TIME')
+          .fontSize(10)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(1.5)
+          .fontColor(SunColor.pebble)
+          .width('100%')
+
+        ForEach(this.moods, (candidate: string) => {
+          Row({ space: SunSpacing.sm }) {
+            Text(candidate)
+              .fontSize(18)
+              .width(34)
+            Text(this.moodCount(candidate).toString())
+              .fontSize(13)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(SunColor.ink)
+              .width(26)
+            Blank()
+              .height(8)
+              .layoutWeight(Math.max(1, this.moodCount(candidate)))
+              .backgroundColor(SunColor.ink)
+            Blank()
+              .height(8)
+              .layoutWeight(Math.max(1, this.entries.length - this.moodCount(candidate) + 1))
+          }
+          .width('100%')
+        }, (candidate: string) => candidate)
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+      .padding(SunSpacing.md)
+      .backgroundColor('#FFFDF7')
+      .border({ width: 1, color: '#C8BDAA' })
+    }
+  }
+
+  @Builder
+  private statPill(label: string, value: string) {
+    Column({ space: 2 }) {
+      Text(value)
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(SunColor.ink)
+      Text(label)
+        .fontSize(9)
+        .fontWeight(FontWeight.Bold)
+        .letterSpacing(1)
+        .fontColor(SunColor.pebble)
     }
   }
 
@@ -251,6 +366,13 @@ struct Index {
             this.perforation()
             this.rollList()
             this.perforation()
+
+            SunButton({
+              label: this.statsOpen ? 'Hide Stats' : 'Stats',
+              role: SunButtonRole.Secondary,
+              action: () => this.statsOpen = !this.statsOpen
+            })
+            this.statsPreview()
 
             SunButton({
               label: this.exportOpen ? 'Hide Export' : 'Export',
