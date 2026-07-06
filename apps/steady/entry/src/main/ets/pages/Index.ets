@@ -35,6 +35,9 @@ interface Symptom {
 PersistentStorage.persistProp('steady.tab.v1', 'Timeline')
 PersistentStorage.persistProp('steady.nextId.v1', 4)
 PersistentStorage.persistProp('steady.selectedKind.v1', 'Blood pressure')
+PersistentStorage.persistProp('steady.draftPrimary.v1', '')
+PersistentStorage.persistProp('steady.draftSecondary.v1', '')
+PersistentStorage.persistProp('steady.draftNote.v1', '')
 PersistentStorage.persistProp('steady.readings.v1', '')
 PersistentStorage.persistProp('steady.meds.v1', '')
 PersistentStorage.persistProp('steady.symptoms.v1', '')
@@ -46,6 +49,9 @@ struct Index {
   @StorageLink('steady.tab.v1') private tab: string = 'Timeline'
   @StorageLink('steady.nextId.v1') private nextId: number = 4
   @StorageLink('steady.selectedKind.v1') private selectedKind: string = 'Blood pressure'
+  @StorageLink('steady.draftPrimary.v1') private draftPrimary: string = ''
+  @StorageLink('steady.draftSecondary.v1') private draftSecondary: string = ''
+  @StorageLink('steady.draftNote.v1') private draftNote: string = ''
   @StorageLink('steady.readings.v1') private readingsJson: string = ''
   @StorageLink('steady.meds.v1') private medsJson: string = ''
   @StorageLink('steady.symptoms.v1') private symptomsJson: string = ''
@@ -129,35 +135,63 @@ struct Index {
   }
 
   private logReading(): void {
-    const value = this.valueForKind(this.selectedKind)
+    const primary = Number(this.draftPrimary)
+    const secondary = Number(this.draftSecondary)
+    if (this.selectedKind === 'Blood pressure') {
+      if (!(primary > 0) || !(secondary > 0)) {
+        this.showToast('Enter systolic and diastolic first.')
+        return
+      }
+    } else if (!(primary > 0)) {
+      this.showToast('Enter a value first.')
+      return
+    }
+
+    const note = this.draftNote.trim()
     this.readings = [
       {
         id: this.nextId,
         kind: this.selectedKind,
-        value: value.value,
-        unit: value.unit,
-        context: 'Just now'
+        value: this.selectedKind === 'Blood pressure'
+          ? `${this.cleanNumber(primary)}/${this.cleanNumber(secondary)}`
+          : this.cleanNumber(primary),
+        unit: this.unitForKind(this.selectedKind),
+        context: note.length > 0 ? note : 'Just now'
       },
       ...this.readings
     ]
     this.nextId += 1
+    this.draftNote = ''
     this.saveReadings()
   }
 
-  private valueForKind(kind: string): Reading {
+  private cleanNumber(value: number): string {
+    const rounded = Math.round(value * 10) / 10
+    return Math.round(rounded) === rounded ? Math.round(rounded).toString() : rounded.toString()
+  }
+
+  private unitForKind(kind: string): string {
     if (kind === 'Blood glucose') {
-      return { id: 0, kind, value: '108', unit: 'mg/dL', context: '' }
+      return 'mg/dL'
     }
     if (kind === 'Weight') {
-      return { id: 0, kind, value: '154', unit: 'lb', context: '' }
+      return 'lb'
     }
     if (kind === 'Heart rate') {
-      return { id: 0, kind, value: '74', unit: 'bpm', context: '' }
+      return 'bpm'
     }
     if (kind === 'Blood oxygen') {
-      return { id: 0, kind, value: '98', unit: '%', context: '' }
+      return '%'
     }
-    return { id: 0, kind, value: '126/82', unit: 'mmHg', context: '' }
+    return 'mmHg'
+  }
+
+  private showToast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message, duration: 1800 })
+    } catch (_error) {
+      // ponytail: validation still blocks the bad save if toast is unavailable.
+    }
   }
 
   private toggleMed(target: Medication): void {
@@ -246,6 +280,51 @@ struct Index {
         .scrollBar(BarState.Off)
         .width('100%')
         .height(44)
+
+        if (this.selectedKind === 'Blood pressure') {
+          Row({ space: SunSpacing.sm }) {
+            TextInput({ placeholder: 'Systolic', text: this.draftPrimary })
+              .height(46)
+              .layoutWeight(1)
+              .fontSize(14)
+              .fontColor(SunColor.ink)
+              .backgroundColor(SunColor.white)
+              .borderRadius(8)
+              .border({ width: 1, color: SunColor.border })
+              .onChange((value: string) => this.draftPrimary = value)
+
+            TextInput({ placeholder: 'Diastolic', text: this.draftSecondary })
+              .height(46)
+              .layoutWeight(1)
+              .fontSize(14)
+              .fontColor(SunColor.ink)
+              .backgroundColor(SunColor.white)
+              .borderRadius(8)
+              .border({ width: 1, color: SunColor.border })
+              .onChange((value: string) => this.draftSecondary = value)
+          }
+          .width('100%')
+        } else {
+          TextInput({ placeholder: this.unitForKind(this.selectedKind), text: this.draftPrimary })
+            .height(46)
+            .width('100%')
+            .fontSize(14)
+            .fontColor(SunColor.ink)
+            .backgroundColor(SunColor.white)
+            .borderRadius(8)
+            .border({ width: 1, color: SunColor.border })
+            .onChange((value: string) => this.draftPrimary = value)
+        }
+
+        TextInput({ placeholder: 'Note (optional)', text: this.draftNote })
+          .height(46)
+          .width('100%')
+          .fontSize(14)
+          .fontColor(SunColor.ink)
+          .backgroundColor(SunColor.white)
+          .borderRadius(8)
+          .border({ width: 1, color: SunColor.border })
+          .onChange((value: string) => this.draftNote = value)
 
         SunButton({
           label: `Save ${this.selectedKind}`,
