@@ -90,6 +90,7 @@ struct Index {
   @State private symptomName: string = ''
   @State private symptomSeverity: number = 1
   @State private symptomNote: string = ''
+  @State private reportOpen: boolean = false
 
   aboutToAppear(): void {
     this.loadReadings()
@@ -394,6 +395,72 @@ struct Index {
       return value >= low && value <= high
     }).length
     return `${inRange} of ${readings.length} in range`
+  }
+
+  private averageForKind(kind: string): string {
+    const readings = this.readingsForKind(kind)
+    if (readings.length === 0) {
+      return 'No readings'
+    }
+    const total = readings.reduce((sum: number, reading: Reading) => sum + this.readingNumber(reading), 0)
+    return `${this.cleanNumber(total / readings.length)} ${this.unitForKind(kind)}`
+  }
+
+  private rangeForKind(kind: string): string {
+    const values = this.readingsForKind(kind).map((reading: Reading) => this.readingNumber(reading))
+    if (values.length === 0) {
+      return 'No readings'
+    }
+    return `${this.cleanNumber(Math.min(...values))}-${this.cleanNumber(Math.max(...values))}`
+  }
+
+  private reportKindSection(kind: string): string {
+    const readings = this.readingsForKind(kind)
+    if (readings.length === 0) {
+      return ''
+    }
+    const lines: string[] = [
+      kind,
+      `Average ${this.averageForKind(kind)}`,
+      `Range ${this.rangeForKind(kind)}`,
+      this.hasTargetRange(kind) ? this.trendSummary(kind) : 'No patient-set range'
+    ]
+    readings.slice(0, 3).forEach((reading: Reading) => {
+      lines.push(`${reading.value} ${reading.unit} · ${reading.context}`)
+    })
+    return lines.join('\n')
+  }
+
+  private medicationReportLine(): string {
+    if (this.meds.length === 0) {
+      return 'No medications set up.'
+    }
+    const taken = this.meds.filter((med: Medication) => med.taken).length
+    return `${taken} of ${this.meds.length} scheduled doses logged today`
+  }
+
+  private symptomReportLines(): string {
+    if (this.symptoms.length === 0) {
+      return 'No symptoms logged.'
+    }
+    return this.symptoms.slice(0, 3).map((symptom: Symptom) => {
+      return `${symptom.name} (${symptom.severity}/3) · ${symptom.context}`
+    }).join('\n')
+  }
+
+  private doctorReportText(): string {
+    const sections = this.kinds.map((kind: string) => this.reportKindSection(kind))
+      .filter((section: string) => section.length > 0)
+    return [
+      'Steady - Health record',
+      'Current snapshot',
+      ...sections,
+      'Medication',
+      this.medicationReportLine(),
+      'Symptoms',
+      this.symptomReportLines(),
+      'Steady is a record-keeping tool, not a medical device.'
+    ].join('\n\n')
   }
 
   private csvPreview(): string {
@@ -831,11 +898,21 @@ struct Index {
   private settings() {
     Column({ space: SunSpacing.md }) {
       SunCard() {
-        Column() {
-          SunListRow({
-            title: 'Doctor report',
-            caption: 'Readings, medication adherence, and symptoms.'
+        Column({ space: SunSpacing.sm }) {
+          SunButton({
+            label: this.reportOpen ? 'Hide Doctor Report' : 'Doctor Report',
+            role: SunButtonRole.Secondary,
+            action: () => this.reportOpen = !this.reportOpen
           })
+
+          if (this.reportOpen) {
+            Text(this.doctorReportText())
+              .width('100%')
+              .fontSize(12)
+              .fontColor(SunColor.ink)
+              .lineHeight(18)
+          }
+
           SunListRow({
             title: 'Export CSV',
             caption: this.csvPreview()
