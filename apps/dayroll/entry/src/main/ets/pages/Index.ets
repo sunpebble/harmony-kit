@@ -41,6 +41,7 @@ PersistentStorage.persistProp('dayroll.proUnlocked.v1', false)
 @Component
 struct Index {
   private moods: string[] = ['😄', '🙂', '😐', '😞', '😣']
+  private tapeScroller: Scroller = new Scroller()
   @StorageLink('dayroll.mood.v1') private mood: string = '😐'
   @StorageLink('dayroll.entries.v1') private entriesJson: string = ''
   @StorageLink('dayroll.exportOpen.v1') private exportOpen: boolean = false
@@ -315,13 +316,20 @@ struct Index {
     return months
   }
 
-  private visibleMonths(): string[] {
-    const months = this.months()
-    return this.selectedMonth.length > 0 && months.includes(this.selectedMonth) ? [this.selectedMonth] : months
+  private monthOffset(month: string): number {
+    let offset = this.composerOpen ? 380 : 128
+    for (const item of this.months()) {
+      if (item === month) {
+        return offset
+      }
+      offset += 28 + SunSpacing.sm + this.entriesForMonth(item).length * (32 + SunSpacing.sm) + SunSpacing.md
+    }
+    return 0
   }
 
-  private toggleMonth(month: string): void {
-    this.selectedMonth = this.selectedMonth === month ? '' : month
+  private scrollToMonth(month: string): void {
+    this.selectedMonth = month
+    this.tapeScroller.scrollTo({ xOffset: 0, yOffset: this.monthOffset(month) })
   }
 
   private monthIndexLabel(month: string): string {
@@ -718,7 +726,7 @@ struct Index {
             .width('100%')
             .padding({ top: 30, bottom: 30 })
         } else {
-          ForEach(this.visibleMonths(), (month: string) => {
+          ForEach(this.months(), (month: string) => {
             Column({ space: SunSpacing.sm }) {
               Row() {
                 Text(month)
@@ -735,6 +743,7 @@ struct Index {
                   .fontColor(SunColor.pebble)
               }
                 .width('100%')
+                .height(28)
 
               ForEach(this.entriesForMonth(month), (entry: RollEntry) => {
                 Row({ space: 10 }) {
@@ -749,10 +758,11 @@ struct Index {
                     .fontSize(13)
                     .fontColor(SunColor.ink)
                     .layoutWeight(1)
-                    .maxLines(2)
+                    .maxLines(1)
                     .textOverflow({ overflow: TextOverflow.Ellipsis })
                 }
                 .width('100%')
+                .height(32)
                 .padding({ top: SunSpacing.xs, bottom: SunSpacing.xs })
                 .onClick(() => this.editEntry(entry))
               }, (entry: RollEntry) => entry.date)
@@ -783,7 +793,7 @@ struct Index {
           .fontColor(this.selectedMonth === month ? SunColor.cream : (month.startsWith('JANUARY ') ? SunColor.ink : SunColor.pebble))
           .fontSize(9)
           .fontWeight(month.startsWith('JANUARY ') ? FontWeight.Bold : FontWeight.Medium)
-          .onClick(() => this.toggleMonth(month))
+          .onClick(() => this.scrollToMonth(month))
       }, (month: string) => month)
     }
     .width(24)
@@ -1096,7 +1106,7 @@ struct Index {
 
   build() {
     Column() {
-      Scroll() {
+      Scroll(this.tapeScroller) {
         Column({ space: SunSpacing.lg }) {
           this.header()
           this.perforation()
