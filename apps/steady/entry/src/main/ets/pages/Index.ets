@@ -289,6 +289,11 @@ struct Index {
     this.saveMeds()
   }
 
+  private deleteMedication(target: Medication): void {
+    this.meds = this.meds.filter((med: Medication) => med !== target)
+    this.saveMeds()
+  }
+
   private logSymptom(): void {
     const name = this.symptomName.trim()
     if (name.length === 0) {
@@ -802,6 +807,15 @@ struct Index {
                 .fontColor(SunColor.ink)
                 .border({ width: 1, color: SunColor.border })
                 .onClick(() => this.toggleMed(med))
+
+              Button('Delete')
+                .height(34)
+                .padding({ left: 12, right: 12 })
+                .borderRadius(999)
+                .backgroundColor(SunColor.white)
+                .fontColor(SunColor.danger)
+                .border({ width: 1, color: SunColor.border })
+                .onClick(() => this.deleteMedication(med))
             }
             .width('100%')
             .height(58)
