@@ -54,6 +54,9 @@ PersistentStorage.persistProp('simmer.timers.v1', '')
 struct Burner {
   @ObjectLink timer: KitchenTimer
   onTap: (id: number) => void = (_id: number) => {}
+  onAddMinute: (id: number) => void = (_id: number) => {}
+  onRestart: (id: number) => void = (_id: number) => {}
+  onCancel: (id: number) => void = (_id: number) => {}
 
   private timerText(seconds: number): string {
     const total = Math.max(0, Math.round(seconds))
@@ -109,6 +112,7 @@ struct Burner {
       }
       .width(150)
       .height(150)
+      .onClick(() => this.onTap(this.timer.id))
 
       Text(this.timer.label.toUpperCase())
         .fontSize(11)
@@ -117,11 +121,32 @@ struct Burner {
         .letterSpacing(1)
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+      Row({ space: 6 }) {
+        this.actionButton('+1m', () => this.onAddMinute(this.timer.id), SunColor.ink)
+        this.actionButton('Restart', () => this.onRestart(this.timer.id), SunColor.ink)
+        this.actionButton('Cancel', () => this.onCancel(this.timer.id), SunColor.danger)
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
     }
-    .width(170)
-    .height(205)
+    .width(190)
+    .height(250)
     .justifyContent(FlexAlign.Center)
-    .onClick(() => this.onTap(this.timer.id))
+  }
+
+  @Builder
+  private actionButton(label: string, action: () => void, color: string) {
+    Button(label)
+      .height(30)
+      .padding({ left: 8, right: 8 })
+      .borderRadius(SunRadius.pill)
+      .backgroundColor(SunColor.white)
+      .fontColor(color)
+      .fontSize(10)
+      .fontWeight(FontWeight.Bold)
+      .border({ width: 1, color: '#D8CFBD' })
+      .onClick(action)
   }
 }
 
@@ -211,6 +236,39 @@ struct Index {
 
   private deleteTimer(id: number): void {
     this.timers = this.timers.filter((timer: KitchenTimer) => timer.id !== id)
+    this.saveTimers()
+  }
+
+  private addMinute(id: number): void {
+    const timer = this.timers.find((item: KitchenTimer) => item.id === id)
+    if (!timer) {
+      return
+    }
+
+    timer.seconds += 60
+    if (timer.running) {
+      timer.endAt = Math.max(timer.endAt, Date.now()) + 60 * 1000
+      timer.remaining = this.remainingFromEnd(timer)
+      timer.done = false
+    } else {
+      timer.remaining += 60
+      timer.running = true
+      timer.done = false
+      timer.endAt = Date.now() + timer.remaining * 1000
+    }
+    this.saveTimers()
+  }
+
+  private restartTimer(id: number): void {
+    const timer = this.timers.find((item: KitchenTimer) => item.id === id)
+    if (!timer) {
+      return
+    }
+
+    timer.remaining = timer.seconds
+    timer.running = true
+    timer.done = false
+    timer.endAt = Date.now() + timer.seconds * 1000
     this.saveTimers()
   }
 
@@ -323,7 +381,10 @@ struct Index {
         ForEach(this.timers, (timer: KitchenTimer) => {
           Burner({
             timer: timer,
-            onTap: (id: number) => this.handleTimerTap(id)
+            onTap: (id: number) => this.handleTimerTap(id),
+            onAddMinute: (id: number) => this.addMinute(id),
+            onRestart: (id: number) => this.restartTimer(id),
+            onCancel: (id: number) => this.deleteTimer(id)
           })
         }, (timer: KitchenTimer) => timer.id.toString())
       }
