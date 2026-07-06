@@ -628,8 +628,8 @@ struct Index {
         }, (candidate: string) => candidate)
       }
 
-      TextInput({ placeholder: 'One line about today…', text: this.draftLine })
-        .height(52)
+      TextArea({ placeholder: 'One line about today…', text: this.draftLine })
+        .height(96)
         .fontSize(15)
         .fontColor(SunColor.ink)
         .placeholderColor(SunColor.pebble)
