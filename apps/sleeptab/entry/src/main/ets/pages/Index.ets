@@ -404,7 +404,7 @@ struct Index {
 
   @Builder
   private rangeButton(label: string, value: number) {
-    Button(value > 7 && !this.proUnlocked ? `${label} Pro` : label)
+    Button(value > 7 && !this.proUnlocked ? `${label} 🔒` : label)
       .height(34)
       .padding({ left: 14, right: 14 })
       .borderRadius(999)
