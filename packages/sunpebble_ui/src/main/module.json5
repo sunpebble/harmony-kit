@@ -1,0 +1,10 @@
+{
+  "module": {
+    "name": "sunpebble_ui",
+    "type": "har",
+    "deviceTypes": [
+      "phone",
+      "tablet"
+    ]
+  }
+}

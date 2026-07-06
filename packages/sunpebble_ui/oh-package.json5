@@ -1,0 +1,8 @@
+{
+  "name": "sunpebble_ui",
+  "version": "0.1.0",
+  "description": "Sunpebble ArkUI tokens, components, and tool shell.",
+  "main": "src/main/ets/index.ets",
+  "author": "Sunpebble",
+  "license": "MIT"
+}

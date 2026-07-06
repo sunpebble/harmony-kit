@@ -1,0 +1,11 @@
+{
+  "name": "entry",
+  "version": "0.1.0",
+  "description": "{{APP_NAME}} entry module.",
+  "main": "",
+  "author": "Sunpebble",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "sunpebble_ui": "file:{{UI_PACKAGE_FROM_ENTRY}}"
+  }
+}
