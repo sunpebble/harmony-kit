@@ -33,6 +33,7 @@ struct Index {
   @StorageLink('sleeptab.nights.v1') private nightsJson: string = ''
   @StorageLink('sleeptab.proUnlocked.v1') private proUnlocked: boolean = false
   @State private nights: SleepNight[] = []
+  @State private confirmingDeleteNightDate: string = ''
 
   aboutToAppear(): void {
     this.loadNights()
@@ -88,6 +89,31 @@ struct Index {
       ...this.nights.filter((item: SleepNight) => item.date !== date),
       night
     ])
+    this.confirmingDeleteNightDate = ''
+    this.saveNights()
+  }
+
+  private todayDateKey(): string {
+    return this.dateKey(new Date())
+  }
+
+  private hasTodayNight(): boolean {
+    const today = this.todayDateKey()
+    return this.nights.some((night: SleepNight) => night.date === today)
+  }
+
+  private todayNightSummary(): string {
+    const today = this.todayDateKey()
+    const matches = this.nights.filter((night: SleepNight) => night.date === today)
+    if (matches.length === 0) {
+      return ''
+    }
+    return `${this.hoursText(matches[0].hours)} · ${matches[0].bedtime}`
+  }
+
+  private deleteNight(date: string): void {
+    this.nights = this.nights.filter((night: SleepNight) => night.date !== date)
+    this.confirmingDeleteNightDate = ''
     this.saveNights()
   }
 
@@ -151,6 +177,39 @@ struct Index {
           this.bedtimeButton('00:30')
         }
         .width('100%')
+
+        if (this.hasTodayNight()) {
+          Column({ space: SunSpacing.sm }) {
+            Text(`Saved tonight · ${this.todayNightSummary()}`)
+              .fontSize(12)
+              .fontColor(SunColor.pebble)
+
+            if (this.confirmingDeleteNightDate === this.todayDateKey()) {
+              Row({ space: SunSpacing.sm }) {
+                SunButton({
+                  label: 'Confirm Delete',
+                  role: SunButtonRole.Danger,
+                  action: () => this.deleteNight(this.todayDateKey())
+                })
+
+                SunButton({
+                  label: 'Cancel',
+                  role: SunButtonRole.Secondary,
+                  action: () => this.confirmingDeleteNightDate = ''
+                })
+              }
+              .width('100%')
+            } else {
+              SunButton({
+                label: 'Delete tonight',
+                role: SunButtonRole.Danger,
+                action: () => this.confirmingDeleteNightDate = this.todayDateKey()
+              })
+            }
+          }
+          .width('100%')
+          .alignItems(HorizontalAlign.Start)
+        }
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
@@ -547,7 +606,7 @@ struct Index {
             }
 
             SunButton({
-              label: 'Save tonight',
+              label: this.hasTodayNight() ? 'Update tonight' : 'Save tonight',
               role: SunButtonRole.Secondary,
               action: () => this.addNight()
             })
