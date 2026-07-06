@@ -14,7 +14,8 @@ interface KeepTask {
   id: number
   title: string
   area: string
-  dueIn: number
+  dueAt?: number
+  dueIn?: number
   cadence: number
 }
 
@@ -51,9 +52,9 @@ struct Index {
 
   private defaultTasks(): KeepTask[] {
     return [
-      { id: 1, title: 'Replace HVAC filter', area: 'Air', dueIn: -2, cadence: 90 },
-      { id: 2, title: 'Test smoke alarms', area: 'Safety', dueIn: 5, cadence: 30 },
-      { id: 3, title: 'Clean dishwasher filter', area: 'Kitchen', dueIn: 16, cadence: 30 }
+      { id: 1, title: 'Replace HVAC filter', area: 'Air', dueAt: this.dueAtFromToday(-2), cadence: 90 },
+      { id: 2, title: 'Test smoke alarms', area: 'Safety', dueAt: this.dueAtFromToday(5), cadence: 30 },
+      { id: 3, title: 'Clean dishwasher filter', area: 'Kitchen', dueAt: this.dueAtFromToday(16), cadence: 30 }
     ]
   }
 
@@ -65,7 +66,8 @@ struct Index {
     }
     try {
       const parsed = JSON.parse(this.tasksJson) as KeepTask[]
-      this.tasks = parsed.length > 0 ? parsed : this.defaultTasks()
+      this.tasks = parsed.length > 0 ? this.normalizeTasks(parsed) : this.defaultTasks()
+      this.saveTasks()
     } catch (_error) {
       this.tasks = this.defaultTasks()
       this.saveTasks()
@@ -76,6 +78,43 @@ struct Index {
     this.tasksJson = JSON.stringify(this.tasks)
   }
 
+  private dayMs(): number {
+    return 24 * 60 * 60 * 1000
+  }
+
+  private todayStart(): number {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  }
+
+  private dueAtFromToday(days: number): number {
+    return this.todayStart() + days * this.dayMs()
+  }
+
+  private dueAt(task: KeepTask): number {
+    if (task.dueAt !== undefined && task.dueAt > 0) {
+      return task.dueAt
+    }
+    return this.dueAtFromToday(task.dueIn === undefined ? 0 : task.dueIn)
+  }
+
+  private normalizeTasks(tasks: KeepTask[]): KeepTask[] {
+    return tasks.map((task: KeepTask) => {
+      const normalized: KeepTask = {
+        id: task.id,
+        title: task.title,
+        area: task.area,
+        dueAt: this.dueAt(task),
+        cadence: task.cadence
+      }
+      return normalized
+    })
+  }
+
+  private daysUntil(task: KeepTask): number {
+    return Math.ceil((this.dueAt(task) - this.todayStart()) / this.dayMs())
+  }
+
   private addTask(): void {
     const preset = this.presets[this.tasks.length % this.presets.length]
     this.tasks = [
@@ -84,7 +123,7 @@ struct Index {
         id: this.nextId,
         title: preset.title,
         area: preset.area,
-        dueIn: preset.cadence,
+        dueAt: this.dueAtFromToday(preset.cadence),
         cadence: preset.cadence
       }
     ]
@@ -99,7 +138,7 @@ struct Index {
         id: this.nextId,
         title: preset.title,
         area: preset.area,
-        dueIn: preset.cadence,
+        dueAt: this.dueAtFromToday(preset.cadence),
         cadence: preset.cadence
       }
     ]
@@ -117,7 +156,7 @@ struct Index {
       id: this.nextId,
       title,
       area: this.draftArea.trim().length > 0 ? this.draftArea.trim() : 'Home',
-      dueIn: 0,
+      dueAt: this.dueAtFromToday(0),
       cadence: this.draftCadence
     }
     this.tasks = [task, ...this.tasks]
@@ -145,7 +184,7 @@ struct Index {
         id: task.id,
         title: task.title,
         area: task.area,
-        dueIn: task.cadence,
+        dueAt: this.dueAtFromToday(task.cadence),
         cadence: task.cadence
       }
     })
@@ -161,7 +200,7 @@ struct Index {
         id: task.id,
         title: task.title,
         area: task.area,
-        dueIn: 7,
+        dueAt: this.dueAtFromToday(7),
         cadence: task.cadence
       }
     })
@@ -178,23 +217,24 @@ struct Index {
       return this.tasks
     }
     if (this.filter === 'Soon') {
-      return this.tasks.filter((task: KeepTask) => task.dueIn > 0 && task.dueIn <= 14)
+      return this.tasks.filter((task: KeepTask) => this.daysUntil(task) > 0 && this.daysUntil(task) <= 14)
     }
-    return this.tasks.filter((task: KeepTask) => task.dueIn <= 0)
+    return this.tasks.filter((task: KeepTask) => this.daysUntil(task) <= 0)
   }
 
   private dueLabel(task: KeepTask): string {
-    if (task.dueIn < 0) {
-      return `${Math.abs(task.dueIn)}d overdue`
+    const days = this.daysUntil(task)
+    if (days < 0) {
+      return `${Math.abs(days)}d overdue`
     }
-    if (task.dueIn === 0) {
+    if (days === 0) {
       return 'Due today'
     }
-    return `Due in ${task.dueIn}d`
+    return `Due in ${days}d`
   }
 
   private dueCount(): number {
-    return this.tasks.filter((task: KeepTask) => task.dueIn <= 0).length
+    return this.tasks.filter((task: KeepTask) => this.daysUntil(task) <= 0).length
   }
 
   @Builder
@@ -278,7 +318,7 @@ struct Index {
                 caption: `${task.area} · every ${task.cadence}d`
               })
 
-              if (task.dueIn <= 0) {
+              if (this.daysUntil(task) <= 0) {
                 Row({ space: SunSpacing.sm }) {
                   SunButton({
                     label: 'Mark Done',
