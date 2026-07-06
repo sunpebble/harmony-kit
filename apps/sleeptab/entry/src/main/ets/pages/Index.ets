@@ -419,6 +419,8 @@ struct Index {
   private emptyState() {
     Column() {
       Column({ space: SunSpacing.sm }) {
+        Text('🌙')
+          .fontSize(56)
         Text('No sleep data yet')
           .fontSize(17)
           .fontWeight(FontWeight.Bold)
