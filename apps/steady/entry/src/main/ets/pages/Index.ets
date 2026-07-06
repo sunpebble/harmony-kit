@@ -1883,7 +1883,7 @@ struct Index {
           }
 
           SunButton({
-            label: this.reportOpen ? 'Hide Doctor Report' : (this.proUnlocked ? 'Doctor Report' : 'Doctor Report Pro'),
+            label: this.reportOpen ? 'Hide Doctor report' : 'Doctor report',
             role: SunButtonRole.Secondary,
             action: () => this.toggleDoctorReport()
           })
@@ -1920,7 +1920,7 @@ struct Index {
           }
 
           SunButton({
-            label: this.proUnlocked ? 'Export CSV' : 'Export CSV Pro',
+            label: 'Export CSV',
             role: SunButtonRole.Secondary,
             action: () => this.exportCsv()
           })
