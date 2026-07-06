@@ -627,7 +627,7 @@ struct Index {
         }, (candidate: string) => candidate)
       }
 
-      TextInput({ placeholder: 'One line about today...', text: this.draftLine })
+      TextInput({ placeholder: 'One line about today…', text: this.draftLine })
         .height(52)
         .fontSize(15)
         .fontColor(SunColor.ink)
@@ -656,7 +656,7 @@ struct Index {
               Text(this.moodMark(memory.mood))
                 .fontSize(13)
 
-              Text(memory.line.length === 0 ? '-' : memory.line)
+              Text(memory.line.length === 0 ? '—' : memory.line)
                 .fontSize(12)
                 .fontColor(SunColor.ink)
                 .layoutWeight(1)
@@ -671,9 +671,14 @@ struct Index {
       }
 
       if (this.confirmingDelete) {
+        Text('Delete this day?')
+          .fontSize(12)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(SunColor.pebble)
+
         Row({ space: SunSpacing.md }) {
           SunButton({
-            label: 'Confirm Delete',
+            label: 'Delete',
             role: SunButtonRole.Danger,
             action: () => this.deleteToday()
           })
@@ -700,7 +705,7 @@ struct Index {
 
         if (this.hasActiveEntry()) {
           SunButton({
-            label: 'Delete Entry',
+            label: 'DELETE THIS DAY',
             role: SunButtonRole.Danger,
             action: () => this.confirmingDelete = true
           })
