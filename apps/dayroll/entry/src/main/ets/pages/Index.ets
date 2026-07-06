@@ -14,14 +14,39 @@ interface RollEntry {
   line: string
 }
 
+PersistentStorage.persistProp('dayroll.mood.v1', '😐')
+PersistentStorage.persistProp('dayroll.entries.v1', '')
+PersistentStorage.persistProp('dayroll.exportOpen.v1', false)
+
 @Entry
 @Component
 struct Index {
   private moods: string[] = ['😄', '🙂', '😐', '😞', '😣']
-  @State private mood: string = '😐'
+  @StorageLink('dayroll.mood.v1') private mood: string = '😐'
+  @StorageLink('dayroll.entries.v1') private entriesJson: string = ''
+  @StorageLink('dayroll.exportOpen.v1') private exportOpen: boolean = false
   @State private draftLine: string = ''
   @State private entries: RollEntry[] = []
-  @State private exportOpen: boolean = false
+
+  aboutToAppear(): void {
+    this.loadEntries()
+  }
+
+  private loadEntries(): void {
+    if (this.entriesJson.length === 0) {
+      return
+    }
+    try {
+      this.entries = JSON.parse(this.entriesJson) as RollEntry[]
+    } catch (_error) {
+      this.entries = []
+      this.saveEntries()
+    }
+  }
+
+  private saveEntries(): void {
+    this.entriesJson = JSON.stringify(this.entries)
+  }
 
   private saveToday(): void {
     const line = this.draftLine.trim()
@@ -32,10 +57,12 @@ struct Index {
     const rest = this.entries.filter((entry: RollEntry) => entry.day !== 'TODAY')
     this.entries = [today, ...rest]
     this.draftLine = ''
+    this.saveEntries()
   }
 
   private deleteToday(): void {
     this.entries = this.entries.filter((entry: RollEntry) => entry.day !== 'TODAY')
+    this.saveEntries()
   }
 
   private streak(): number {

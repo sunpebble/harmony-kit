@@ -24,6 +24,10 @@ interface PresetTask {
   cadence: number
 }
 
+PersistentStorage.persistProp('homekeep.nextId.v1', 4)
+PersistentStorage.persistProp('homekeep.filter.v1', 'Due')
+PersistentStorage.persistProp('homekeep.tasks.v1', '')
+
 @Entry
 @Component
 struct Index {
@@ -33,13 +37,41 @@ struct Index {
     { title: 'Clean dishwasher filter', area: 'Kitchen', cadence: 30 },
     { title: 'Flush water heater', area: 'Utility', cadence: 180 }
   ]
-  @State private nextId: number = 4
-  @State private filter: string = 'Due'
-  @State private tasks: KeepTask[] = [
-    { id: 1, title: 'Replace HVAC filter', area: 'Air', dueIn: -2, cadence: 90 },
-    { id: 2, title: 'Test smoke alarms', area: 'Safety', dueIn: 5, cadence: 30 },
-    { id: 3, title: 'Clean dishwasher filter', area: 'Kitchen', dueIn: 16, cadence: 30 }
-  ]
+  @StorageLink('homekeep.nextId.v1') private nextId: number = 4
+  @StorageLink('homekeep.filter.v1') private filter: string = 'Due'
+  @StorageLink('homekeep.tasks.v1') private tasksJson: string = ''
+  @State private tasks: KeepTask[] = []
+
+  aboutToAppear(): void {
+    this.loadTasks()
+  }
+
+  private defaultTasks(): KeepTask[] {
+    return [
+      { id: 1, title: 'Replace HVAC filter', area: 'Air', dueIn: -2, cadence: 90 },
+      { id: 2, title: 'Test smoke alarms', area: 'Safety', dueIn: 5, cadence: 30 },
+      { id: 3, title: 'Clean dishwasher filter', area: 'Kitchen', dueIn: 16, cadence: 30 }
+    ]
+  }
+
+  private loadTasks(): void {
+    if (this.tasksJson.length === 0) {
+      this.tasks = this.defaultTasks()
+      this.saveTasks()
+      return
+    }
+    try {
+      const parsed = JSON.parse(this.tasksJson) as KeepTask[]
+      this.tasks = parsed.length > 0 ? parsed : this.defaultTasks()
+    } catch (_error) {
+      this.tasks = this.defaultTasks()
+      this.saveTasks()
+    }
+  }
+
+  private saveTasks(): void {
+    this.tasksJson = JSON.stringify(this.tasks)
+  }
 
   private addTask(): void {
     const preset = this.presets[this.tasks.length % this.presets.length]
@@ -54,6 +86,7 @@ struct Index {
       }
     ]
     this.nextId += 1
+    this.saveTasks()
   }
 
   private addPreset(preset: PresetTask): void {
@@ -68,6 +101,7 @@ struct Index {
       }
     ]
     this.nextId += 1
+    this.saveTasks()
   }
 
   private completeTask(id: number): void {
@@ -83,6 +117,7 @@ struct Index {
         cadence: task.cadence
       }
     })
+    this.saveTasks()
   }
 
   private visibleTasks(): KeepTask[] {

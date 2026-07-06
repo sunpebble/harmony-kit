@@ -25,22 +25,81 @@ interface Medication {
   taken: boolean
 }
 
+PersistentStorage.persistProp('steady.tab.v1', 'Timeline')
+PersistentStorage.persistProp('steady.nextId.v1', 4)
+PersistentStorage.persistProp('steady.selectedKind.v1', 'Blood pressure')
+PersistentStorage.persistProp('steady.readings.v1', '')
+PersistentStorage.persistProp('steady.meds.v1', '')
+
 @Entry
 @Component
 struct Index {
   private kinds: string[] = ['Blood pressure', 'Blood glucose', 'Weight', 'Heart rate', 'Blood oxygen']
-  @State private tab: string = 'Timeline'
-  @State private nextId: number = 4
-  @State private selectedKind: string = 'Blood pressure'
-  @State private readings: Reading[] = [
-    { id: 1, kind: 'Blood pressure', value: '128/84', unit: 'mmHg', context: 'Today · morning' },
-    { id: 2, kind: 'Blood glucose', value: '105', unit: 'mg/dL', context: 'Fasting' },
-    { id: 3, kind: 'Heart rate', value: '72', unit: 'bpm', context: 'Resting' }
-  ]
-  @State private meds: Medication[] = [
-    { name: 'Metformin', dose: '500mg', time: '08:00', taken: true },
-    { name: 'Vitamin D', dose: '1000 IU', time: '20:00', taken: false }
-  ]
+  @StorageLink('steady.tab.v1') private tab: string = 'Timeline'
+  @StorageLink('steady.nextId.v1') private nextId: number = 4
+  @StorageLink('steady.selectedKind.v1') private selectedKind: string = 'Blood pressure'
+  @StorageLink('steady.readings.v1') private readingsJson: string = ''
+  @StorageLink('steady.meds.v1') private medsJson: string = ''
+  @State private readings: Reading[] = []
+  @State private meds: Medication[] = []
+
+  aboutToAppear(): void {
+    this.loadReadings()
+    this.loadMeds()
+  }
+
+  private defaultReadings(): Reading[] {
+    return [
+      { id: 1, kind: 'Blood pressure', value: '128/84', unit: 'mmHg', context: 'Today · morning' },
+      { id: 2, kind: 'Blood glucose', value: '105', unit: 'mg/dL', context: 'Fasting' },
+      { id: 3, kind: 'Heart rate', value: '72', unit: 'bpm', context: 'Resting' }
+    ]
+  }
+
+  private defaultMeds(): Medication[] {
+    return [
+      { name: 'Metformin', dose: '500mg', time: '08:00', taken: true },
+      { name: 'Vitamin D', dose: '1000 IU', time: '20:00', taken: false }
+    ]
+  }
+
+  private loadReadings(): void {
+    if (this.readingsJson.length === 0) {
+      this.readings = this.defaultReadings()
+      this.saveReadings()
+      return
+    }
+    try {
+      const parsed = JSON.parse(this.readingsJson) as Reading[]
+      this.readings = parsed.length > 0 ? parsed : this.defaultReadings()
+    } catch (_error) {
+      this.readings = this.defaultReadings()
+      this.saveReadings()
+    }
+  }
+
+  private loadMeds(): void {
+    if (this.medsJson.length === 0) {
+      this.meds = this.defaultMeds()
+      this.saveMeds()
+      return
+    }
+    try {
+      const parsed = JSON.parse(this.medsJson) as Medication[]
+      this.meds = parsed.length > 0 ? parsed : this.defaultMeds()
+    } catch (_error) {
+      this.meds = this.defaultMeds()
+      this.saveMeds()
+    }
+  }
+
+  private saveReadings(): void {
+    this.readingsJson = JSON.stringify(this.readings)
+  }
+
+  private saveMeds(): void {
+    this.medsJson = JSON.stringify(this.meds)
+  }
 
   private logReading(): void {
     const value = this.valueForKind(this.selectedKind)
@@ -55,6 +114,7 @@ struct Index {
       ...this.readings
     ]
     this.nextId += 1
+    this.saveReadings()
   }
 
   private valueForKind(kind: string): Reading {
@@ -80,10 +140,12 @@ struct Index {
       }
       return { name: med.name, dose: med.dose, time: med.time, taken: !med.taken }
     })
+    this.saveMeds()
   }
 
   private addMedication(): void {
     this.meds = [...this.meds, { name: 'Medication', dose: 'Dose', time: '21:00', taken: false }]
+    this.saveMeds()
   }
 
   private readingsForKind(kind: string): Reading[] {

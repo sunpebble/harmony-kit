@@ -15,12 +15,24 @@ interface SleepNight {
   bedtime: string
 }
 
+PersistentStorage.persistProp('sleeptab.goalHours.v1', 8)
+PersistentStorage.persistProp('sleeptab.rangeNights.v1', 7)
+PersistentStorage.persistProp('sleeptab.nights.v1', '')
+
 @Entry
 @Component
 struct Index {
-  @State private goalHours: number = 8
-  @State private rangeNights: number = 7
-  @State private nights: SleepNight[] = [
+  @StorageLink('sleeptab.goalHours.v1') private goalHours: number = 8
+  @StorageLink('sleeptab.rangeNights.v1') private rangeNights: number = 7
+  @StorageLink('sleeptab.nights.v1') private nightsJson: string = ''
+  @State private nights: SleepNight[] = []
+
+  aboutToAppear(): void {
+    this.loadNights()
+  }
+
+  private defaultNights(): SleepNight[] {
+    return [
     { day: 'MON', hours: 6.7, bedtime: '23:40' },
     { day: 'TUE', hours: 7.2, bedtime: '23:20' },
     { day: 'WED', hours: 6.3, bedtime: '00:10' },
@@ -28,13 +40,36 @@ struct Index {
     { day: 'FRI', hours: 7.4, bedtime: '23:35' },
     { day: 'SAT', hours: 8.8, bedtime: '00:30' },
     { day: 'SUN', hours: 7.1, bedtime: '23:50' }
-  ]
+    ]
+  }
+
+  private loadNights(): void {
+    if (this.nightsJson.length === 0) {
+      this.nights = this.defaultNights()
+      this.saveNights()
+      return
+    }
+    try {
+      const parsed = JSON.parse(this.nightsJson) as SleepNight[]
+      if (parsed.length > 0) {
+        this.nights = parsed
+      }
+    } catch (_error) {
+      this.nights = this.defaultNights()
+      this.saveNights()
+    }
+  }
+
+  private saveNights(): void {
+    this.nightsJson = JSON.stringify(this.nights)
+  }
 
   private addNight(): void {
     const labels: string[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
     const index = this.nights.length % labels.length
     const hours = [7.6, 6.9, 8.2, 7.3][this.nights.length % 4]
     this.nights = [...this.nights, { day: labels[index], hours, bedtime: '23:30' }]
+    this.saveNights()
   }
 
   private shownNights(): SleepNight[] {
