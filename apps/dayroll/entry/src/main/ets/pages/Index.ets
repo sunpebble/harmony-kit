@@ -54,6 +54,7 @@ struct Index {
   @State private draftLine: string = ''
   @State private editingDate: string = ''
   @State private confirmingDelete: boolean = false
+  @State private composerOpen: boolean = false
   @State private entries: RollEntry[] = []
 
   aboutToAppear(): void {
@@ -96,6 +97,7 @@ struct Index {
     this.draftLine = ''
     this.editingDate = ''
     this.confirmingDelete = false
+    this.composerOpen = false
     this.saveEntries()
   }
 
@@ -105,6 +107,7 @@ struct Index {
     this.draftLine = ''
     this.editingDate = ''
     this.confirmingDelete = false
+    this.composerOpen = false
     this.saveEntries()
   }
 
@@ -113,6 +116,7 @@ struct Index {
     this.mood = this.validMood(entry.mood) || '😐'
     this.draftLine = entry.line
     this.confirmingDelete = false
+    this.composerOpen = true
   }
 
   private composeToday(): void {
@@ -126,6 +130,7 @@ struct Index {
     this.mood = '😐'
     this.draftLine = ''
     this.confirmingDelete = false
+    this.composerOpen = true
   }
 
   private activeDate(): string {
@@ -986,8 +991,10 @@ struct Index {
         Column({ space: SunSpacing.lg }) {
           this.header()
           this.perforation()
-          this.composer()
-          this.perforation()
+          if (this.composerOpen) {
+            this.composer()
+            this.perforation()
+          }
           this.rollList()
           this.perforation()
 
