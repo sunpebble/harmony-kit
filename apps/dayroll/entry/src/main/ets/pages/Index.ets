@@ -226,6 +226,10 @@ struct Index {
     return this.moods[index]
   }
 
+  private moodTrendHeight(score: number): number {
+    return score <= 0 ? 8 : 20 + Math.round(score / 5 * 84)
+  }
+
   private monthKey(date: Date): string {
     return `${date.getFullYear()}-${this.pad(date.getMonth() + 1)}`
   }
@@ -910,21 +914,7 @@ struct Index {
           .fontColor(SunColor.pebble)
           .width('100%')
 
-        Row({ space: SunSpacing.sm }) {
-          ForEach(this.monthlyStats(), (stat: MonthStat) => {
-            Column({ space: 4 }) {
-              Text(this.moodForScore(stat.avgMood))
-                .fontSize(14)
-              Text(stat.label)
-                .fontSize(9)
-                .fontWeight(FontWeight.Bold)
-                .fontColor(SunColor.pebble)
-            }
-            .layoutWeight(1)
-            .alignItems(HorizontalAlign.Center)
-          }, (stat: MonthStat) => stat.key)
-        }
-        .width('100%')
+        this.moodTrendChart()
 
         this.perforation()
 
@@ -962,6 +952,36 @@ struct Index {
       .backgroundColor('#FFFDF7')
       .border({ width: 1, color: '#C8BDAA' })
     }
+  }
+
+  @Builder
+  private moodTrendChart() {
+    Row({ space: SunSpacing.xs }) {
+      ForEach(this.monthlyStats(), (stat: MonthStat) => {
+        Column({ space: 4 }) {
+          Blank()
+            .width('100%')
+            .height(this.moodTrendHeight(stat.avgMood))
+            .backgroundColor(stat.avgMood > 0 ? SunColor.ink : '#D8CCBA')
+            .borderRadius(4)
+
+          Text(this.moodForScore(stat.avgMood))
+            .fontSize(12)
+
+          Text(stat.label)
+            .fontSize(9)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(SunColor.pebble)
+        }
+        .layoutWeight(1)
+        .height(138)
+        .justifyContent(FlexAlign.End)
+        .alignItems(HorizontalAlign.Center)
+      }, (stat: MonthStat) => stat.key)
+    }
+    .width('100%')
+    .height(142)
+    .alignItems(VerticalAlign.Bottom)
   }
 
   @Builder
