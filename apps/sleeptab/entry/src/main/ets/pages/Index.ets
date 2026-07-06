@@ -38,17 +38,6 @@ struct Index {
     this.loadNights()
   }
 
-  private defaultNights(): SleepNight[] {
-    const samples: number[] = [6.7, 7.2, 6.3, 8.1, 7.4, 8.8, 7.1]
-    const bedtimes: string[] = ['23:40', '23:20', '00:10', '22:55', '23:35', '00:30', '23:50']
-    const today = new Date()
-    return samples.map((hours: number, index: number) => {
-      const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (samples.length - index))
-      const night: SleepNight = { date: this.dateKey(date), day: this.dayLabel(date), hours, bedtime: bedtimes[index] }
-      return night
-    })
-  }
-
   private normalizeNight(night: SleepNight, index: number, total: number): SleepNight {
     const fallback = new Date()
     fallback.setDate(fallback.getDate() - (total - index))
@@ -170,18 +159,16 @@ struct Index {
 
   private loadNights(): void {
     if (this.nightsJson.length === 0) {
-      this.nights = this.defaultNights()
+      this.nights = []
       this.saveNights()
       return
     }
     try {
       const parsed = JSON.parse(this.nightsJson) as SleepNight[]
-      this.nights = parsed.length > 0
-        ? this.sortNights(parsed.map((night: SleepNight, index: number) => this.normalizeNight(night, index, parsed.length)))
-        : this.defaultNights()
+      this.nights = this.sortNights(parsed.map((night: SleepNight, index: number) => this.normalizeNight(night, index, parsed.length)))
       this.saveNights()
     } catch (_error) {
-      this.nights = this.defaultNights()
+      this.nights = []
       this.saveNights()
     }
   }
@@ -333,6 +320,25 @@ struct Index {
       .fontSize(12)
       .fontWeight(FontWeight.Bold)
       .onClick(() => this.setRange(value))
+  }
+
+  @Builder
+  private emptyState() {
+    SunCard() {
+      Column({ space: SunSpacing.sm }) {
+        Text('No sleep data yet')
+          .fontSize(17)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(SunColor.ink)
+        Text('Add tonight below to start tracking manually.')
+          .fontSize(13)
+          .fontColor(SunColor.pebble)
+          .textAlign(TextAlign.Center)
+          .lineHeight(20)
+      }
+      .width('100%')
+      .padding({ top: SunSpacing.lg, bottom: SunSpacing.lg })
+    }
   }
 
   @Builder
@@ -527,12 +533,18 @@ struct Index {
       }) {
         Scroll() {
           Column({ space: SunSpacing.lg }) {
-            this.debtCard()
-            this.chartCard()
-            this.weekCard()
-            this.insightsCard()
-            this.goalCard()
-            this.manualEntryCard()
+            if (this.nights.length === 0) {
+              this.emptyState()
+              this.goalCard()
+              this.manualEntryCard()
+            } else {
+              this.debtCard()
+              this.chartCard()
+              this.weekCard()
+              this.insightsCard()
+              this.goalCard()
+              this.manualEntryCard()
+            }
 
             SunButton({
               label: 'Save tonight',
