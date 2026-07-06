@@ -223,9 +223,6 @@ struct Index {
   }
 
   private exportText(): string {
-    if (this.entries.length === 0) {
-      return 'No entries yet.'
-    }
     const sorted = [...this.entries].sort((a: RollEntry, b: RollEntry) => a.date.localeCompare(b.date))
     if (this.exportFormat === 'Markdown') {
       return sorted.map((entry: RollEntry) => {
