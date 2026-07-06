@@ -5,6 +5,7 @@ import {
   SunSpacing,
   SunToolShell
 } from 'sunpebble_ui'
+import { pasteboard } from '@kit.BasicServicesKit'
 import { appProfile } from '../AppProfile'
 
 interface RollEntry {
@@ -371,6 +372,16 @@ struct Index {
     this.exportOpen = !this.exportOpen
   }
 
+  private async copyExportText(): Promise<void> {
+    try {
+      const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, this.exportText())
+      await pasteboard.getSystemPasteboard().setData(data)
+      this.showToast(`${this.exportFormat} copied.`)
+    } catch (_error) {
+      this.showToast('Copy failed.')
+    }
+  }
+
   @Builder
   private perforation() {
     Row({ space: 4 }) {
@@ -586,6 +597,14 @@ struct Index {
           .fontColor(SunColor.ink)
           .lineHeight(18)
           .width('100%')
+
+        SunButton({
+          label: 'Copy Export',
+          role: SunButtonRole.Secondary,
+          action: () => {
+            this.copyExportText()
+          }
+        })
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
