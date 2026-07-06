@@ -175,7 +175,7 @@ struct Index {
       id: this.nextId,
       title,
       area: this.draftArea.trim().length > 0 ? this.draftArea.trim() : 'Home',
-      dueAt: this.dueAtFromToday(0),
+      dueAt: this.dueAtFromToday(this.draftCadence),
       cadence: this.draftCadence
     }
     this.tasks = [task, ...this.tasks]
