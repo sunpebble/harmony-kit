@@ -905,6 +905,54 @@ struct Index {
     return this.selectedTrendReadings().length > 0
   }
 
+  private trendChartReadings(): Reading[] {
+    return [...this.selectedTrendReadings()]
+      .filter((reading: Reading) => !Number.isNaN(this.readingNumber(reading)))
+      .sort((a: Reading, b: Reading) => this.dateTime(a.date) - this.dateTime(b.date))
+  }
+
+  private trendChartValues(): number[] {
+    return this.trendChartReadings().map((reading: Reading) => this.readingNumber(reading))
+  }
+
+  private trendChartBarHeight(reading: Reading): number {
+    const values = this.trendChartValues()
+    if (values.length <= 1) {
+      return 80
+    }
+    const min = Math.min(...values)
+    const max = Math.max(...values)
+    if (max === min) {
+      return 80
+    }
+    return 28 + Math.round((this.readingNumber(reading) - min) / (max - min) * 96)
+  }
+
+  private trendChartColor(reading: Reading): ResourceColor {
+    if (!this.hasTargetRange(reading.kind)) {
+      return SunColor.sun
+    }
+    const value = this.readingNumber(reading)
+    const low = Number(this.targetLowForKind(reading.kind))
+    const high = Number(this.targetHighForKind(reading.kind))
+    return value >= low && value <= high ? SunColor.sun : SunColor.danger
+  }
+
+  private trendDateLabel(reading: Reading): string {
+    const date = new Date(this.dateTime(reading.date))
+    return `${this.pad(date.getMonth() + 1)}/${this.pad(date.getDate())}`
+  }
+
+  private trendChartStartLabel(): string {
+    const readings = this.trendChartReadings()
+    return readings.length === 0 ? '' : this.trendDateLabel(readings[0])
+  }
+
+  private trendChartEndLabel(): string {
+    const readings = this.trendChartReadings()
+    return readings.length === 0 ? '' : this.trendDateLabel(readings[readings.length - 1])
+  }
+
   private selectedTrendTargetValue(): string {
     const readings = this.selectedTrendReadings()
     if (readings.length === 0 || !this.hasTargetRange(this.trendKind)) {
@@ -1743,6 +1791,7 @@ struct Index {
           .height(44)
 
           if (this.hasSelectedTrendReadings()) {
+            this.trendChart()
             this.trendFactRow('Average', this.averageForReadings(this.trendKind, this.selectedTrendReadings()))
             this.trendFactRow('Range', this.rangeForReadings(this.selectedTrendReadings()))
             if (this.selectedTrendTargetValue().length > 0) {
@@ -1799,6 +1848,41 @@ struct Index {
         .alignItems(HorizontalAlign.Start)
       }
     }
+  }
+
+  @Builder
+  private trendChart() {
+    Column({ space: SunSpacing.xs }) {
+      Row({ space: 4 }) {
+        ForEach(this.trendChartReadings(), (reading: Reading) => {
+          Column() {
+            Blank()
+              .width('100%')
+              .height(this.trendChartBarHeight(reading))
+              .backgroundColor(this.trendChartColor(reading))
+              .borderRadius(4)
+          }
+          .layoutWeight(1)
+          .height(136)
+          .justifyContent(FlexAlign.End)
+        }, (reading: Reading) => `${reading.id}-${reading.date}`)
+      }
+      .width('100%')
+      .height(136)
+      .alignItems(VerticalAlign.Bottom)
+
+      Row() {
+        Text(this.trendChartStartLabel())
+          .fontSize(10)
+          .fontColor(SunColor.pebble)
+        Blank().layoutWeight(1)
+        Text(this.trendChartEndLabel())
+          .fontSize(10)
+          .fontColor(SunColor.pebble)
+      }
+      .width('100%')
+    }
+    .width('100%')
   }
 
   @Builder
