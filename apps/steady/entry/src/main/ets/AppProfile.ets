@@ -3,7 +3,7 @@ import { SunAppManifest, SunMode } from 'sunpebble_ui'
 export const appProfile: SunAppManifest = {
   name: 'STEADY',
   tagline: '',
-  primaryAction: 'Log',
+  primaryAction: '',
   accent: '#F7B733',
   mode: SunMode.Light
 }
