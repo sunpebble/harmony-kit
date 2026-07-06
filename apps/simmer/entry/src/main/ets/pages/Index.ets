@@ -281,7 +281,7 @@ struct Index {
 
   private customLabel(): string {
     const label = this.customLabelText.trim()
-    return label.length > 0 ? label : 'Custom'
+    return label.length > 0 ? label : 'Timer'
   }
 
   private adjustCustomMinutes(delta: number): void {
@@ -609,21 +609,34 @@ struct Index {
           .border({ width: 1, color: '#D8CFBD' })
           .onChange((value: string) => this.customLabelText = value)
 
-        Row({ space: SunSpacing.sm }) {
-          Button(this.proUnlocked ? 'Save Preset' : 'Save Preset Pro')
-            .height(44)
-            .layoutWeight(1)
-            .borderRadius(SunRadius.pill)
-            .backgroundColor(SunColor.white)
-            .fontColor(SunColor.ink)
-            .fontSize(13)
-            .fontWeight(FontWeight.Bold)
-            .border({ width: 1, color: '#D8CFBD' })
-            .onClick(() => this.saveCustomPreset())
+        if (this.proUnlocked) {
+          Row({ space: SunSpacing.sm }) {
+            Button('Save Preset')
+              .height(44)
+              .layoutWeight(1)
+              .borderRadius(SunRadius.pill)
+              .backgroundColor(SunColor.white)
+              .fontColor(SunColor.ink)
+              .fontSize(13)
+              .fontWeight(FontWeight.Bold)
+              .border({ width: 1, color: '#D8CFBD' })
+              .onClick(() => this.saveCustomPreset())
 
+            Button('Start Custom')
+              .height(44)
+              .layoutWeight(1)
+              .borderRadius(SunRadius.pill)
+              .backgroundColor(SunColor.ink)
+              .fontColor(SunColor.cream)
+              .fontSize(13)
+              .fontWeight(FontWeight.Bold)
+              .onClick(() => this.startCustomTimer())
+          }
+          .width('100%')
+        } else {
           Button('Start Custom')
             .height(44)
-            .layoutWeight(1)
+            .width('100%')
             .borderRadius(SunRadius.pill)
             .backgroundColor(SunColor.ink)
             .fontColor(SunColor.cream)
@@ -631,7 +644,6 @@ struct Index {
             .fontWeight(FontWeight.Bold)
             .onClick(() => this.startCustomTimer())
         }
-        .width('100%')
 
         if (!this.proUnlocked) {
           Button('Unlock Pro')
