@@ -13,6 +13,13 @@ interface PresetTimer {
   seconds: number
 }
 
+interface SavedPresetTimer {
+  id: number
+  emoji: string
+  label: string
+  seconds: number
+}
+
 interface TimerSnapshot {
   id: number
   label: string
@@ -52,6 +59,8 @@ PersistentStorage.persistProp('simmer.timers.v1', '')
 PersistentStorage.persistProp('simmer.customMinutes.v1', 5)
 PersistentStorage.persistProp('simmer.customSeconds.v1', 0)
 PersistentStorage.persistProp('simmer.customEmoji.v1', '🍲')
+PersistentStorage.persistProp('simmer.savedPresets.v1', '')
+PersistentStorage.persistProp('simmer.nextPresetId.v1', 1)
 
 @Component
 struct Burner {
@@ -178,11 +187,15 @@ struct Index {
   @StorageLink('simmer.customMinutes.v1') private customMinutes: number = 5
   @StorageLink('simmer.customSeconds.v1') private customSeconds: number = 0
   @StorageLink('simmer.customEmoji.v1') private customEmoji: string = '🍲'
+  @StorageLink('simmer.savedPresets.v1') private savedPresetsJson: string = ''
+  @StorageLink('simmer.nextPresetId.v1') private nextPresetId: number = 1
   @State private customOpen: boolean = false
   @State private timers: KitchenTimer[] = []
+  @State private savedPresets: SavedPresetTimer[] = []
 
   aboutToAppear(): void {
     this.loadTimers()
+    this.loadSavedPresets()
     if (this.intervalId < 0) {
       this.intervalId = setInterval(() => this.tick(), 1000)
     }
@@ -199,17 +212,43 @@ struct Index {
     this.startTimer(preset.label, preset.emoji, preset.seconds)
   }
 
+  private startSavedPreset(preset: SavedPresetTimer): void {
+    this.startTimer(preset.label, preset.emoji, preset.seconds)
+  }
+
   private startCustom(): void {
     this.customOpen = !this.customOpen
   }
 
   private startCustomTimer(): void {
-    const seconds = this.customMinutes * 60 + this.customSeconds
+    const seconds = this.customSecondsTotal()
     if (seconds <= 0) {
       return
     }
     this.startTimer('Custom', this.customEmoji, seconds)
     this.customOpen = false
+  }
+
+  private saveCustomPreset(): void {
+    const seconds = this.customSecondsTotal()
+    if (seconds <= 0) {
+      return
+    }
+    this.savedPresets = [
+      ...this.savedPresets,
+      { id: this.nextPresetId, emoji: this.customEmoji, label: 'Custom', seconds }
+    ]
+    this.nextPresetId += 1
+    this.saveSavedPresets()
+  }
+
+  private removeSavedPreset(id: number): void {
+    this.savedPresets = this.savedPresets.filter((preset: SavedPresetTimer) => preset.id !== id)
+    this.saveSavedPresets()
+  }
+
+  private customSecondsTotal(): number {
+    return this.customMinutes * 60 + this.customSeconds
   }
 
   private adjustCustomMinutes(delta: number): void {
@@ -337,6 +376,19 @@ struct Index {
     }
   }
 
+  private loadSavedPresets(): void {
+    if (this.savedPresetsJson.length === 0) {
+      return
+    }
+
+    try {
+      this.savedPresets = JSON.parse(this.savedPresetsJson) as SavedPresetTimer[]
+    } catch (_error) {
+      this.savedPresets = []
+      this.saveSavedPresets()
+    }
+  }
+
   private restoreTimer(timer: TimerSnapshot): KitchenTimer {
     if (!timer.running) {
       return new KitchenTimer(timer.id, timer.label, timer.emoji, timer.seconds, timer.remaining, false, timer.done, 0)
@@ -348,6 +400,10 @@ struct Index {
 
   private saveTimers(): void {
     this.timersJson = JSON.stringify(this.timers)
+  }
+
+  private saveSavedPresets(): void {
+    this.savedPresetsJson = JSON.stringify(this.savedPresets)
   }
 
   private remainingFromEnd(timer: KitchenTimer): number {
@@ -478,15 +534,29 @@ struct Index {
         .width('100%')
         .justifyContent(FlexAlign.Center)
 
-        Button('Start Custom')
-          .height(44)
-          .width('100%')
-          .borderRadius(SunRadius.pill)
-          .backgroundColor(SunColor.ink)
-          .fontColor(SunColor.cream)
-          .fontSize(13)
-          .fontWeight(FontWeight.Bold)
-          .onClick(() => this.startCustomTimer())
+        Row({ space: SunSpacing.sm }) {
+          Button('Save Preset')
+            .height(44)
+            .layoutWeight(1)
+            .borderRadius(SunRadius.pill)
+            .backgroundColor(SunColor.white)
+            .fontColor(SunColor.ink)
+            .fontSize(13)
+            .fontWeight(FontWeight.Bold)
+            .border({ width: 1, color: '#D8CFBD' })
+            .onClick(() => this.saveCustomPreset())
+
+          Button('Start Custom')
+            .height(44)
+            .layoutWeight(1)
+            .borderRadius(SunRadius.pill)
+            .backgroundColor(SunColor.ink)
+            .fontColor(SunColor.cream)
+            .fontSize(13)
+            .fontWeight(FontWeight.Bold)
+            .onClick(() => this.startCustomTimer())
+        }
+        .width('100%')
       }
       .width('100%')
       .padding(SunSpacing.lg)
@@ -524,6 +594,32 @@ struct Index {
           .fontWeight(FontWeight.Medium)
           .border({ width: 1, color: SunColor.pebble })
           .onClick(() => this.startCustom())
+
+        ForEach(this.savedPresets, (preset: SavedPresetTimer) => {
+          Row({ space: 4 }) {
+            Button(`${preset.emoji}  ${preset.label} · ${this.timerText(preset.seconds)}`)
+              .height(44)
+              .padding({ left: 16, right: 12 })
+              .borderRadius(SunRadius.pill)
+              .backgroundColor(SunColor.sun)
+              .fontColor(SunColor.ink)
+              .fontSize(13)
+              .fontWeight(FontWeight.Medium)
+              .onClick(() => this.startSavedPreset(preset))
+
+            Button('×')
+              .width(34)
+              .height(34)
+              .borderRadius(999)
+              .backgroundColor(SunColor.white)
+              .fontColor(SunColor.danger)
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .border({ width: 1, color: '#D8CFBD' })
+              .onClick(() => this.removeSavedPreset(preset.id))
+          }
+          .height(56)
+        }, (preset: SavedPresetTimer) => preset.id.toString())
 
         ForEach(this.presets, (preset: PresetTimer) => {
           Button(`${preset.emoji}  ${preset.label} · ${this.timerText(preset.seconds)}`)
