@@ -872,7 +872,7 @@ struct Index {
 
         this.perforation()
 
-        Text('DAYS LOGGED - LAST 12 MONTHS')
+        Text('DAYS LOGGED — LAST 12 MONTHS')
           .fontSize(10)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.5)
@@ -904,7 +904,7 @@ struct Index {
 
         this.perforation()
 
-        Text('MOOD TREND - LAST 12 MONTHS')
+        Text('MOOD TREND — LAST 12 MONTHS')
           .fontSize(10)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.5)
@@ -929,7 +929,7 @@ struct Index {
 
         this.perforation()
 
-        Text('MOOD MIX · ALL TIME')
+        Text('MOOD MIX — ALL TIME')
           .fontSize(10)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.5)
