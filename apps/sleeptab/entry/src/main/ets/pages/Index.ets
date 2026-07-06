@@ -19,6 +19,7 @@ PersistentStorage.persistProp('sleeptab.goalHours.v1', 8)
 PersistentStorage.persistProp('sleeptab.rangeNights.v1', 7)
 PersistentStorage.persistProp('sleeptab.draftHours.v1', 7.5)
 PersistentStorage.persistProp('sleeptab.draftBedtime.v1', '23:30')
+PersistentStorage.persistProp('sleeptab.draftDate.v1', '')
 PersistentStorage.persistProp('sleeptab.nights.v1', '')
 PersistentStorage.persistProp('sleeptab.proUnlocked.v1', false)
 
@@ -29,6 +30,7 @@ struct Index {
   @StorageLink('sleeptab.rangeNights.v1') private rangeNights: number = 7
   @StorageLink('sleeptab.draftHours.v1') private draftHours: number = 7.5
   @StorageLink('sleeptab.draftBedtime.v1') private draftBedtime: string = '23:30'
+  @StorageLink('sleeptab.draftDate.v1') private draftDate: string = ''
   @StorageLink('sleeptab.nights.v1') private nightsJson: string = ''
   @StorageLink('sleeptab.proUnlocked.v1') private proUnlocked: boolean = false
   @State private nights: SleepNight[] = []
@@ -77,11 +79,11 @@ struct Index {
   }
 
   private addNight(): void {
-    const today = new Date()
-    const date = this.dateKey(today)
+    const date = this.draftDateKey()
+    const day = this.dateFromKey(date)
     const night: SleepNight = {
       date,
-      day: this.dayLabel(today),
+      day: this.dayLabel(day),
       hours: this.draftHours,
       bedtime: this.draftBedtime
     }
@@ -93,18 +95,18 @@ struct Index {
     this.saveNights()
   }
 
-  private todayDateKey(): string {
-    return this.dateKey(new Date())
+  private draftDateKey(): string {
+    return this.draftDate.length > 0 ? this.draftDate : this.dateKey(new Date())
   }
 
-  private hasTodayNight(): boolean {
-    const today = this.todayDateKey()
-    return this.nights.some((night: SleepNight) => night.date === today)
+  private hasDraftNight(): boolean {
+    const date = this.draftDateKey()
+    return this.nights.some((night: SleepNight) => night.date === date)
   }
 
-  private todayNightSummary(): string {
-    const today = this.todayDateKey()
-    const matches = this.nights.filter((night: SleepNight) => night.date === today)
+  private draftNightSummary(): string {
+    const date = this.draftDateKey()
+    const matches = this.nights.filter((night: SleepNight) => night.date === date)
     if (matches.length === 0) {
       return ''
     }
@@ -116,6 +118,31 @@ struct Index {
     this.nights = this.nights.filter((night: SleepNight) => night.date !== date)
     this.confirmingDeleteNightDate = ''
     this.saveNights()
+  }
+
+  private applyDraftDate(date: string): void {
+    this.draftDate = date
+    this.confirmingDeleteNightDate = ''
+    const matches = this.nights.filter((night: SleepNight) => night.date === date)
+    if (matches.length > 0) {
+      this.draftHours = matches[0].hours
+      this.draftBedtime = this.validBedtime(matches[0].bedtime) || this.draftBedtime
+    }
+  }
+
+  private pickDraftDate(): void {
+    try {
+      this.getUIContext().showDatePickerDialog({
+        start: new Date('2000-01-01T00:00:00'),
+        end: new Date('2100-12-31T23:59:59'),
+        selected: this.dateFromKey(this.draftDateKey()),
+        onDateAccept: (value: Date) => {
+          this.applyDraftDate(this.dateKey(value))
+        }
+      })
+    } catch (_error) {
+      this.showToast('Date picker unavailable.')
+    }
   }
 
   private draftBedtimeDate(): Date {
@@ -134,7 +161,7 @@ struct Index {
       Column({ space: SunSpacing.md }) {
         Row({ space: SunSpacing.md }) {
           Column({ space: SunSpacing.xs }) {
-            Text('TONIGHT')
+            Text('NIGHT')
               .fontSize(11)
               .fontWeight(FontWeight.Bold)
               .letterSpacing(1.5)
@@ -167,6 +194,16 @@ struct Index {
         }
         .width('100%')
 
+        Button(`Night · ${this.draftDateKey()}`)
+          .height(38)
+          .padding({ left: 14, right: 14 })
+          .borderRadius(999)
+          .backgroundColor('#31354A')
+          .fontColor(SunColor.cream)
+          .fontSize(12)
+          .fontWeight(FontWeight.Bold)
+          .onClick(() => this.pickDraftDate())
+
         TimePicker({ selected: this.draftBedtimeDate() })
           .width('100%')
           .height(120)
@@ -174,18 +211,18 @@ struct Index {
           .textStyle({ color: '#BFB8AA', font: { size: 18, weight: FontWeight.Medium } })
           .onChange((value: TimePickerResult) => this.setDraftBedtime(value.hour, value.minute))
 
-        if (this.hasTodayNight()) {
+        if (this.hasDraftNight()) {
           Column({ space: SunSpacing.sm }) {
-            Text(`Saved tonight · ${this.todayNightSummary()}`)
+            Text(`Saved night · ${this.draftNightSummary()}`)
               .fontSize(12)
               .fontColor('#BFB8AA')
 
-            if (this.confirmingDeleteNightDate === this.todayDateKey()) {
+            if (this.confirmingDeleteNightDate === this.draftDateKey()) {
               Row({ space: SunSpacing.sm }) {
                 SunButton({
                   label: 'Confirm Delete',
                   role: SunButtonRole.Danger,
-                  action: () => this.deleteNight(this.todayDateKey())
+                  action: () => this.deleteNight(this.draftDateKey())
                 })
 
                 SunButton({
@@ -197,9 +234,9 @@ struct Index {
               .width('100%')
             } else {
               SunButton({
-                label: 'Delete tonight',
+                label: 'Delete night',
                 role: SunButtonRole.Danger,
-                action: () => this.confirmingDeleteNightDate = this.todayDateKey()
+                action: () => this.confirmingDeleteNightDate = this.draftDateKey()
               })
             }
           }
@@ -431,7 +468,7 @@ struct Index {
           .fontSize(17)
           .fontWeight(FontWeight.Bold)
           .fontColor(SunColor.cream)
-        Text('Add tonight below to start tracking manually.')
+        Text('Add a night below to start tracking manually.')
           .fontSize(13)
           .fontColor('#BFB8AA')
           .textAlign(TextAlign.Center)
@@ -731,7 +768,7 @@ struct Index {
 
             this.paywallPanel()
 
-            Button(this.hasTodayNight() ? 'Update tonight' : 'Save tonight')
+            Button(this.hasDraftNight() ? 'Update night' : 'Save night')
               .height(48)
               .padding({ left: SunSpacing.lg, right: SunSpacing.lg })
               .borderRadius(999)
