@@ -29,6 +29,7 @@ interface TimerSnapshot {
   running: boolean
   done: boolean
   endAt: number
+  completedAt?: number
 }
 
 @Observed
@@ -41,8 +42,9 @@ class KitchenTimer {
   running: boolean
   done: boolean
   endAt: number
+  completedAt: number
 
-  constructor(id: number, label: string, emoji: string, seconds: number, remaining: number, running: boolean, done: boolean, endAt: number) {
+  constructor(id: number, label: string, emoji: string, seconds: number, remaining: number, running: boolean, done: boolean, endAt: number, completedAt: number) {
     this.id = id
     this.label = label
     this.emoji = emoji
@@ -51,6 +53,7 @@ class KitchenTimer {
     this.running = running
     this.done = done
     this.endAt = endAt
+    this.completedAt = completedAt
   }
 }
 
@@ -66,6 +69,8 @@ PersistentStorage.persistProp('simmer.nextPresetId.v1', 1)
 @Component
 struct Burner {
   @ObjectLink timer: KitchenTimer
+  @Prop
+  nowMs: number = Date.now()
   onTap: (id: number) => void = (_id: number) => {}
   onAddMinute: (id: number) => void = (_id: number) => {}
   onRestart: (id: number) => void = (_id: number) => {}
@@ -81,6 +86,13 @@ struct Burner {
 
   private pad(value: number): string {
     return value < 10 ? `0${value}` : `${value}`
+  }
+
+  private overdue(): number {
+    if (!this.timer.done || this.timer.completedAt <= 0) {
+      return 0
+    }
+    return Math.max(0, Math.floor((this.nowMs - this.timer.completedAt) / 1000))
   }
 
   private progress(): number {
@@ -108,6 +120,11 @@ struct Burner {
               .fontSize(15)
               .fontWeight(FontWeight.Bold)
               .fontColor(SunColor.sun)
+
+            Text(`OVER +${this.timerText(this.overdue())}`)
+              .fontSize(9)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(SunColor.pebble)
           } else {
             Text(this.timerText(this.timer.remaining))
               .fontSize(17)
@@ -194,6 +211,7 @@ struct Index {
   @State private customOpen: boolean = false
   @State private timers: KitchenTimer[] = []
   @State private savedPresets: SavedPresetTimer[] = []
+  @State private nowMs: number = Date.now()
 
   aboutToAppear(): void {
     this.loadTimers()
@@ -268,7 +286,7 @@ struct Index {
 
   private startTimer(label: string, emoji: string, seconds: number): void {
     this.timers = [
-      new KitchenTimer(this.nextId, label, emoji, seconds, seconds, true, false, Date.now() + seconds * 1000),
+      new KitchenTimer(this.nextId, label, emoji, seconds, seconds, true, false, Date.now() + seconds * 1000, 0),
       ...this.timers
     ]
     this.nextId += 1
@@ -286,11 +304,13 @@ struct Index {
       timer.running = false
       timer.done = false
       timer.endAt = 0
+      timer.completedAt = 0
     } else {
       timer.remaining = timer.remaining > 0 ? timer.remaining : timer.seconds
       timer.running = true
       timer.done = false
       timer.endAt = Date.now() + timer.remaining * 1000
+      timer.completedAt = 0
     }
     this.tick()
     this.saveTimers()
@@ -321,11 +341,13 @@ struct Index {
       timer.endAt = Math.max(timer.endAt, Date.now()) + 60 * 1000
       timer.remaining = this.remainingFromEnd(timer)
       timer.done = false
+      timer.completedAt = 0
     } else {
       timer.remaining += 60
       timer.running = true
       timer.done = false
       timer.endAt = Date.now() + timer.remaining * 1000
+      timer.completedAt = 0
     }
     this.saveTimers()
   }
@@ -340,10 +362,13 @@ struct Index {
     timer.running = true
     timer.done = false
     timer.endAt = Date.now() + timer.seconds * 1000
+    timer.completedAt = 0
     this.saveTimers()
   }
 
   private tick(): void {
+    const now = Date.now()
+    this.nowMs = now
     if (!this.timers.some((timer: KitchenTimer) => timer.running)) {
       return
     }
@@ -353,7 +378,7 @@ struct Index {
         return
       }
 
-      const remaining = this.remainingFromEnd(timer)
+      const remaining = this.remainingFromEnd(timer, now)
       if (remaining > 0) {
         timer.remaining = remaining
         timer.done = false
@@ -364,6 +389,7 @@ struct Index {
       timer.remaining = 0
       timer.running = false
       timer.done = true
+      timer.completedAt = timer.endAt > 0 ? timer.endAt : now
       timer.endAt = 0
       this.saveTimers()
     })
@@ -397,12 +423,13 @@ struct Index {
   }
 
   private restoreTimer(timer: TimerSnapshot): KitchenTimer {
+    const completedAt = timer.completedAt ? timer.completedAt : (timer.done ? Date.now() : 0)
     if (!timer.running) {
-      return new KitchenTimer(timer.id, timer.label, timer.emoji, timer.seconds, timer.remaining, false, timer.done, 0)
+      return new KitchenTimer(timer.id, timer.label, timer.emoji, timer.seconds, timer.remaining, false, timer.done, 0, completedAt)
     }
 
     const remaining = Math.max(0, Math.ceil((timer.endAt - Date.now()) / 1000))
-    return new KitchenTimer(timer.id, timer.label, timer.emoji, timer.seconds, remaining, remaining > 0, remaining <= 0, remaining > 0 ? timer.endAt : 0)
+    return new KitchenTimer(timer.id, timer.label, timer.emoji, timer.seconds, remaining, remaining > 0, remaining <= 0, remaining > 0 ? timer.endAt : 0, remaining > 0 ? 0 : timer.endAt)
   }
 
   private saveTimers(): void {
@@ -413,8 +440,8 @@ struct Index {
     this.savedPresetsJson = JSON.stringify(this.savedPresets)
   }
 
-  private remainingFromEnd(timer: KitchenTimer): number {
-    return Math.max(0, Math.ceil((timer.endAt - Date.now()) / 1000))
+  private remainingFromEnd(timer: KitchenTimer, now: number = Date.now()): number {
+    return Math.max(0, Math.ceil((timer.endAt - now) / 1000))
   }
 
   private showDone(label: string): void {
@@ -469,6 +496,7 @@ struct Index {
         ForEach(this.timers, (timer: KitchenTimer) => {
           Burner({
             timer: timer,
+            nowMs: this.nowMs,
             onTap: (id: number) => this.handleTimerTap(id),
             onAddMinute: (id: number) => this.addMinute(id),
             onRestart: (id: number) => this.restartTimer(id),
