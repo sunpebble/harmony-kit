@@ -1051,14 +1051,14 @@ struct Index {
           }
 
           SunButton({
-            label: this.statsOpen ? 'Hide Stats' : (this.proUnlocked ? 'Stats' : 'Stats Pro'),
+            label: this.statsOpen ? 'Hide Stats' : 'Stats',
             role: SunButtonRole.Secondary,
             action: () => this.toggleStats()
           })
           this.statsPreview()
 
           SunButton({
-            label: this.exportOpen ? 'Hide Export' : (this.proUnlocked ? 'Export' : 'Export Pro'),
+            label: this.exportOpen ? 'Hide Export' : 'Export',
             role: SunButtonRole.Secondary,
             action: () => this.toggleExport()
           })
