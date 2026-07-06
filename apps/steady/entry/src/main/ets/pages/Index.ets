@@ -1130,32 +1130,6 @@ struct Index {
     this.showToast('Daily reminder off.')
   }
 
-  private testMeasurementReminder(): void {
-    this.scheduleTestMeasurementReminder()
-  }
-
-  private async scheduleTestMeasurementReminder(): Promise<void> {
-    try {
-      if (!await this.requestNotificationAccess()) {
-        this.showToast('Enable notifications to test reminders.')
-        return
-      }
-      const request: reminderAgentManager.ReminderRequestTimer = {
-        reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_TIMER,
-        triggerTimeInSeconds: 3,
-        title: 'Steady',
-        content: 'Measurement time: take a minute to log your readings.',
-        expiredContent: 'Steady reminder missed.',
-        notificationId: 2002,
-        tapDismissed: true
-      }
-      await reminderAgentManager.publishReminder(request)
-      this.showToast('Test reminder scheduled.')
-    } catch (_error) {
-      this.showToast('Enable notifications to test reminders.')
-    }
-  }
-
   private async requestNotificationAccess(): Promise<boolean> {
     const context = this.getUIContext().getHostContext()
     if (!context) {
@@ -2020,11 +1994,6 @@ struct Index {
             caption: 'Take a minute to log your readings.'
           })
 
-          SunButton({
-            label: 'Test Reminder',
-            role: SunButtonRole.Secondary,
-            action: () => this.testMeasurementReminder()
-          })
         }
         .width('100%')
         .alignItems(HorizontalAlign.Start)
