@@ -469,10 +469,13 @@ struct Index {
     return `${this.pad(this.reminderHour)}:${this.pad(this.reminderMinute)}`
   }
 
-  private adjustReminder(delta: number): void {
-    const total = (this.reminderHour * 60 + this.reminderMinute + delta + 1440) % 1440
-    this.reminderHour = Math.floor(total / 60)
-    this.reminderMinute = total % 60
+  private reminderDate(): Date {
+    return new Date(2024, 0, 1, this.reminderHour, this.reminderMinute, 0)
+  }
+
+  private setReminderTime(hour: number, minute: number): void {
+    this.reminderHour = Math.max(0, Math.min(23, hour))
+    this.reminderMinute = Math.max(0, Math.min(59, minute))
     if (this.reminderEnabled) {
       this.scheduleDailyReminder()
     }
@@ -948,14 +951,12 @@ struct Index {
           .width('100%')
           .textAlign(TextAlign.Center)
 
-        Row({ space: SunSpacing.sm }) {
-          this.reminderAdjustButton('-15m', -15)
-          this.reminderAdjustButton('-5m', -5)
-          this.reminderAdjustButton('+5m', 5)
-          this.reminderAdjustButton('+15m', 15)
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Center)
+        TimePicker({ selected: this.reminderDate() })
+          .width('100%')
+          .height(120)
+          .selectedTextStyle({ color: SunColor.ink, font: { size: 22, weight: FontWeight.Bold } })
+          .textStyle({ color: SunColor.pebble, font: { size: 18, weight: FontWeight.Medium } })
+          .onChange((value: TimePickerResult) => this.setReminderTime(value.hour, value.minute))
 
         Text(this.reminderEnabled ? `REMIND ME AT ${this.reminderTimeLabel()}` : 'REMINDER PAUSED')
           .fontSize(11)
@@ -977,19 +978,6 @@ struct Index {
       .backgroundColor('#FFFDF7')
       .border({ width: 1, color: '#C8BDAA' })
     }
-  }
-
-  @Builder
-  private reminderAdjustButton(label: string, delta: number) {
-    Button(label)
-      .height(34)
-      .padding({ left: 12, right: 12 })
-      .borderRadius(999)
-      .backgroundColor('#F5EBD9')
-      .fontColor(SunColor.ink)
-      .fontSize(11)
-      .fontWeight(FontWeight.Bold)
-      .onClick(() => this.adjustReminder(delta))
   }
 
   build() {
