@@ -528,23 +528,25 @@ struct Index {
   private timelineItems(): TimelineItem[] {
     const items: TimelineItem[] = []
     this.readings.forEach((reading: Reading) => {
+      const time = this.dateTime(reading.date)
       items.push({
         key: this.readingDeleteKey(reading),
         kind: 'Reading',
-        time: this.dateTime(reading.date),
+        time,
         title: `${reading.value} ${reading.unit}`,
-        caption: this.readingTimelineCaption(reading),
+        caption: this.timelineCaption(time, this.readingTimelineCaption(reading)),
         readingId: reading.id,
         symptomId: -1
       })
     })
     this.symptoms.forEach((symptom: Symptom) => {
+      const time = this.dateTime(symptom.date)
       items.push({
         key: this.symptomDeleteKey(symptom),
         kind: 'Symptom',
-        time: this.dateTime(symptom.date),
+        time,
         title: `${symptom.name} · ${String('•').repeat(symptom.severity)}`,
-        caption: 'Symptom',
+        caption: this.timelineCaption(time, 'Symptom'),
         readingId: -1,
         symptomId: symptom.id
       })
@@ -561,6 +563,10 @@ struct Index {
       })
     })
     return items.sort((a: TimelineItem, b: TimelineItem) => b.time - a.time)
+  }
+
+  private timelineCaption(time: number, detail: string): string {
+    return `${this.dateTimeLabel(time)} · ${detail}`
   }
 
   private medKey(med: Medication): string {
