@@ -284,6 +284,26 @@ struct Index {
     this.saveSavedPresets()
   }
 
+  private normalizeSavedPresets(presets: SavedPresetTimer[]): SavedPresetTimer[] {
+    const usedIds: number[] = []
+    let nextId = Math.max(1, this.nextPresetId)
+    const normalized = presets.map((preset: SavedPresetTimer) => {
+      let id = preset.id
+      if (!id || id <= 0 || usedIds.includes(id)) {
+        while (usedIds.includes(nextId)) {
+          nextId += 1
+        }
+        id = nextId
+      }
+      usedIds.push(id)
+      nextId = Math.max(nextId, id + 1)
+      const normalizedPreset: SavedPresetTimer = { id, emoji: preset.emoji, label: preset.label, seconds: preset.seconds }
+      return normalizedPreset
+    })
+    this.nextPresetId = nextId
+    return normalized
+  }
+
   private customSecondsTotal(): number {
     return this.customMinutes * 60 + this.customSeconds
   }
@@ -446,7 +466,9 @@ struct Index {
     }
 
     try {
-      this.savedPresets = JSON.parse(this.savedPresetsJson) as SavedPresetTimer[]
+      const saved = JSON.parse(this.savedPresetsJson) as SavedPresetTimer[]
+      this.savedPresets = this.normalizeSavedPresets(saved)
+      this.saveSavedPresets()
     } catch (_error) {
       this.savedPresets = []
       this.saveSavedPresets()
