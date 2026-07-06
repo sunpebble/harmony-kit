@@ -2,8 +2,7 @@ import {
   SunButton,
   SunButtonRole,
   SunColor,
-  SunSpacing,
-  SunToolShell
+  SunSpacing
 } from 'sunpebble_ui'
 import { uniformTypeDescriptor as utd } from '@kit.ArkData'
 import { pasteboard } from '@kit.BasicServicesKit'
@@ -11,7 +10,6 @@ import { common } from '@kit.AbilityKit'
 import { reminderAgentManager } from '@kit.BackgroundTasksKit'
 import { notificationManager } from '@kit.NotificationKit'
 import { systemShare } from '@kit.ShareKit'
-import { appProfile } from '../AppProfile'
 
 interface RollEntry {
   date: string
@@ -952,68 +950,64 @@ struct Index {
 
   build() {
     Column() {
-      SunToolShell({
-        manifest: appProfile,
-        onPrimaryAction: () => this.saveToday()
-      }) {
-        Scroll() {
-          Column({ space: SunSpacing.lg }) {
-            this.header()
-            this.perforation()
-            this.composer()
-            this.perforation()
-            this.rollList()
-            this.perforation()
+      Scroll() {
+        Column({ space: SunSpacing.lg }) {
+          this.header()
+          this.perforation()
+          this.composer()
+          this.perforation()
+          this.rollList()
+          this.perforation()
 
-            Button('+')
-              .width(52)
-              .height(52)
-              .borderRadius(999)
-              .backgroundColor(SunColor.ink)
-              .fontColor('#FFFDF7')
-              .fontSize(28)
-              .fontWeight(FontWeight.Bold)
-              .alignSelf(ItemAlign.Center)
-              .onClick(() => this.saveToday())
+          Button('+')
+            .width(52)
+            .height(52)
+            .borderRadius(999)
+            .backgroundColor(SunColor.ink)
+            .fontColor('#FFFDF7')
+            .fontSize(28)
+            .fontWeight(FontWeight.Bold)
+            .alignSelf(ItemAlign.Center)
+            .onClick(() => this.saveToday())
 
+          SunButton({
+            label: this.reminderOpen ? 'Hide Reminder' : 'Reminder',
+            role: SunButtonRole.Secondary,
+            action: () => this.reminderOpen = !this.reminderOpen
+          })
+          this.reminderPanel()
+
+          if (!this.proUnlocked) {
             SunButton({
-              label: this.reminderOpen ? 'Hide Reminder' : 'Reminder',
+              label: 'Unlock Pro',
               role: SunButtonRole.Secondary,
-              action: () => this.reminderOpen = !this.reminderOpen
+              action: () => this.unlockPro()
             })
-            this.reminderPanel()
-
-            if (!this.proUnlocked) {
-              SunButton({
-                label: 'Unlock Pro',
-                role: SunButtonRole.Secondary,
-                action: () => this.unlockPro()
-              })
-            }
-
-            SunButton({
-              label: this.statsOpen ? 'Hide Stats' : (this.proUnlocked ? 'Stats' : 'Stats Pro'),
-              role: SunButtonRole.Secondary,
-              action: () => this.toggleStats()
-            })
-            this.statsPreview()
-
-            SunButton({
-              label: this.exportOpen ? 'Hide Export' : (this.proUnlocked ? 'Export' : 'Export Pro'),
-              role: SunButtonRole.Secondary,
-              action: () => this.toggleExport()
-            })
-            this.exportPreview()
           }
-          .width('100%')
-          .padding(20)
-          .backgroundColor('#FFFDF7')
+
+          SunButton({
+            label: this.statsOpen ? 'Hide Stats' : (this.proUnlocked ? 'Stats' : 'Stats Pro'),
+            role: SunButtonRole.Secondary,
+            action: () => this.toggleStats()
+          })
+          this.statsPreview()
+
+          SunButton({
+            label: this.exportOpen ? 'Hide Export' : (this.proUnlocked ? 'Export' : 'Export Pro'),
+            role: SunButtonRole.Secondary,
+            action: () => this.toggleExport()
+          })
+          this.exportPreview()
         }
         .width('100%')
-        .height('100%')
+        .padding(20)
+        .backgroundColor('#FFFDF7')
       }
+      .width('100%')
+      .height('100%')
     }
     .width('100%')
     .height('100%')
+    .backgroundColor(SunColor.cream)
   }
 }
