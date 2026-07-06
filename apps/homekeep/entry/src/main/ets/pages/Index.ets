@@ -40,6 +40,9 @@ struct Index {
   @StorageLink('homekeep.nextId.v1') private nextId: number = 4
   @StorageLink('homekeep.filter.v1') private filter: string = 'Due'
   @StorageLink('homekeep.tasks.v1') private tasksJson: string = ''
+  @State private draftTitle: string = ''
+  @State private draftArea: string = ''
+  @State private draftCadence: number = 30
   @State private tasks: KeepTask[] = []
 
   aboutToAppear(): void {
@@ -102,6 +105,35 @@ struct Index {
     ]
     this.nextId += 1
     this.saveTasks()
+  }
+
+  private addCustomTask(): void {
+    const title = this.draftTitle.trim()
+    if (title.length === 0) {
+      this.showToast('Enter a task name first.')
+      return
+    }
+    const task: KeepTask = {
+      id: this.nextId,
+      title,
+      area: this.draftArea.trim().length > 0 ? this.draftArea.trim() : 'Home',
+      dueIn: 0,
+      cadence: this.draftCadence
+    }
+    this.tasks = [task, ...this.tasks]
+    this.nextId += 1
+    this.draftTitle = ''
+    this.draftArea = ''
+    this.filter = 'Due'
+    this.saveTasks()
+  }
+
+  private showToast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message, duration: 1800 })
+    } catch (_error) {
+      // ponytail: validation still blocks empty custom tasks if toast is unavailable.
+    }
   }
 
   private completeTask(id: number): void {
@@ -177,6 +209,20 @@ struct Index {
       .fontWeight(FontWeight.Bold)
       .border({ width: 1, color: SunColor.border })
       .onClick(() => this.filter = label)
+  }
+
+  @Builder
+  private cadenceButton(days: number) {
+    Button(`${days}d`)
+      .height(34)
+      .padding({ left: 12, right: 12 })
+      .borderRadius(999)
+      .backgroundColor(this.draftCadence === days ? '#4F8A6D' : SunColor.white)
+      .fontColor(this.draftCadence === days ? SunColor.white : SunColor.ink)
+      .fontSize(12)
+      .fontWeight(FontWeight.Bold)
+      .border({ width: 1, color: SunColor.border })
+      .onClick(() => this.draftCadence = days)
   }
 
   @Builder
@@ -264,6 +310,54 @@ struct Index {
   }
 
   @Builder
+  private customTaskCard() {
+    SunCard() {
+      Column({ space: SunSpacing.md }) {
+        Text('CUSTOM TASK')
+          .fontSize(10)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(1.4)
+          .fontColor(SunColor.pebble)
+
+        TextInput({ placeholder: 'Task name', text: this.draftTitle })
+          .height(46)
+          .width('100%')
+          .fontSize(14)
+          .fontColor(SunColor.ink)
+          .backgroundColor(SunColor.white)
+          .borderRadius(8)
+          .border({ width: 1, color: SunColor.border })
+          .onChange((value: string) => this.draftTitle = value)
+
+        TextInput({ placeholder: 'Area (optional)', text: this.draftArea })
+          .height(46)
+          .width('100%')
+          .fontSize(14)
+          .fontColor(SunColor.ink)
+          .backgroundColor(SunColor.white)
+          .borderRadius(8)
+          .border({ width: 1, color: SunColor.border })
+          .onChange((value: string) => this.draftArea = value)
+
+        Row({ space: SunSpacing.sm }) {
+          this.cadenceButton(7)
+          this.cadenceButton(30)
+          this.cadenceButton(90)
+          this.cadenceButton(180)
+        }
+        .width('100%')
+
+        SunButton({
+          label: 'Add Custom Task',
+          action: () => this.addCustomTask()
+        })
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
+  }
+
+  @Builder
   private presetBar() {
     Scroll() {
       Row({ space: SunSpacing.sm }) {
@@ -289,7 +383,7 @@ struct Index {
     Column() {
       SunToolShell({
         manifest: appProfile,
-        onPrimaryAction: () => this.addTask()
+        onPrimaryAction: () => this.addCustomTask()
       }) {
         Column({ space: SunSpacing.md }) {
           this.summary()
@@ -300,6 +394,8 @@ struct Index {
             this.filterButton('All')
           }
           .width('100%')
+
+          this.customTaskCard()
 
           Scroll() {
             this.taskList()
