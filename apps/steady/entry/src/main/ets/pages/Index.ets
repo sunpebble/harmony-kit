@@ -683,6 +683,11 @@ struct Index {
     return `${date.getFullYear()}-${this.pad(date.getMonth() + 1)}-${this.pad(date.getDate())}`
   }
 
+  private dateTimeLabel(time: number): string {
+    const date = new Date(time)
+    return `${this.dateLabel(time)} ${this.pad(date.getHours())}:${this.pad(date.getMinutes())}`
+  }
+
   private reportCutoffTime(): number {
     return Date.now() - 30 * this.dayMs()
   }
@@ -796,7 +801,7 @@ struct Index {
     readings.forEach((reading: Reading) => {
       const note = this.readingNote(reading)
       const mealtime = this.validMealtime(reading.mealtime)
-      lines.push(`${this.dateLabel(this.dateTime(reading.date))}  ${reading.value} ${reading.unit}${mealtime.length > 0 ? ` (${mealtime})` : ''}${note.length > 0 ? ` - ${note}` : ''}`)
+      lines.push(`${this.dateTimeLabel(this.dateTime(reading.date))}  ${reading.value} ${reading.unit}${mealtime.length > 0 ? ` (${mealtime})` : ''}${note.length > 0 ? ` - ${note}` : ''}`)
     })
     return lines.join('\n')
   }
