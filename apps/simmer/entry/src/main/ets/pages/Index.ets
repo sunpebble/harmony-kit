@@ -251,6 +251,10 @@ struct Index {
     const nextOpen = !this.customOpen
     this.customOpen = nextOpen
     if (nextOpen) {
+      this.customMinutes = 5
+      this.customSeconds = 0
+      this.customEmoji = '🍲'
+      this.customLabelText = ''
       this.customSaveAsPreset = false
     }
   }
