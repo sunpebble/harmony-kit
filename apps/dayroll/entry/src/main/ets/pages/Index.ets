@@ -1116,13 +1116,6 @@ struct Index {
           })
           this.reminderPanel()
 
-          if (!this.proUnlocked) {
-            SunButton({
-              label: 'Unlock Pro',
-              role: SunButtonRole.Secondary,
-              action: () => this.showPaywall()
-            })
-          }
           this.paywallPanel()
 
           SunButton({
