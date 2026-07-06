@@ -100,6 +100,7 @@ struct Index {
   @State private symptomSeverity: number = 1
   @State private symptomNote: string = ''
   @State private reportOpen: boolean = false
+  @State private confirmingTimelineDeleteKey: string = ''
 
   aboutToAppear(): void {
     this.loadReadings()
@@ -236,7 +237,28 @@ struct Index {
     ]
     this.nextId += 1
     this.draftNote = ''
+    this.confirmingTimelineDeleteKey = ''
     this.saveReadings()
+  }
+
+  private readingDeleteKey(reading: Reading): string {
+    return `reading-${reading.id}`
+  }
+
+  private symptomDeleteKey(symptom: Symptom): string {
+    return `symptom-${symptom.id}`
+  }
+
+  private deleteReading(id: number): void {
+    this.readings = this.readings.filter((reading: Reading) => reading.id !== id)
+    this.confirmingTimelineDeleteKey = ''
+    this.saveReadings()
+  }
+
+  private deleteSymptom(id: number): void {
+    this.symptoms = this.symptoms.filter((symptom: Symptom) => symptom.id !== id)
+    this.confirmingTimelineDeleteKey = ''
+    this.saveSymptoms()
   }
 
   private cleanNumber(value: number): string {
@@ -432,6 +454,7 @@ struct Index {
     this.nextId += 1
     this.symptomName = ''
     this.symptomNote = ''
+    this.confirmingTimelineDeleteKey = ''
     this.saveSymptoms()
   }
 
@@ -908,17 +931,69 @@ struct Index {
               .fontColor(SunColor.pebble)
           } else {
             ForEach(this.readings, (reading: Reading) => {
-              SunListRow({
-                title: `${reading.value} ${reading.unit}`,
-                caption: `${reading.kind} · ${reading.context}`
-              })
+              Column({ space: SunSpacing.xs }) {
+                SunListRow({
+                  title: `${reading.value} ${reading.unit}`,
+                  caption: `${reading.kind} · ${reading.context}`
+                })
+
+                if (this.confirmingTimelineDeleteKey === this.readingDeleteKey(reading)) {
+                  Row({ space: SunSpacing.sm }) {
+                    SunButton({
+                      label: 'Confirm Delete',
+                      role: SunButtonRole.Danger,
+                      action: () => this.deleteReading(reading.id)
+                    })
+
+                    SunButton({
+                      label: 'Cancel',
+                      role: SunButtonRole.Secondary,
+                      action: () => this.confirmingTimelineDeleteKey = ''
+                    })
+                  }
+                  .width('100%')
+                } else {
+                  SunButton({
+                    label: 'Delete',
+                    role: SunButtonRole.Danger,
+                    action: () => this.confirmingTimelineDeleteKey = this.readingDeleteKey(reading)
+                  })
+                }
+              }
+              .width('100%')
             }, (reading: Reading) => reading.id.toString())
 
             ForEach(this.symptoms, (symptom: Symptom) => {
-              SunListRow({
-                title: `${symptom.name} · ${String('•').repeat(symptom.severity)}`,
-                caption: `Symptom · ${symptom.context}`
-              })
+              Column({ space: SunSpacing.xs }) {
+                SunListRow({
+                  title: `${symptom.name} · ${String('•').repeat(symptom.severity)}`,
+                  caption: `Symptom · ${symptom.context}`
+                })
+
+                if (this.confirmingTimelineDeleteKey === this.symptomDeleteKey(symptom)) {
+                  Row({ space: SunSpacing.sm }) {
+                    SunButton({
+                      label: 'Confirm Delete',
+                      role: SunButtonRole.Danger,
+                      action: () => this.deleteSymptom(symptom.id)
+                    })
+
+                    SunButton({
+                      label: 'Cancel',
+                      role: SunButtonRole.Secondary,
+                      action: () => this.confirmingTimelineDeleteKey = ''
+                    })
+                  }
+                  .width('100%')
+                } else {
+                  SunButton({
+                    label: 'Delete',
+                    role: SunButtonRole.Danger,
+                    action: () => this.confirmingTimelineDeleteKey = this.symptomDeleteKey(symptom)
+                  })
+                }
+              }
+              .width('100%')
             }, (symptom: Symptom) => symptom.id.toString())
           }
         }
