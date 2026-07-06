@@ -1868,7 +1868,7 @@ struct Index {
               .fontColor(SunColor.pebble)
           }
 
-          ForEach(this.kinds.slice(0, 4), (kind: string) => {
+          ForEach(this.kinds, (kind: string) => {
             Row({ space: SunSpacing.md }) {
               Text(kind)
                 .fontSize(SunType.body)
