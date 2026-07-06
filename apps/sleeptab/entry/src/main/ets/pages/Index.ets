@@ -96,7 +96,8 @@ struct Index {
   }
 
   private draftDateKey(): string {
-    return this.draftDate.length > 0 ? this.draftDate : this.dateKey(new Date())
+    const today = this.dateKey(new Date())
+    return this.draftDate.length > 0 && this.draftDate < today ? this.draftDate : today
   }
 
   private hasDraftNight(): boolean {
@@ -134,7 +135,7 @@ struct Index {
     try {
       this.getUIContext().showDatePickerDialog({
         start: new Date('2000-01-01T00:00:00'),
-        end: new Date('2100-12-31T23:59:59'),
+        end: new Date(),
         selected: this.dateFromKey(this.draftDateKey()),
         onDateAccept: (value: Date) => {
           this.applyDraftDate(this.dateKey(value))
