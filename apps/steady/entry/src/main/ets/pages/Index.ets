@@ -25,11 +25,19 @@ interface Medication {
   taken: boolean
 }
 
+interface Symptom {
+  id: number
+  name: string
+  severity: number
+  context: string
+}
+
 PersistentStorage.persistProp('steady.tab.v1', 'Timeline')
 PersistentStorage.persistProp('steady.nextId.v1', 4)
 PersistentStorage.persistProp('steady.selectedKind.v1', 'Blood pressure')
 PersistentStorage.persistProp('steady.readings.v1', '')
 PersistentStorage.persistProp('steady.meds.v1', '')
+PersistentStorage.persistProp('steady.symptoms.v1', '')
 
 @Entry
 @Component
@@ -40,12 +48,15 @@ struct Index {
   @StorageLink('steady.selectedKind.v1') private selectedKind: string = 'Blood pressure'
   @StorageLink('steady.readings.v1') private readingsJson: string = ''
   @StorageLink('steady.meds.v1') private medsJson: string = ''
+  @StorageLink('steady.symptoms.v1') private symptomsJson: string = ''
   @State private readings: Reading[] = []
   @State private meds: Medication[] = []
+  @State private symptoms: Symptom[] = []
 
   aboutToAppear(): void {
     this.loadReadings()
     this.loadMeds()
+    this.loadSymptoms()
   }
 
   private defaultReadings(): Reading[] {
@@ -93,12 +104,28 @@ struct Index {
     }
   }
 
+  private loadSymptoms(): void {
+    if (this.symptomsJson.length === 0) {
+      return
+    }
+    try {
+      this.symptoms = JSON.parse(this.symptomsJson) as Symptom[]
+    } catch (_error) {
+      this.symptoms = []
+      this.saveSymptoms()
+    }
+  }
+
   private saveReadings(): void {
     this.readingsJson = JSON.stringify(this.readings)
   }
 
   private saveMeds(): void {
     this.medsJson = JSON.stringify(this.meds)
+  }
+
+  private saveSymptoms(): void {
+    this.symptomsJson = JSON.stringify(this.symptoms)
   }
 
   private logReading(): void {
@@ -148,14 +175,27 @@ struct Index {
     this.saveMeds()
   }
 
+  private logSymptom(): void {
+    this.symptoms = [
+      { id: this.nextId, name: 'Headache', severity: 2, context: 'Just now' },
+      ...this.symptoms
+    ]
+    this.nextId += 1
+    this.saveSymptoms()
+  }
+
   private readingsForKind(kind: string): Reading[] {
     return this.readings.filter((reading: Reading) => reading.kind === kind)
   }
 
   private csvPreview(): string {
-    return this.readings.map((reading: Reading) => {
+    const readingRows = this.readings.map((reading: Reading) => {
       return `${reading.kind},${reading.value},${reading.unit}`
-    }).join('\n')
+    })
+    const symptomRows = this.symptoms.map((symptom: Symptom) => {
+      return `Symptom,${symptom.name},severity ${symptom.severity}`
+    })
+    return [...readingRows, ...symptomRows].join('\n')
   }
 
   @Builder
@@ -222,9 +262,15 @@ struct Index {
     Column({ space: SunSpacing.md }) {
       this.quickLogCard()
 
+      SunButton({
+        label: 'Log symptom',
+        role: SunButtonRole.Secondary,
+        action: () => this.logSymptom()
+      })
+
       SunCard() {
-        Column() {
-          if (this.readings.length === 0) {
+        Column({ space: SunSpacing.sm }) {
+          if (this.readings.length === 0 && this.symptoms.length === 0) {
             Text('Log your first reading with the + button.')
               .fontSize(SunType.body)
               .fontColor(SunColor.pebble)
@@ -235,6 +281,13 @@ struct Index {
                 caption: `${reading.kind} · ${reading.context}`
               })
             }, (reading: Reading) => reading.id.toString())
+
+            ForEach(this.symptoms, (symptom: Symptom) => {
+              SunListRow({
+                title: `${symptom.name} · ${String('•').repeat(symptom.severity)}`,
+                caption: `Symptom · ${symptom.context}`
+              })
+            }, (symptom: Symptom) => symptom.id.toString())
           }
         }
         .width('100%')
