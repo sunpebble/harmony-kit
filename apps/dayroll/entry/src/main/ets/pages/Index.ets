@@ -287,7 +287,8 @@ struct Index {
         return false
       }
       const date = this.dateFromKey(entry.date)
-      return date.getTime() < active.getTime() && date.getMonth() === active.getMonth() && date.getDate() === active.getDate()
+      const years = active.getFullYear() - date.getFullYear()
+      return years >= 1 && years <= 30 && date.getMonth() === active.getMonth() && date.getDate() === active.getDate()
     }).sort((a: RollEntry, b: RollEntry) => b.date.localeCompare(a.date))
   }
 
