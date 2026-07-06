@@ -113,7 +113,7 @@ struct Burner {
           .width(150)
           .height(150)
           .color(this.timer.done ? SunColor.sun : SunColor.ink)
-          .style({ strokeWidth: 8 })
+          .style({ strokeWidth: 8, enableSmoothEffect: false, enableScanEffect: false })
 
         Column({ space: SunSpacing.xs }) {
           Text(this.timer.emoji)
