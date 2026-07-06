@@ -789,7 +789,10 @@ struct Index {
   private trendSummary(kind: string): string {
     const cutoff = Date.now() - this.trendDays() * this.dayMs()
     const readings = this.readingsForKind(kind).filter((reading: Reading) => this.dateTime(reading.date) >= cutoff)
-    if (readings.length === 0 || !this.hasTargetRange(kind)) {
+    if (readings.length === 0) {
+      return 'No data in range'
+    }
+    if (!this.hasTargetRange(kind)) {
       return `${readings.length} logs`
     }
     const low = Number(this.targetLowForKind(kind))
@@ -799,6 +802,19 @@ struct Index {
       return value >= low && value <= high
     }).length
     return `${inRange} of ${readings.length} in patient-set range`
+  }
+
+  private trendMedicationValue(): string {
+    const activeMeds = this.activeMeds()
+    const expected = activeMeds.reduce((total: number, med: Medication) => total + this.medTimesFor(med).length * this.trendDays(), 0)
+    if (expected === 0) {
+      return '0 of 0 (0%)'
+    }
+    const cutoff = this.dateLabel(Date.now() - this.trendDays() * this.dayMs())
+    const taken = activeMeds.reduce((total: number, med: Medication) => {
+      return total + this.takenLogFor(med).filter((key: string) => key.split('|')[0] >= cutoff).length
+    }, 0)
+    return `${taken} of ${expected} (${Math.round(taken / expected * 100)}%)`
   }
 
   private averageForKind(kind: string): string {
@@ -1609,6 +1625,32 @@ struct Index {
             .width('100%')
             .height(42)
           }, (kind: string) => kind)
+
+          Text('MEDICATION')
+            .fontSize(10)
+            .fontWeight(FontWeight.Bold)
+            .letterSpacing(1.4)
+            .fontColor(SunColor.pebble)
+            .padding({ top: SunSpacing.xs })
+
+          if (this.activeMeds().length === 0) {
+            Text('No medications set up.')
+              .fontSize(SunType.body)
+              .fontColor(SunColor.pebble)
+          } else {
+            Row({ space: SunSpacing.md }) {
+              Text('Doses logged')
+                .fontSize(SunType.body)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(SunColor.ink)
+                .layoutWeight(1)
+              Text(this.trendMedicationValue())
+                .fontSize(SunType.body)
+                .fontColor(SunColor.pebble)
+            }
+            .width('100%')
+            .height(42)
+          }
         }
         .width('100%')
         .alignItems(HorizontalAlign.Start)
