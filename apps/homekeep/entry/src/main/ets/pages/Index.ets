@@ -423,7 +423,7 @@ struct Index {
     Column() {
       SunToolShell({
         manifest: appProfile,
-        onPrimaryAction: () => this.addCustomTask()
+        onPrimaryAction: () => this.addTask()
       }) {
         Column({ space: SunSpacing.md }) {
           this.summary()
