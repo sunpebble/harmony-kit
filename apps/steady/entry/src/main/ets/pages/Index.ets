@@ -1939,6 +1939,10 @@ struct Index {
               role: SunButtonRole.Secondary,
               action: () => this.showPaywall()
             })
+          } else {
+            SunListRow({
+              title: 'Steady Pro — unlocked'
+            })
           }
           this.paywallPanel()
 
