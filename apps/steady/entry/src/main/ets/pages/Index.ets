@@ -32,6 +32,12 @@ interface Symptom {
   context: string
 }
 
+interface ReadingMemory {
+  kind: string
+  primary: string
+  secondary: string
+}
+
 PersistentStorage.persistProp('steady.tab.v1', 'Timeline')
 PersistentStorage.persistProp('steady.nextId.v1', 4)
 PersistentStorage.persistProp('steady.selectedKind.v1', 'Blood pressure')
@@ -39,6 +45,7 @@ PersistentStorage.persistProp('steady.draftPrimary.v1', '')
 PersistentStorage.persistProp('steady.draftSecondary.v1', '')
 PersistentStorage.persistProp('steady.draftNote.v1', '')
 PersistentStorage.persistProp('steady.readings.v1', '')
+PersistentStorage.persistProp('steady.lastReadings.v1', '')
 PersistentStorage.persistProp('steady.meds.v1', '')
 PersistentStorage.persistProp('steady.symptoms.v1', '')
 PersistentStorage.persistProp('steady.reminderEnabled.v1', false)
@@ -62,6 +69,7 @@ struct Index {
   @StorageLink('steady.draftSecondary.v1') private draftSecondary: string = ''
   @StorageLink('steady.draftNote.v1') private draftNote: string = ''
   @StorageLink('steady.readings.v1') private readingsJson: string = ''
+  @StorageLink('steady.lastReadings.v1') private lastReadingsJson: string = ''
   @StorageLink('steady.meds.v1') private medsJson: string = ''
   @StorageLink('steady.symptoms.v1') private symptomsJson: string = ''
   @StorageLink('steady.reminderEnabled.v1') private reminderEnabled: boolean = false
@@ -87,6 +95,9 @@ struct Index {
     this.loadReadings()
     this.loadMeds()
     this.loadSymptoms()
+    if (this.draftPrimary.length === 0 && this.draftSecondary.length === 0) {
+      this.applyLastReading(this.selectedKind)
+    }
   }
 
   private defaultReadings(): Reading[] {
@@ -150,6 +161,32 @@ struct Index {
     this.readingsJson = JSON.stringify(this.readings)
   }
 
+  private lastReadings(): ReadingMemory[] {
+    if (this.lastReadingsJson.length === 0) {
+      return []
+    }
+    try {
+      return JSON.parse(this.lastReadingsJson) as ReadingMemory[]
+    } catch (_error) {
+      this.lastReadingsJson = ''
+      return []
+    }
+  }
+
+  private saveLastReading(primary: string, secondary: string): void {
+    const rest = this.lastReadings().filter((memory: ReadingMemory) => memory.kind !== this.selectedKind)
+    this.lastReadingsJson = JSON.stringify([
+      { kind: this.selectedKind, primary, secondary },
+      ...rest
+    ])
+  }
+
+  private applyLastReading(kind: string): void {
+    const memory = this.lastReadings().find((item: ReadingMemory) => item.kind === kind)
+    this.draftPrimary = memory ? memory.primary : ''
+    this.draftSecondary = kind === 'Blood pressure' && memory ? memory.secondary : ''
+  }
+
   private saveMeds(): void {
     this.medsJson = JSON.stringify(this.meds)
   }
@@ -172,6 +209,10 @@ struct Index {
     }
 
     const note = this.draftNote.trim()
+    this.saveLastReading(
+      this.cleanNumber(primary),
+      this.selectedKind === 'Blood pressure' ? this.cleanNumber(secondary) : ''
+    )
     this.readings = [
       {
         id: this.nextId,
@@ -399,7 +440,10 @@ struct Index {
       .fontColor(this.selectedKind === kind ? SunColor.cream : SunColor.ink)
       .fontSize(12)
       .border({ width: 1, color: SunColor.border })
-      .onClick(() => this.selectedKind = kind)
+      .onClick(() => {
+        this.selectedKind = kind
+        this.applyLastReading(kind)
+      })
   }
 
   @Builder
