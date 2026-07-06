@@ -802,7 +802,7 @@ struct Index {
       this.medicationReportLine(),
       'Symptoms',
       this.symptomReportLines(),
-      'Steady is a record-keeping tool, not a medical device.'
+      'Steady is a record-keeping tool, not a medical device. It does not diagnose, treat, or give medical advice. Target ranges shown are the ones you entered yourself. Always consult your doctor about your readings.'
     ].join('\n\n')
   }
 
@@ -1640,7 +1640,7 @@ struct Index {
         .alignItems(HorizontalAlign.Start)
       }
 
-      Text('Steady is a record-keeping tool, not a medical device. It does not diagnose, treat, or give medical advice.')
+      Text('Steady is a record-keeping tool, not a medical device. It does not diagnose, treat, or give medical advice. Target ranges shown are the ones you entered yourself. Always consult your doctor about your readings.')
         .fontSize(12)
         .fontColor(SunColor.pebble)
         .lineHeight(18)
