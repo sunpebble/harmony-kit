@@ -503,7 +503,7 @@ struct Index {
 
   private medicationTimelineLogs(): MedicationTimelineLog[] {
     const logs: MedicationTimelineLog[] = []
-    this.activeMeds().forEach((med: Medication) => {
+    this.meds.forEach((med: Medication) => {
       this.takenLogFor(med).forEach((key: string) => {
         const parts = key.split('|')
         const date = parts.length > 0 ? parts[0] : this.todayKey()
@@ -1004,7 +1004,7 @@ struct Index {
       return '0 of 0 (0%)'
     }
     const cutoff = this.dateLabel(Date.now() - this.trendDays() * this.dayMs())
-    const taken = activeMeds.reduce((total: number, med: Medication) => {
+    const taken = this.meds.reduce((total: number, med: Medication) => {
       return total + this.takenLogFor(med).filter((key: string) => key.split('|')[0] >= cutoff).length
     }, 0)
     return `${taken} of ${expected} (${Math.round(taken / expected * 100)}%)`
