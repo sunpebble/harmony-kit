@@ -12,7 +12,7 @@ interface SleepNight {
   date: string
   day: string
   hours: number
-  bedtime: string
+  bedtime?: string
 }
 
 PersistentStorage.persistProp('sleeptab.goalHours.v1', 8)
@@ -46,7 +46,7 @@ struct Index {
       date,
       day: this.dayLabel(this.dateFromKey(date)),
       hours: night.hours,
-      bedtime: night.bedtime
+      bedtime: this.validBedtime(night.bedtime)
     }
   }
 
@@ -107,7 +107,8 @@ struct Index {
     if (matches.length === 0) {
       return ''
     }
-    return `${this.hoursText(matches[0].hours)} · ${matches[0].bedtime}`
+    const bedtime = this.validBedtime(matches[0].bedtime)
+    return `${this.hoursText(matches[0].hours)}${bedtime.length > 0 ? ` · ${bedtime}` : ''}`
   }
 
   private deleteNight(date: string): void {
@@ -303,32 +304,55 @@ struct Index {
     return this.shownNights().some((night: SleepNight) => days.includes(night.day))
   }
 
-  private bedtimeMinutes(time: string): number {
+  private validBedtime(time?: string): string {
+    if (!time) {
+      return ''
+    }
     const parts = time.split(':')
     if (parts.length < 2) {
-      return 0
+      return ''
     }
+    const hour = Number(parts[0])
+    const minute = Number(parts[1])
+    if (Number.isNaN(hour) || Number.isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      return ''
+    }
+    return `${this.pad(hour)}:${this.pad(minute)}`
+  }
+
+  private bedtimeMinutes(time?: string): number {
+    const bedtime = this.validBedtime(time)
+    if (bedtime.length === 0) {
+      return -1
+    }
+    const parts = bedtime.split(':')
     const hour = Number(parts[0])
     const minute = Number(parts[1])
     return (hour < 12 ? hour + 24 : hour) * 60 + minute
   }
 
+  private bedtimeValues(): number[] {
+    return this.shownNights()
+      .map((night: SleepNight) => this.bedtimeMinutes(night.bedtime))
+      .filter((minutes: number) => minutes >= 0)
+  }
+
   private averageBedtimeMinutes(): number {
-    const list = this.shownNights()
+    const list = this.bedtimeValues()
     if (list.length === 0) {
       return 0
     }
-    return list.reduce((total: number, night: SleepNight) => total + this.bedtimeMinutes(night.bedtime), 0) / list.length
+    return list.reduce((total: number, minutes: number) => total + minutes, 0) / list.length
   }
 
   private consistencyMinutes(): number {
-    const list = this.shownNights()
+    const list = this.bedtimeValues()
     if (list.length < 2) {
       return 0
     }
     const average = this.averageBedtimeMinutes()
-    const variance = list.reduce((total: number, night: SleepNight) => {
-      const delta = this.bedtimeMinutes(night.bedtime) - average
+    const variance = list.reduce((total: number, minutes: number) => {
+      const delta = minutes - average
       return total + delta * delta
     }, 0) / list.length
     return Math.sqrt(variance)
@@ -542,7 +566,7 @@ struct Index {
           }
           this.insightRow('BEST NIGHT', this.bestNightText())
           this.insightRow('ROUGHEST', this.roughestNightText())
-          if (this.shownNights().length >= 2) {
+          if (this.bedtimeValues().length >= 2) {
             this.insightRow('AVG BEDTIME', this.clockText(this.averageBedtimeMinutes()))
             this.insightRow('CONSISTENCY', `± ${this.hoursText(this.consistencyMinutes() / 60)}`)
           }
