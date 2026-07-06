@@ -45,6 +45,7 @@ struct Index {
   @State private draftArea: string = ''
   @State private draftCadence: number = 30
   @State private tasks: KeepTask[] = []
+  @State private confirmingTaskId: number = -1
 
   aboutToAppear(): void {
     this.loadTasks()
@@ -121,6 +122,7 @@ struct Index {
     ]
     this.nextId += 1
     this.filter = 'All'
+    this.confirmingTaskId = -1
     this.saveTasks()
   }
 
@@ -137,6 +139,7 @@ struct Index {
     ]
     this.nextId += 1
     this.filter = 'All'
+    this.confirmingTaskId = -1
     this.saveTasks()
   }
 
@@ -158,6 +161,7 @@ struct Index {
     this.draftTitle = ''
     this.draftArea = ''
     this.filter = 'Due'
+    this.confirmingTaskId = -1
     this.saveTasks()
   }
 
@@ -182,6 +186,7 @@ struct Index {
         cadence: task.cadence
       }
     })
+    this.confirmingTaskId = -1
     this.saveTasks()
   }
 
@@ -198,11 +203,13 @@ struct Index {
         cadence: task.cadence
       }
     })
+    this.confirmingTaskId = -1
     this.saveTasks()
   }
 
   private deleteTask(id: number): void {
     this.tasks = this.tasks.filter((task: KeepTask) => task.id !== id)
+    this.confirmingTaskId = -1
     this.saveTasks()
   }
 
@@ -329,11 +336,28 @@ struct Index {
                 .width('100%')
               }
 
-              SunButton({
-                label: 'Delete',
-                role: SunButtonRole.Danger,
-                action: () => this.deleteTask(task.id)
-              })
+              if (this.confirmingTaskId === task.id) {
+                Row({ space: SunSpacing.sm }) {
+                  SunButton({
+                    label: 'Confirm Delete',
+                    role: SunButtonRole.Danger,
+                    action: () => this.deleteTask(task.id)
+                  })
+
+                  SunButton({
+                    label: 'Cancel',
+                    role: SunButtonRole.Secondary,
+                    action: () => this.confirmingTaskId = -1
+                  })
+                }
+                .width('100%')
+              } else {
+                SunButton({
+                  label: 'Delete',
+                  role: SunButtonRole.Danger,
+                  action: () => this.confirmingTaskId = task.id
+                })
+              }
             }
             .width('100%')
           }, (task: KeepTask) => task.id.toString())
