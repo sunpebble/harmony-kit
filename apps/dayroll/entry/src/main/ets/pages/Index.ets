@@ -92,7 +92,7 @@ struct Index {
   }
 
   private saveToday(): void {
-    const line = this.draftLine.trim()
+    const line = this.draftLine
     const date = this.activeDate()
     const day = this.dateFromKey(date)
     const entry: RollEntry = { date, day: this.dayLabel(day), month: this.monthLabel(day), mood: this.mood, line }
