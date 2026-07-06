@@ -197,7 +197,11 @@ struct Index {
   }
 
   private debtHours(): number {
-    return Math.max(0, this.recentNights(14).reduce((total: number, night: SleepNight) => {
+    const cutoff = new Date()
+    cutoff.setHours(0, 0, 0, 0)
+    cutoff.setDate(cutoff.getDate() - 14)
+    const recent = this.nights.filter((night: SleepNight) => this.dateFromKey(night.date).getTime() > cutoff.getTime())
+    return Math.max(0, recent.reduce((total: number, night: SleepNight) => {
       return total + (this.goalHours - night.hours)
     }, 0))
   }
@@ -210,12 +214,22 @@ struct Index {
     return list.reduce((total: number, night: SleepNight) => total + night.hours, 0) / list.length
   }
 
-  private bestHours(): number {
-    return this.shownNights().reduce((best: number, night: SleepNight) => Math.max(best, night.hours), 0)
+  private bestNightText(): string {
+    const list = this.shownNights()
+    if (list.length === 0) {
+      return this.hoursText(0)
+    }
+    const best = list.reduce((selected: SleepNight, night: SleepNight) => night.hours > selected.hours ? night : selected, list[0])
+    return this.nightText(best)
   }
 
-  private roughestHours(): number {
-    return this.shownNights().reduce((worst: number, night: SleepNight) => Math.min(worst, night.hours), 24)
+  private roughestNightText(): string {
+    const list = this.shownNights()
+    if (list.length === 0) {
+      return this.hoursText(0)
+    }
+    const roughest = list.reduce((selected: SleepNight, night: SleepNight) => night.hours < selected.hours ? night : selected, list[0])
+    return this.nightText(roughest)
   }
 
   private averageForDays(days: string[]): number {
@@ -245,10 +259,25 @@ struct Index {
   }
 
   private consistencyMinutes(): number {
+    const list = this.shownNights()
+    if (list.length < 2) {
+      return 0
+    }
     const average = this.averageBedtimeMinutes()
-    return this.shownNights().reduce((spread: number, night: SleepNight) => {
-      return Math.max(spread, Math.abs(this.bedtimeMinutes(night.bedtime) - average))
-    }, 0)
+    const variance = list.reduce((total: number, night: SleepNight) => {
+      const delta = this.bedtimeMinutes(night.bedtime) - average
+      return total + delta * delta
+    }, 0) / list.length
+    return Math.sqrt(variance)
+  }
+
+  private nightText(night: SleepNight): string {
+    return `${this.hoursText(night.hours)} · ${this.monthDayLabel(this.dateFromKey(night.date))}`
+  }
+
+  private monthDayLabel(date: Date): string {
+    const months: string[] = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    return `${months[date.getMonth()]} ${date.getDate()}`
   }
 
   private clockText(totalMinutes: number): string {
@@ -393,8 +422,8 @@ struct Index {
           .letterSpacing(1)
           .fontColor(SunColor.pebble)
 
-        this.insightRow('BEST NIGHT', this.hoursText(this.bestHours()))
-        this.insightRow('ROUGHEST', this.hoursText(this.roughestHours()))
+        this.insightRow('BEST NIGHT', this.bestNightText())
+        this.insightRow('ROUGHEST', this.roughestNightText())
         this.insightRow('WEEKDAY AVG', this.hoursText(this.averageForDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])))
         this.insightRow('WEEKEND AVG', this.hoursText(this.averageForDays(['SAT', 'SUN'])))
         this.insightRow('AVG BEDTIME', this.clockText(this.averageBedtimeMinutes()))
