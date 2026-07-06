@@ -66,7 +66,15 @@ struct Index {
     }
     try {
       const parsed = JSON.parse(this.entriesJson) as RollEntry[]
-      this.entries = this.sortEntries(parsed.map((entry: RollEntry) => this.normalizeEntry(entry)))
+      const dates: string[] = []
+      this.entries = this.sortEntries(parsed.map((entry: RollEntry) => this.normalizeEntry(entry))
+        .filter((entry: RollEntry) => {
+          if (dates.includes(entry.date)) {
+            return false
+          }
+          dates.push(entry.date)
+          return true
+        }))
       this.saveEntries()
     } catch (_error) {
       this.entries = []
