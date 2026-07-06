@@ -100,16 +100,29 @@ struct Index {
   }
 
   private normalizeTasks(tasks: KeepTask[]): KeepTask[] {
-    return tasks.map((task: KeepTask) => {
-      const normalized: KeepTask = {
-        id: task.id,
+    const usedIds: number[] = []
+    let nextId = Math.max(1, this.nextId)
+    const normalized = tasks.map((task: KeepTask) => {
+      let id = task.id
+      if (!id || id <= 0 || usedIds.includes(id)) {
+        while (usedIds.includes(nextId)) {
+          nextId += 1
+        }
+        id = nextId
+      }
+      usedIds.push(id)
+      nextId = Math.max(nextId, id + 1)
+      const taskWithId: KeepTask = {
+        id,
         title: task.title,
         area: task.area,
         dueAt: this.dueAt(task),
         cadence: task.cadence
       }
-      return normalized
+      return taskWithId
     })
+    this.nextId = nextId
+    return normalized
   }
 
   private daysUntil(task: KeepTask): number {
