@@ -755,6 +755,17 @@ struct Index {
             .onClick(() => this.startCustomTimer())
         }
 
+        Button('Cancel')
+          .height(38)
+          .width('100%')
+          .borderRadius(SunRadius.pill)
+          .backgroundColor(SunColor.white)
+          .fontColor(SunColor.ink)
+          .fontSize(12)
+          .fontWeight(FontWeight.Bold)
+          .border({ width: 1, color: '#D8CFBD' })
+          .onClick(() => this.customOpen = false)
+
         if (!this.proUnlocked) {
           Button('Unlock Pro')
             .height(38)
