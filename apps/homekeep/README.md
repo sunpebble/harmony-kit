@@ -15,5 +15,5 @@ secondary settings or monetization.
 ohpm install
 cd entry && ohpm install
 cd ..
-DEVECO_SDK_HOME=/Users/shikun/Developer/freelance/sunpebble/HarmonyKit/.deveco-sdk/default hvigorw assembleApp --no-daemon
+DEVECO_SDK_HOME=/Users/shikun/Developer/freelance/sunpebble/harmony-kit/.deveco-sdk/default hvigorw assembleApp --no-daemon
 ```
