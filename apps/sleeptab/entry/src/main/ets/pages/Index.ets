@@ -227,7 +227,15 @@ struct Index {
     }
     try {
       const parsed = JSON.parse(this.nightsJson) as SleepNight[]
-      this.nights = this.sortNights(parsed.map((night: SleepNight, index: number) => this.normalizeNight(night, index, parsed.length)))
+      const dates: string[] = []
+      this.nights = this.sortNights(parsed.map((night: SleepNight, index: number) => this.normalizeNight(night, index, parsed.length))
+        .filter((night: SleepNight) => {
+          if (dates.includes(night.date)) {
+            return false
+          }
+          dates.push(night.date)
+          return true
+        }))
       this.saveNights()
     } catch (_error) {
       this.nights = []
