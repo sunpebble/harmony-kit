@@ -642,7 +642,7 @@ struct Index {
         .fontWeight(FontWeight.Bold)
         .fontColor(SunColor.ink)
 
-      Text('Tap a preset below to start a timer.\nIt lives on your Lock Screen and\nin the Dynamic Island.')
+      Text('Tap a preset below to start a timer.\nSimmer keeps it running with\nsystem timer alerts.')
         .fontSize(13)
         .fontColor(SunColor.pebble)
         .textAlign(TextAlign.Center)
@@ -902,7 +902,7 @@ struct Index {
 
         Column({ space: 14 }) {
           this.paywallFeature('⏱', 'Run every burner at once — unlimited timers')
-          this.paywallFeature('⚡', 'All of them grouped in the Dynamic Island')
+          this.paywallFeature('⚡', 'All of them tracked with system timer alerts')
           this.paywallFeature('★', 'Save your go-to timers as presets')
           this.paywallFeature('↺', 'Restart finished timers without rebuilding them')
           this.paywallFeature('♥', 'Support an indie developer')
