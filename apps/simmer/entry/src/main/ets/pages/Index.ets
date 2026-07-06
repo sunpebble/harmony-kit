@@ -256,7 +256,7 @@ struct Index {
     }
   }
 
-  private saveCustomPreset(): void {
+  private saveCustomPresetAndStart(): void {
     if (!this.proUnlocked) {
       this.showToast('Simmer Pro unlocks saved custom presets.')
       return
@@ -265,13 +265,17 @@ struct Index {
     if (seconds <= 0) {
       return
     }
+    const label = this.customLabel()
     this.savedPresets = [
-      ...this.savedPresets,
-      { id: this.nextPresetId, emoji: this.customEmoji, label: this.customLabel(), seconds }
+      { id: this.nextPresetId, emoji: this.customEmoji, label, seconds },
+      ...this.savedPresets
     ]
     this.nextPresetId += 1
     this.confirmingPresetId = -1
     this.saveSavedPresets()
+    if (this.startTimer(label, this.customEmoji, seconds)) {
+      this.customOpen = false
+    }
   }
 
   private removeSavedPreset(id: number): void {
@@ -616,7 +620,7 @@ struct Index {
 
         if (this.proUnlocked) {
           Row({ space: SunSpacing.sm }) {
-            Button('Save Preset')
+            Button('Save + Start')
               .height(44)
               .layoutWeight(1)
               .borderRadius(SunRadius.pill)
@@ -625,7 +629,7 @@ struct Index {
               .fontSize(13)
               .fontWeight(FontWeight.Bold)
               .border({ width: 1, color: '#D8CFBD' })
-              .onClick(() => this.saveCustomPreset())
+              .onClick(() => this.saveCustomPresetAndStart())
 
             Button('Start Custom')
               .height(44)
