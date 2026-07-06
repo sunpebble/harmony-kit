@@ -120,6 +120,27 @@ struct Index {
     this.saveTasks()
   }
 
+  private snoozeTask(id: number): void {
+    this.tasks = this.tasks.map((task: KeepTask) => {
+      if (task.id !== id) {
+        return task
+      }
+      return {
+        id: task.id,
+        title: task.title,
+        area: task.area,
+        dueIn: 7,
+        cadence: task.cadence
+      }
+    })
+    this.saveTasks()
+  }
+
+  private deleteTask(id: number): void {
+    this.tasks = this.tasks.filter((task: KeepTask) => task.id !== id)
+    this.saveTasks()
+  }
+
   private visibleTasks(): KeepTask[] {
     if (this.filter === 'All') {
       return this.tasks
@@ -212,12 +233,27 @@ struct Index {
               })
 
               if (task.dueIn <= 0) {
-                SunButton({
-                  label: 'Mark Done',
-                  role: SunButtonRole.Secondary,
-                  action: () => this.completeTask(task.id)
-                })
+                Row({ space: SunSpacing.sm }) {
+                  SunButton({
+                    label: 'Mark Done',
+                    role: SunButtonRole.Secondary,
+                    action: () => this.completeTask(task.id)
+                  })
+
+                  SunButton({
+                    label: 'Snooze 7d',
+                    role: SunButtonRole.Secondary,
+                    action: () => this.snoozeTask(task.id)
+                  })
+                }
+                .width('100%')
               }
+
+              SunButton({
+                label: 'Delete',
+                role: SunButtonRole.Danger,
+                action: () => this.deleteTask(task.id)
+              })
             }
             .width('100%')
           }, (task: KeepTask) => task.id.toString())
