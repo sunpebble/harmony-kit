@@ -92,6 +92,7 @@ struct Index {
   @State private medName: string = ''
   @State private medDose: string = ''
   @State private medTimes: string[] = ['08:00']
+  @State private editingMedKey: string = ''
   @State private medRevision: number = 0
   @State private symptoms: Symptom[] = []
   @State private symptomName: string = ''
@@ -345,31 +346,64 @@ struct Index {
     this.medRevision += 1
   }
 
+  private editMedication(med: Medication): void {
+    this.editingMedKey = this.medKey(med)
+    this.medName = med.name
+    this.medDose = med.dose
+    this.medTimes = this.medTimesFor(med)
+  }
+
+  private resetMedicationForm(): void {
+    this.medName = ''
+    this.medDose = ''
+    this.medTimes = ['08:00']
+    this.editingMedKey = ''
+  }
+
   private addMedication(): void {
     const name = this.medName.trim()
     if (name.length === 0) {
       this.showToast('Enter medication name first.')
       return
     }
-    this.meds = [
-      ...this.meds,
-      {
-        name,
-        dose: this.medDose.trim().length > 0 ? this.medDose.trim() : 'Dose',
-        times: this.medTimes,
-        takenSlots: []
+    const times = [...this.medTimes]
+    const nextMed: Medication = {
+      name,
+      dose: this.medDose.trim().length > 0 ? this.medDose.trim() : 'Dose',
+      times,
+      takenSlots: []
+    }
+    if (this.editingMedKey.length > 0) {
+      const index = this.meds.findIndex((med: Medication) => this.medKey(med) === this.editingMedKey)
+      if (index >= 0) {
+        const existing = this.meds[index]
+        const next = [...this.meds]
+        next[index] = {
+          name: nextMed.name,
+          dose: nextMed.dose,
+          times,
+          takenSlots: this.takenSlotsFor(existing).filter((time: string) => times.includes(time))
+        }
+        this.meds = next
+      } else {
+        this.meds = [...this.meds, nextMed]
       }
-    ]
-    this.medName = ''
-    this.medDose = ''
-    this.medTimes = ['08:00']
+    } else {
+      this.meds = [...this.meds, nextMed]
+    }
+    this.resetMedicationForm()
     this.saveMeds()
+    this.medRevision += 1
   }
 
   private deleteMedication(target: Medication): void {
     const targetKey = this.medKey(target)
     this.meds = this.meds.filter((med: Medication) => this.medKey(med) !== targetKey)
+    if (this.editingMedKey === targetKey) {
+      this.resetMedicationForm()
+    }
     this.saveMeds()
+    this.medRevision += 1
   }
 
   private logSymptom(): void {
@@ -929,7 +963,7 @@ struct Index {
     Column({ space: SunSpacing.md }) {
       SunCard() {
         Column({ space: SunSpacing.md }) {
-          Text('NEW MEDICATION')
+          Text(this.editingMedKey.length > 0 ? 'EDIT MEDICATION' : 'NEW MEDICATION')
             .fontSize(10)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1.4)
@@ -964,10 +998,18 @@ struct Index {
           .width('100%')
 
           SunButton({
-            label: 'Add Medication',
+            label: this.editingMedKey.length > 0 ? 'Save Medication' : 'Add Medication',
             role: SunButtonRole.Secondary,
             action: () => this.addMedication()
           })
+
+          if (this.editingMedKey.length > 0) {
+            SunButton({
+              label: 'Cancel Edit',
+              role: SunButtonRole.Secondary,
+              action: () => this.resetMedicationForm()
+            })
+          }
         }
         .width('100%')
         .alignItems(HorizontalAlign.Start)
@@ -985,7 +1027,8 @@ struct Index {
             Column({ space: SunSpacing.sm }) {
               SunListRow({
                 title: med.name,
-                caption: `${med.dose} · ${this.timesLabel(med)}`
+                caption: `${med.dose} · ${this.timesLabel(med)}`,
+                action: () => this.editMedication(med)
               })
 
               ForEach(this.medTimesFor(med), (time: string) => {
