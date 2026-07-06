@@ -1744,9 +1744,17 @@ struct Index {
           }, (med: Medication) => `${this.medKey(med)}-${this.medRevision}`)
 
           if (this.activeMeds().length === 0) {
-            Text('No medications set up.')
-              .fontSize(SunType.body)
-              .fontColor(SunColor.pebble)
+            Column({ space: SunSpacing.xs }) {
+              Text('No medications')
+                .fontSize(SunType.body)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(SunColor.ink)
+
+              Text('Add one to get reminders and a daily checklist.')
+                .fontSize(SunType.caption)
+                .fontColor(SunColor.pebble)
+            }
+            .width('100%')
           }
         }
         .width('100%')
