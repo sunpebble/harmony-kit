@@ -13,6 +13,7 @@ import { appProfile } from '../AppProfile'
 
 interface Reading {
   id: number
+  date?: string
   kind: string
   value: string
   unit: string
@@ -227,6 +228,7 @@ struct Index {
     this.readings = [
       {
         id: this.nextId,
+        date: new Date().toISOString(),
         kind: this.selectedKind,
         value: this.selectedKind === 'Blood pressure'
           ? `${this.cleanNumber(primary)}/${this.cleanNumber(secondary)}`
@@ -621,14 +623,53 @@ struct Index {
     ].join('\n\n')
   }
 
+  private csvKind(kind: string): string {
+    if (kind === 'Blood pressure') {
+      return 'bloodPressure'
+    }
+    if (kind === 'Blood glucose') {
+      return 'glucose'
+    }
+    if (kind === 'Heart rate') {
+      return 'heartRate'
+    }
+    if (kind === 'Blood oxygen') {
+      return 'oxygen'
+    }
+    return kind.toLowerCase()
+  }
+
+  private csvValue(value: string): string {
+    if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
+      return `"${value.replaceAll('"', '""')}"`
+    }
+    return value
+  }
+
+  private readingPrimary(reading: Reading): string {
+    return reading.value.split('/')[0]
+  }
+
+  private readingSecondary(reading: Reading): string {
+    return reading.value.includes('/') ? reading.value.split('/')[1] : ''
+  }
+
+  private readingNote(reading: Reading): string {
+    return reading.context === 'Just now' ? '' : reading.context
+  }
+
   private csvPreview(): string {
     const readingRows = this.readings.map((reading: Reading) => {
-      return `${reading.kind},${reading.value},${reading.unit}`
+      return [
+        reading.date ? reading.date : '',
+        this.csvKind(reading.kind),
+        this.readingPrimary(reading),
+        this.readingSecondary(reading),
+        '',
+        this.csvValue(this.readingNote(reading))
+      ].join(',')
     })
-    const symptomRows = this.symptoms.map((symptom: Symptom) => {
-      return `Symptom,${symptom.name},severity ${symptom.severity}`
-    })
-    return [...readingRows, ...symptomRows].join('\n')
+    return ['date,kind,value,secondary,mealtime,note', ...readingRows].join('\n')
   }
 
   private trendLimit(): number {
