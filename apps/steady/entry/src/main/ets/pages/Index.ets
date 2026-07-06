@@ -8,6 +8,7 @@ import {
   SunToolShell,
   SunType
 } from 'sunpebble_ui'
+import { pasteboard } from '@kit.BasicServicesKit'
 import { appProfile } from '../AppProfile'
 
 interface Reading {
@@ -313,7 +314,21 @@ struct Index {
       this.showProToast()
       return
     }
-    this.showToast('CSV preview ready below.')
+    this.copyText('CSV', this.csvPreview())
+  }
+
+  private copyDoctorReport(): void {
+    this.copyText('Doctor report', this.doctorReportText())
+  }
+
+  private async copyText(label: string, text: string): Promise<void> {
+    try {
+      const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, text)
+      await pasteboard.getSystemPasteboard().setData(data)
+      this.showToast(`${label} copied.`)
+    } catch (_error) {
+      this.showToast('Copy failed.')
+    }
   }
 
   private medTimesFor(med: Medication): string[] {
@@ -1190,6 +1205,14 @@ struct Index {
               .fontSize(12)
               .fontColor(SunColor.ink)
               .lineHeight(18)
+
+            SunButton({
+              label: 'Copy Doctor Report',
+              role: SunButtonRole.Secondary,
+              action: () => {
+                this.copyDoctorReport()
+              }
+            })
           }
 
           SunButton({
