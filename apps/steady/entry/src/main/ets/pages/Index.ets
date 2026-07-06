@@ -817,6 +817,10 @@ struct Index {
     return `${this.dateLabel(time)} ${this.pad(date.getHours())}:${this.pad(date.getMinutes())}`
   }
 
+  private reportSymptomDateLabel(time: number): string {
+    return new Date(time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
   private readingDate(): Date {
     return this.draftReadingAt > 0 ? new Date(this.draftReadingAt) : new Date()
   }
@@ -1113,7 +1117,7 @@ struct Index {
     }
     return symptoms.map((symptom: Symptom) => {
       const note = symptom.context.trim()
-      return `${this.dateLabel(this.dateTime(symptom.date))} - ${symptom.name} (${symptom.severity}/3)${note.length > 0 ? `: ${note}` : ''}`
+      return `${this.reportSymptomDateLabel(this.dateTime(symptom.date))} - ${symptom.name} (${symptom.severity}/3)${note.length > 0 ? `: ${note}` : ''}`
     }).join('\n')
   }
 
