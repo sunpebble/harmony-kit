@@ -199,6 +199,22 @@ struct Index {
     return this.entries.filter((entry: RollEntry) => entry.month === month)
   }
 
+  private memories(): RollEntry[] {
+    const active = this.dateFromKey(this.activeDate())
+    return this.entries.filter((entry: RollEntry) => {
+      if (entry.date === this.activeDate()) {
+        return false
+      }
+      const date = this.dateFromKey(entry.date)
+      return date.getTime() < active.getTime() && date.getMonth() === active.getMonth() && date.getDate() === active.getDate()
+    }).sort((a: RollEntry, b: RollEntry) => b.date.localeCompare(a.date))
+  }
+
+  private memoryAge(entry: RollEntry): string {
+    const years = Math.max(1, this.dateFromKey(this.activeDate()).getFullYear() - this.dateFromKey(entry.date).getFullYear())
+    return years === 1 ? '1 YR AGO' : `${years} YRS AGO`
+  }
+
   private dateKey(date: Date): string {
     return `${date.getFullYear()}-${this.pad(date.getMonth() + 1)}-${this.pad(date.getDate())}`
   }
@@ -324,6 +340,39 @@ struct Index {
         .borderRadius(8)
         .border({ width: 1, color: '#C8BDAA' })
         .onChange((value: string) => this.draftLine = value)
+
+      if (this.memories().length > 0) {
+        Column({ space: SunSpacing.sm }) {
+          Text('ON THIS DAY')
+            .fontSize(10)
+            .fontWeight(FontWeight.Bold)
+            .letterSpacing(1.5)
+            .fontColor(SunColor.pebble)
+
+          ForEach(this.memories(), (memory: RollEntry) => {
+            Row({ space: SunSpacing.sm }) {
+              Text(this.memoryAge(memory))
+                .fontSize(10)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(SunColor.pebble)
+                .width(72)
+
+              Text(memory.mood)
+                .fontSize(13)
+
+              Text(memory.line.length === 0 ? '-' : memory.line)
+                .fontSize(12)
+                .fontColor(SunColor.ink)
+                .layoutWeight(1)
+                .maxLines(2)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+            }
+            .width('100%')
+          }, (memory: RollEntry) => memory.date)
+        }
+        .width('100%')
+        .padding({ top: 4, bottom: 4 })
+      }
 
       Row({ space: SunSpacing.md }) {
         SunButton({
