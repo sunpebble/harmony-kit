@@ -550,7 +550,7 @@ struct Index {
         .fontWeight(FontWeight.Bold)
         .fontColor(SunColor.ink)
 
-      Text('Tap a preset below to start a timer.\nKeep it open while you cook.')
+      Text('Tap a preset below to start a timer.\nIt lives on your Lock Screen and\nin the Dynamic Island.')
         .fontSize(13)
         .fontColor(SunColor.pebble)
         .textAlign(TextAlign.Center)
@@ -818,7 +818,7 @@ struct Index {
   }
 
   build() {
-    Column() {
+    Stack({ alignContent: Alignment.TopEnd }) {
       SunToolShell({
         manifest: appProfile,
         onPrimaryAction: () => this.startCustom()
@@ -835,6 +835,19 @@ struct Index {
         }
         .width('100%')
         .height('100%')
+      }
+
+      if (!this.proUnlocked) {
+        Button('PRO')
+          .height(48)
+          .padding({ left: SunSpacing.lg, right: SunSpacing.lg })
+          .borderRadius(SunRadius.pill)
+          .backgroundColor(SunColor.sun)
+          .fontColor(SunColor.ink)
+          .fontSize(SunType.body)
+          .fontWeight(FontWeight.Medium)
+          .margin({ top: SunSpacing.xl, right: SunSpacing.xl })
+          .onClick(() => this.unlockPro())
       }
     }
     .width('100%')
