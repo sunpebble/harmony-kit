@@ -9,6 +9,9 @@ import {
   SunType
 } from 'sunpebble_ui'
 import { pasteboard } from '@kit.BasicServicesKit'
+import { common } from '@kit.AbilityKit'
+import { reminderAgentManager } from '@kit.BackgroundTasksKit'
+import { notificationManager } from '@kit.NotificationKit'
 import { appProfile } from '../AppProfile'
 
 interface Reading {
@@ -693,8 +696,89 @@ struct Index {
     return value < 10 ? `0${value}` : `${value}`
   }
 
+  private enableMeasurementReminder(): void {
+    this.scheduleMeasurementReminder()
+  }
+
+  private async scheduleMeasurementReminder(): Promise<void> {
+    try {
+      if (!await this.requestNotificationAccess()) {
+        this.reminderEnabled = false
+        this.showToast('Enable notifications to use measurement reminders.')
+        return
+      }
+      await reminderAgentManager.cancelAllReminders()
+      const request: reminderAgentManager.ReminderRequestAlarm = {
+        reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_ALARM,
+        hour: this.reminderHour,
+        minute: this.reminderMinute,
+        daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
+        title: 'Steady',
+        content: 'Measurement time: take a minute to log your readings.',
+        expiredContent: 'Steady reminder missed.',
+        notificationId: 2001,
+        tapDismissed: true
+      }
+      await reminderAgentManager.publishReminder(request)
+      this.reminderEnabled = true
+      this.showToast(`Daily reminder set for ${this.reminderLabel()}.`)
+    } catch (_error) {
+      this.reminderEnabled = false
+      this.showToast('Enable notifications to use measurement reminders.')
+    }
+  }
+
+  private disableMeasurementReminder(): void {
+    this.cancelMeasurementReminder()
+  }
+
+  private async cancelMeasurementReminder(): Promise<void> {
+    try {
+      await reminderAgentManager.cancelAllReminders()
+    } catch (_error) {
+      // ponytail: stale reminder ids should not block the visible off state.
+    }
+    this.reminderEnabled = false
+    this.showToast('Daily reminder off.')
+  }
+
   private testMeasurementReminder(): void {
-    this.showToast('Measurement time: take a minute to log your readings.')
+    this.scheduleTestMeasurementReminder()
+  }
+
+  private async scheduleTestMeasurementReminder(): Promise<void> {
+    try {
+      if (!await this.requestNotificationAccess()) {
+        this.showToast('Enable notifications to test reminders.')
+        return
+      }
+      const request: reminderAgentManager.ReminderRequestTimer = {
+        reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_TIMER,
+        triggerTimeInSeconds: 3,
+        title: 'Steady',
+        content: 'Measurement time: take a minute to log your readings.',
+        expiredContent: 'Steady reminder missed.',
+        notificationId: 2002,
+        tapDismissed: true
+      }
+      await reminderAgentManager.publishReminder(request)
+      this.showToast('Test reminder scheduled.')
+    } catch (_error) {
+      this.showToast('Enable notifications to test reminders.')
+    }
+  }
+
+  private async requestNotificationAccess(): Promise<boolean> {
+    const context = this.getUIContext().getHostContext()
+    if (!context) {
+      return false
+    }
+    try {
+      await notificationManager.requestEnableNotification(context as common.UIAbilityContext)
+      return true
+    } catch (_error) {
+      return false
+    }
   }
 
   @Builder
@@ -803,6 +887,9 @@ struct Index {
       .onClick(() => {
         this.reminderHour = hour
         this.reminderMinute = minute
+        if (this.reminderEnabled) {
+          this.scheduleMeasurementReminder()
+        }
       })
   }
 
@@ -1310,7 +1397,13 @@ struct Index {
             .fontSize(13)
             .fontWeight(FontWeight.Bold)
             .border({ width: 1, color: SunColor.border })
-            .onClick(() => this.reminderEnabled = !this.reminderEnabled)
+            .onClick(() => {
+              if (this.reminderEnabled) {
+                this.disableMeasurementReminder()
+              } else {
+                this.enableMeasurementReminder()
+              }
+            })
 
           Row({ space: SunSpacing.sm }) {
             this.reminderTimeButton('08:00', 8, 0)

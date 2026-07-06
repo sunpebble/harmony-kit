@@ -6,6 +6,9 @@ import {
   SunToolShell
 } from 'sunpebble_ui'
 import { pasteboard } from '@kit.BasicServicesKit'
+import { common } from '@kit.AbilityKit'
+import { reminderAgentManager } from '@kit.BackgroundTasksKit'
+import { notificationManager } from '@kit.NotificationKit'
 import { appProfile } from '../AppProfile'
 
 interface RollEntry {
@@ -330,8 +333,89 @@ struct Index {
     return value < 10 ? `0${value}` : `${value}`
   }
 
+  private enableReminder(): void {
+    this.scheduleDailyReminder()
+  }
+
+  private async scheduleDailyReminder(): Promise<void> {
+    try {
+      if (!await this.requestNotificationAccess()) {
+        this.reminderEnabled = false
+        this.showToast('Enable notifications to use daily reminders.')
+        return
+      }
+      await reminderAgentManager.cancelAllReminders()
+      const request: reminderAgentManager.ReminderRequestAlarm = {
+        reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_ALARM,
+        hour: this.reminderHour,
+        minute: this.reminderMinute,
+        daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
+        title: 'Dayroll',
+        content: 'One line about today?',
+        expiredContent: 'Dayroll reminder missed.',
+        notificationId: 1001,
+        tapDismissed: true
+      }
+      await reminderAgentManager.publishReminder(request)
+      this.reminderEnabled = true
+      this.showToast(`Daily reminder set for ${this.reminderTimeLabel()}.`)
+    } catch (_error) {
+      this.reminderEnabled = false
+      this.showToast('Enable notifications to use daily reminders.')
+    }
+  }
+
+  private disableReminder(): void {
+    this.cancelDailyReminder()
+  }
+
+  private async cancelDailyReminder(): Promise<void> {
+    try {
+      await reminderAgentManager.cancelAllReminders()
+    } catch (_error) {
+      // ponytail: stale reminder ids should not block the visible off state.
+    }
+    this.reminderEnabled = false
+    this.showToast('Daily reminder off.')
+  }
+
   private testReminder(): void {
-    this.showToast('One line about today?')
+    this.scheduleTestReminder()
+  }
+
+  private async scheduleTestReminder(): Promise<void> {
+    try {
+      if (!await this.requestNotificationAccess()) {
+        this.showToast('Enable notifications to test reminders.')
+        return
+      }
+      const request: reminderAgentManager.ReminderRequestTimer = {
+        reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_TIMER,
+        triggerTimeInSeconds: 3,
+        title: 'Dayroll',
+        content: 'One line about today?',
+        expiredContent: 'Dayroll reminder missed.',
+        notificationId: 1002,
+        tapDismissed: true
+      }
+      await reminderAgentManager.publishReminder(request)
+      this.showToast('Test reminder scheduled.')
+    } catch (_error) {
+      this.showToast('Enable notifications to test reminders.')
+    }
+  }
+
+  private async requestNotificationAccess(): Promise<boolean> {
+    const context = this.getUIContext().getHostContext()
+    if (!context) {
+      return false
+    }
+    try {
+      await notificationManager.requestEnableNotification(context as common.UIAbilityContext)
+      return true
+    } catch (_error) {
+      return false
+    }
   }
 
   private showToast(message: string): void {
@@ -353,6 +437,9 @@ struct Index {
     const total = (this.reminderHour * 60 + this.reminderMinute + delta + 1440) % 1440
     this.reminderHour = Math.floor(total / 60)
     this.reminderMinute = total % 60
+    if (this.reminderEnabled) {
+      this.scheduleDailyReminder()
+    }
   }
 
   private unlockPro(): void {
@@ -780,7 +867,13 @@ struct Index {
           .fontColor(this.reminderEnabled ? SunColor.cream : SunColor.ink)
           .fontSize(13)
           .fontWeight(FontWeight.Bold)
-          .onClick(() => this.reminderEnabled = !this.reminderEnabled)
+          .onClick(() => {
+            if (this.reminderEnabled) {
+              this.disableReminder()
+            } else {
+              this.enableReminder()
+            }
+          })
 
         Text(this.reminderTimeLabel())
           .fontSize(24)
