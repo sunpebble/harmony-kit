@@ -745,7 +745,7 @@ struct Index {
         return date >= start && date <= end
       }).length
     }, 0)
-    return `${taken} of ${expected} scheduled doses logged`
+    return `${taken} of ${expected} scheduled doses logged (${Math.round(taken / expected * 100)}%)`
   }
 
   private symptomReportLines(): string {
