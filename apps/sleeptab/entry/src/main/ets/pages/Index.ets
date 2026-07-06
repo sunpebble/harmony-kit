@@ -585,7 +585,7 @@ struct Index {
   }
 
   build() {
-    Column() {
+    Stack({ alignContent: Alignment.TopEnd }) {
       SunToolShell({
         manifest: appProfile,
         onPrimaryAction: () => this.addNight()
@@ -616,6 +616,19 @@ struct Index {
         }
         .width('100%')
         .height('100%')
+      }
+
+      if (!this.proUnlocked) {
+        Button('PRO')
+          .height(48)
+          .padding({ left: SunSpacing.lg, right: SunSpacing.lg })
+          .borderRadius(999)
+          .backgroundColor('#9B8CFF')
+          .fontColor(SunColor.night)
+          .fontSize(SunType.body)
+          .fontWeight(FontWeight.Medium)
+          .margin({ top: SunSpacing.xl, right: SunSpacing.xl })
+          .onClick(() => this.unlockPro())
       }
     }
     .width('100%')
