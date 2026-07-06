@@ -10,6 +10,7 @@ import {
 import { appProfile } from '../AppProfile'
 
 interface SleepNight {
+  date: string
   day: string
   hours: number
   bedtime: string
@@ -17,6 +18,7 @@ interface SleepNight {
 
 PersistentStorage.persistProp('sleeptab.goalHours.v1', 8)
 PersistentStorage.persistProp('sleeptab.rangeNights.v1', 7)
+PersistentStorage.persistProp('sleeptab.draftHours.v1', 7.5)
 PersistentStorage.persistProp('sleeptab.nights.v1', '')
 
 @Entry
@@ -24,6 +26,7 @@ PersistentStorage.persistProp('sleeptab.nights.v1', '')
 struct Index {
   @StorageLink('sleeptab.goalHours.v1') private goalHours: number = 8
   @StorageLink('sleeptab.rangeNights.v1') private rangeNights: number = 7
+  @StorageLink('sleeptab.draftHours.v1') private draftHours: number = 7.5
   @StorageLink('sleeptab.nights.v1') private nightsJson: string = ''
   @State private nights: SleepNight[] = []
 
@@ -32,15 +35,107 @@ struct Index {
   }
 
   private defaultNights(): SleepNight[] {
-    return [
-    { day: 'MON', hours: 6.7, bedtime: '23:40' },
-    { day: 'TUE', hours: 7.2, bedtime: '23:20' },
-    { day: 'WED', hours: 6.3, bedtime: '00:10' },
-    { day: 'THU', hours: 8.1, bedtime: '22:55' },
-    { day: 'FRI', hours: 7.4, bedtime: '23:35' },
-    { day: 'SAT', hours: 8.8, bedtime: '00:30' },
-    { day: 'SUN', hours: 7.1, bedtime: '23:50' }
-    ]
+    const samples: number[] = [6.7, 7.2, 6.3, 8.1, 7.4, 8.8, 7.1]
+    const bedtimes: string[] = ['23:40', '23:20', '00:10', '22:55', '23:35', '00:30', '23:50']
+    const today = new Date()
+    return samples.map((hours: number, index: number) => {
+      const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (samples.length - index))
+      const night: SleepNight = { date: this.dateKey(date), day: this.dayLabel(date), hours, bedtime: bedtimes[index] }
+      return night
+    })
+  }
+
+  private normalizeNight(night: SleepNight, index: number, total: number): SleepNight {
+    const fallback = new Date()
+    fallback.setDate(fallback.getDate() - (total - index))
+    const date = night.date ? night.date : this.dateKey(fallback)
+    return {
+      date,
+      day: this.dayLabel(this.dateFromKey(date)),
+      hours: night.hours,
+      bedtime: night.bedtime
+    }
+  }
+
+  private sortNights(nights: SleepNight[]): SleepNight[] {
+    return [...nights].sort((a: SleepNight, b: SleepNight) => a.date.localeCompare(b.date))
+  }
+
+  private dateKey(date: Date): string {
+    return `${date.getFullYear()}-${this.pad(date.getMonth() + 1)}-${this.pad(date.getDate())}`
+  }
+
+  private dateFromKey(key: string): Date {
+    const parts = key.split('-')
+    if (parts.length !== 3) {
+      return new Date()
+    }
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+  }
+
+  private dayLabel(date: Date): string {
+    const days: string[] = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+    return days[date.getDay()]
+  }
+
+  private adjustDraftHours(delta: number): void {
+    this.draftHours = Math.max(0.5, Math.min(14, Math.round((this.draftHours + delta) * 4) / 4))
+  }
+
+  private addNight(): void {
+    const today = new Date()
+    const date = this.dateKey(today)
+    const night: SleepNight = {
+      date,
+      day: this.dayLabel(today),
+      hours: this.draftHours,
+      bedtime: '23:30'
+    }
+    this.nights = this.sortNights([
+      ...this.nights.filter((item: SleepNight) => item.date !== date),
+      night
+    ])
+    this.saveNights()
+  }
+
+  @Builder
+  private manualEntryCard() {
+    SunCard() {
+      Row({ space: SunSpacing.md }) {
+        Column({ space: SunSpacing.xs }) {
+          Text('TONIGHT')
+            .fontSize(11)
+            .fontWeight(FontWeight.Bold)
+            .letterSpacing(1.5)
+            .fontColor(SunColor.pebble)
+          Text(this.hoursText(this.draftHours))
+            .fontSize(22)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(SunColor.ink)
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+
+        Button('-15m')
+          .height(38)
+          .padding({ left: 12, right: 12 })
+          .borderRadius(999)
+          .backgroundColor('#24283A')
+          .fontColor(SunColor.cream)
+          .fontSize(12)
+          .onClick(() => this.adjustDraftHours(-0.25))
+
+        Button('+15m')
+          .height(38)
+          .padding({ left: 12, right: 12 })
+          .borderRadius(999)
+          .backgroundColor('#9B8CFF')
+          .fontColor(SunColor.night)
+          .fontSize(12)
+          .onClick(() => this.adjustDraftHours(0.25))
+      }
+      .width('100%')
+    }
   }
 
   private loadNights(): void {
@@ -51,7 +146,10 @@ struct Index {
     }
     try {
       const parsed = JSON.parse(this.nightsJson) as SleepNight[]
-      this.nights = parsed.length > 0 ? parsed : this.defaultNights()
+      this.nights = parsed.length > 0
+        ? this.sortNights(parsed.map((night: SleepNight, index: number) => this.normalizeNight(night, index, parsed.length)))
+        : this.defaultNights()
+      this.saveNights()
     } catch (_error) {
       this.nights = this.defaultNights()
       this.saveNights()
@@ -60,14 +158,6 @@ struct Index {
 
   private saveNights(): void {
     this.nightsJson = JSON.stringify(this.nights)
-  }
-
-  private addNight(): void {
-    const labels: string[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
-    const index = this.nights.length % labels.length
-    const hours = [7.6, 6.9, 8.2, 7.3][this.nights.length % 4]
-    this.nights = [...this.nights, { day: labels[index], hours, bedtime: '23:30' }]
-    this.saveNights()
   }
 
   private shownNights(): SleepNight[] {
@@ -79,9 +169,9 @@ struct Index {
   }
 
   private debtHours(): number {
-    return this.recentNights(14).reduce((total: number, night: SleepNight) => {
-      return total + Math.max(0, this.goalHours - night.hours)
-    }, 0)
+    return Math.max(0, this.recentNights(14).reduce((total: number, night: SleepNight) => {
+      return total + (this.goalHours - night.hours)
+    }, 0))
   }
 
   private averageHours(count: number): number {
@@ -223,7 +313,7 @@ struct Index {
             .layoutWeight(1)
             .height(168)
             .justifyContent(FlexAlign.End)
-          }, (night: SleepNight) => `${night.day}-${night.hours}-${night.bedtime}`)
+          }, (night: SleepNight) => `${night.date}-${night.hours}-${night.bedtime}`)
         }
         .height(176)
       }
@@ -353,9 +443,10 @@ struct Index {
             this.weekCard()
             this.insightsCard()
             this.goalCard()
+            this.manualEntryCard()
 
             SunButton({
-              label: 'Add tonight',
+              label: 'Save tonight',
               role: SunButtonRole.Secondary,
               action: () => this.addNight()
             })
