@@ -1099,6 +1099,9 @@ struct Index {
     const start = this.dateLabel(this.reportStartTime())
     const end = this.dateLabel(this.reportEndTime())
     const expected = activeMeds.reduce((total: number, med: Medication) => total + this.medTimesFor(med).length * this.reportDays(), 0)
+    if (expected === 0) {
+      return ''
+    }
     const taken = this.meds.reduce((total: number, med: Medication) => {
       return total + this.takenLogFor(med).filter((key: string) => {
         const date = key.split('|')[0]
