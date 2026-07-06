@@ -56,6 +56,7 @@ struct Index {
   @State private confirmingDelete: boolean = false
   @State private composerOpen: boolean = false
   @State private selectedMonth: string = ''
+  @State private paywallOpen: boolean = false
   @State private entries: RollEntry[] = []
 
   aboutToAppear(): void {
@@ -483,13 +484,18 @@ struct Index {
 
   private unlockPro(): void {
     this.proUnlocked = true
+    this.paywallOpen = false
     this.showToast('Dayroll Pro unlocked on this device.')
+  }
+
+  private showPaywall(): void {
+    this.paywallOpen = true
   }
 
   private toggleStats(): void {
     if (!this.proUnlocked) {
       this.statsOpen = false
-      this.showToast('Dayroll Pro unlocks stats and yearly review.')
+      this.showPaywall()
       return
     }
     this.statsOpen = !this.statsOpen
@@ -498,7 +504,7 @@ struct Index {
   private toggleExport(): void {
     if (!this.proUnlocked) {
       this.exportOpen = false
-      this.showToast('Dayroll Pro unlocks text, Markdown, and CSV export.')
+      this.showPaywall()
       return
     }
     this.exportOpen = !this.exportOpen
@@ -955,6 +961,74 @@ struct Index {
   }
 
   @Builder
+  private paywallFeature(icon: string, text: string) {
+    Row({ space: SunSpacing.md }) {
+      Text(icon)
+        .fontSize(18)
+        .width(24)
+        .textAlign(TextAlign.Center)
+      Text(text)
+        .fontSize(14)
+        .fontColor(SunColor.ink)
+    }
+    .width('100%')
+    .alignItems(VerticalAlign.Center)
+  }
+
+  @Builder
+  private paywallPanel() {
+    if (this.paywallOpen && !this.proUnlocked) {
+      Column({ space: SunSpacing.lg }) {
+        Text('DAYROLL PRO')
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(4)
+          .fontColor(SunColor.ink)
+          .width('100%')
+          .textAlign(TextAlign.Center)
+
+        this.perforation()
+
+        Column({ space: 14 }) {
+          this.paywallFeature('↗', 'Export your tape — text, Markdown or CSV')
+          this.paywallFeature('▥', 'Streaks, mood trends & yearly review')
+          this.paywallFeature('↺', 'On This Day — see past years while you write')
+          this.paywallFeature('♥', 'Support an indie developer')
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Start)
+
+        this.perforation()
+
+        Text('PAY ONCE. YOURS FOREVER.\nNO SUBSCRIPTION. NO ACCOUNT.')
+          .fontSize(11)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(SunColor.pebble)
+          .lineHeight(17)
+          .width('100%')
+          .textAlign(TextAlign.Center)
+
+        SunButton({
+          label: 'UNLOCK FOR $1.99',
+          action: () => this.unlockPro()
+        })
+
+        Button('Restore Purchase')
+          .height(36)
+          .backgroundColor(Color.Transparent)
+          .fontSize(12)
+          .fontColor(SunColor.pebble)
+          .onClick(() => this.unlockPro())
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Center)
+      .padding(SunSpacing.lg)
+      .backgroundColor('#FFFDF7')
+      .border({ width: 1, color: '#C8BDAA' })
+    }
+  }
+
+  @Builder
   private reminderPanel() {
     if (this.reminderOpen) {
       Column({ space: SunSpacing.md }) {
@@ -1046,9 +1120,10 @@ struct Index {
             SunButton({
               label: 'Unlock Pro',
               role: SunButtonRole.Secondary,
-              action: () => this.unlockPro()
+              action: () => this.showPaywall()
             })
           }
+          this.paywallPanel()
 
           SunButton({
             label: this.statsOpen ? 'Hide Stats' : 'Stats',
