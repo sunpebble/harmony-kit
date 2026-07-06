@@ -261,12 +261,13 @@ struct Index {
   }
 
   private normalizeSymptom(symptom: Symptom): Symptom {
+    const context = symptom.context === 'Just now' ? '' : symptom.context
     return {
       id: this.normalizeEntityId(symptom.id),
       date: symptom.date ? symptom.date : new Date().toISOString(),
       name: symptom.name,
       severity: symptom.severity,
-      context: symptom.context
+      context
     }
   }
 
@@ -637,7 +638,7 @@ struct Index {
         date: new Date().toISOString(),
         name,
         severity: this.symptomSeverity,
-        context: this.symptomNote.trim().length > 0 ? this.symptomNote.trim() : 'Just now'
+        context: this.symptomNote.trim()
       },
       ...this.symptoms
     ]
@@ -905,7 +906,8 @@ struct Index {
       return ''
     }
     return symptoms.map((symptom: Symptom) => {
-      return `${this.dateLabel(this.dateTime(symptom.date))} - ${symptom.name} (${symptom.severity}/3) · ${symptom.context}`
+      const note = symptom.context.trim()
+      return `${this.dateLabel(this.dateTime(symptom.date))} - ${symptom.name} (${symptom.severity}/3)${note.length > 0 ? `: ${note}` : ''}`
     }).join('\n')
   }
 
@@ -1532,7 +1534,7 @@ struct Index {
               Column({ space: SunSpacing.xs }) {
                 SunListRow({
                   title: `${symptom.name} · ${String('•').repeat(symptom.severity)}`,
-                  caption: `Symptom · ${symptom.context}`
+                  caption: symptom.context.trim().length > 0 ? `Symptom · ${symptom.context.trim()}` : 'Symptom'
                 })
 
                 if (this.confirmingTimelineDeleteKey === this.symptomDeleteKey(symptom)) {
