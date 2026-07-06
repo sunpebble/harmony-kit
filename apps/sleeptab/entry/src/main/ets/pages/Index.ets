@@ -411,6 +411,14 @@ struct Index {
     return `${Math.floor(total / 60)}h ${this.pad(total % 60)}m`
   }
 
+  private sleepBarHeight(hours: number): number {
+    return 34 + Math.min(118, Math.round(hours / this.goalHours * 92))
+  }
+
+  private goalRuleBottom(): number {
+    return this.sleepBarHeight(this.goalHours) + 18
+  }
+
   private pad(value: number): string {
     return value < 10 ? `0${value}` : `${value}`
   }
@@ -520,25 +528,44 @@ struct Index {
           this.rangeButton('90N', 90)
         }
 
-        Row({ space: SunSpacing.sm }) {
-          ForEach(this.shownNights(), (night: SleepNight) => {
-            Column({ space: SunSpacing.xs }) {
-              Blank()
-                .width('100%')
-                .height(34 + Math.min(118, Math.round(night.hours / this.goalHours * 92)))
-                .backgroundColor(night.hours >= this.goalHours ? '#F7B733' : '#8C6925')
-                .borderRadius(5)
+        Stack({ alignContent: Alignment.Bottom }) {
+          Row({ space: SunSpacing.sm }) {
+            ForEach(this.shownNights(), (night: SleepNight) => {
+              Column({ space: SunSpacing.xs }) {
+                Blank()
+                  .width('100%')
+                  .height(this.sleepBarHeight(night.hours))
+                  .backgroundColor(night.hours >= this.goalHours ? '#F7B733' : '#8C6925')
+                  .borderRadius(5)
 
-              Text(night.day)
-                .fontSize(9)
-                .fontWeight(FontWeight.Bold)
-                .fontColor('#BFB8AA')
-            }
-            .layoutWeight(1)
-            .height(168)
-            .justifyContent(FlexAlign.End)
-          }, (night: SleepNight) => `${night.date}-${night.hours}-${night.bedtime}`)
+                Text(night.day)
+                  .fontSize(9)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor('#BFB8AA')
+              }
+              .layoutWeight(1)
+              .height(168)
+              .justifyContent(FlexAlign.End)
+            }, (night: SleepNight) => `${night.date}-${night.hours}-${night.bedtime}`)
+          }
+          .height(176)
+
+          Row({ space: SunSpacing.xs }) {
+            Blank()
+              .height(1)
+              .layoutWeight(1)
+              .backgroundColor('#BFB8AA')
+
+            Text(`GOAL ${this.hoursText(this.goalHours)}`)
+              .fontSize(9)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#BFB8AA')
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .margin({ bottom: this.goalRuleBottom() })
         }
+        .width('100%')
         .height(176)
       }
     }
