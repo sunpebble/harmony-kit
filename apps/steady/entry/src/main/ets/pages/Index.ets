@@ -22,6 +22,7 @@ interface Reading {
   kind: string
   value: string
   unit: string
+  mealtime?: string
   context: string
 }
 
@@ -53,6 +54,7 @@ interface ReadingMemory {
 PersistentStorage.persistProp('steady.tab.v1', 'Timeline')
 PersistentStorage.persistProp('steady.nextId.v1', 1)
 PersistentStorage.persistProp('steady.selectedKind.v1', 'Blood pressure')
+PersistentStorage.persistProp('steady.selectedMealtime.v1', '')
 PersistentStorage.persistProp('steady.draftPrimary.v1', '')
 PersistentStorage.persistProp('steady.draftSecondary.v1', '')
 PersistentStorage.persistProp('steady.draftNote.v1', '')
@@ -79,6 +81,7 @@ struct Index {
   @StorageLink('steady.tab.v1') private tab: string = 'Timeline'
   @StorageLink('steady.nextId.v1') private nextId: number = 1
   @StorageLink('steady.selectedKind.v1') private selectedKind: string = 'Blood pressure'
+  @StorageLink('steady.selectedMealtime.v1') private selectedMealtime: string = ''
   @StorageLink('steady.draftPrimary.v1') private draftPrimary: string = ''
   @StorageLink('steady.draftSecondary.v1') private draftSecondary: string = ''
   @StorageLink('steady.draftNote.v1') private draftNote: string = ''
@@ -244,6 +247,7 @@ struct Index {
       kind,
       value: reading.value,
       unit: reading.unit ? reading.unit : this.unitForKind(kind),
+      mealtime: kind === 'Blood glucose' ? this.validMealtime(reading.mealtime) : '',
       context: reading.context ? reading.context : 'Just now'
     }
     return normalized
@@ -290,6 +294,7 @@ struct Index {
           ? `${this.cleanNumber(primary)}/${this.cleanNumber(secondary)}`
           : this.cleanNumber(primary),
         unit: this.unitForKind(this.selectedKind),
+        mealtime: this.selectedKind === 'Blood glucose' ? this.validMealtime(this.selectedMealtime) : '',
         context: note.length > 0 ? note : 'Just now'
       },
       ...this.readings
@@ -303,6 +308,9 @@ struct Index {
   private selectQuickKind(kind: string): void {
     this.selectedKind = kind
     this.applyLastReading(kind)
+    if (kind !== 'Blood glucose') {
+      this.selectedMealtime = ''
+    }
     this.tab = 'Timeline'
     this.quickActionsOpen = false
   }
@@ -754,6 +762,21 @@ struct Index {
     return `${inRange} of ${readings.length} in range`
   }
 
+  private validMealtime(mealtime?: string): string {
+    return mealtime === 'Fasting' || mealtime === 'After meal' ? mealtime : ''
+  }
+
+  private mealtimeRaw(mealtime?: string): string {
+    const value = this.validMealtime(mealtime)
+    if (value === 'Fasting') {
+      return '1'
+    }
+    if (value === 'After meal') {
+      return '2'
+    }
+    return ''
+  }
+
   private reportKindSection(kind: string): string {
     const cutoff = this.reportCutoffTime()
     const readings = this.readingsForKind(kind)
@@ -772,7 +795,8 @@ struct Index {
     }
     readings.forEach((reading: Reading) => {
       const note = this.readingNote(reading)
-      lines.push(`${this.dateLabel(this.dateTime(reading.date))}  ${reading.value} ${reading.unit}${note.length > 0 ? ` - ${note}` : ''}`)
+      const mealtime = this.validMealtime(reading.mealtime)
+      lines.push(`${this.dateLabel(this.dateTime(reading.date))}  ${reading.value} ${reading.unit}${mealtime.length > 0 ? ` (${mealtime})` : ''}${note.length > 0 ? ` - ${note}` : ''}`)
     })
     return lines.join('\n')
   }
@@ -871,7 +895,7 @@ struct Index {
         this.csvKind(reading.kind),
         this.readingPrimary(reading),
         this.readingSecondary(reading),
-        '',
+        this.mealtimeRaw(reading.mealtime),
         this.csvValue(this.readingNote(reading))
       ].join(',')
     })
@@ -1064,7 +1088,24 @@ struct Index {
       .onClick(() => {
         this.selectedKind = kind
         this.applyLastReading(kind)
+        if (kind !== 'Blood glucose') {
+          this.selectedMealtime = ''
+        }
       })
+  }
+
+  @Builder
+  private mealtimeButton(label: string, value: string) {
+    Button(label)
+      .height(34)
+      .padding({ left: 12, right: 12 })
+      .borderRadius(999)
+      .backgroundColor(this.selectedMealtime === value ? SunColor.sun : SunColor.white)
+      .fontColor(SunColor.ink)
+      .fontSize(12)
+      .fontWeight(FontWeight.Bold)
+      .border({ width: 1, color: SunColor.border })
+      .onClick(() => this.selectedMealtime = value)
   }
 
   @Builder
@@ -1184,6 +1225,15 @@ struct Index {
             .borderRadius(8)
             .border({ width: 1, color: SunColor.border })
             .onChange((value: string) => this.draftPrimary = value)
+        }
+
+        if (this.selectedKind === 'Blood glucose') {
+          Row({ space: SunSpacing.sm }) {
+            this.mealtimeButton('-', '')
+            this.mealtimeButton('Fasting', 'Fasting')
+            this.mealtimeButton('After meal', 'After meal')
+          }
+          .width('100%')
         }
 
         TextInput({ placeholder: 'Note (optional)', text: this.draftNote })
