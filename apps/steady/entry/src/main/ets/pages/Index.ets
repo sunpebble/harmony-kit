@@ -708,7 +708,7 @@ struct Index {
       const value = this.readingNumber(reading)
       return value >= low && value <= high
     }).length
-    return `${inRange} of ${readings.length} in range`
+    return `${inRange} of ${readings.length} in patient-set range`
   }
 
   private averageForKind(kind: string): string {
@@ -765,11 +765,14 @@ struct Index {
     const lines: string[] = [
       kind,
       `Average ${this.averageForReadings(kind, readings)}`,
-      `Range ${this.rangeForReadings(readings)}`,
-      this.hasTargetRange(kind) ? this.targetSummaryForReadings(kind, readings) : 'No patient-set range'
+      `Range ${this.rangeForReadings(readings)}`
     ]
+    if (this.hasTargetRange(kind)) {
+      lines.push(this.targetSummaryForReadings(kind, readings))
+    }
     readings.forEach((reading: Reading) => {
-      lines.push(`${this.dateLabel(this.dateTime(reading.date))}  ${reading.value} ${reading.unit} · ${reading.context}`)
+      const note = this.readingNote(reading)
+      lines.push(`${this.dateLabel(this.dateTime(reading.date))}  ${reading.value} ${reading.unit}${note.length > 0 ? ` - ${note}` : ''}`)
     })
     return lines.join('\n')
   }
