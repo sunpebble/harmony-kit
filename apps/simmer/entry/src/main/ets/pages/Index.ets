@@ -771,17 +771,6 @@ struct Index {
             this.customSaveAsPreset = false
           })
 
-        if (!this.proUnlocked) {
-          Button('Unlock Pro')
-            .height(38)
-            .width('100%')
-            .borderRadius(SunRadius.pill)
-            .backgroundColor(SunColor.sun)
-            .fontColor(SunColor.ink)
-            .fontSize(12)
-            .fontWeight(FontWeight.Bold)
-            .onClick(() => this.unlockPro())
-        }
       }
       .width('100%')
       .padding(SunSpacing.lg)
