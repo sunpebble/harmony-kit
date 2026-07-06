@@ -66,6 +66,7 @@ PersistentStorage.persistProp('steady.reminderEnabled.v1', false)
 PersistentStorage.persistProp('steady.reminderHour.v1', 8)
 PersistentStorage.persistProp('steady.reminderMinute.v1', 0)
 PersistentStorage.persistProp('steady.trendRange.v1', '7D')
+PersistentStorage.persistProp('steady.trendKind.v1', 'Blood pressure')
 PersistentStorage.persistProp('steady.proUnlocked.v1', false)
 PersistentStorage.persistProp('steady.targetBpLow.v1', '')
 PersistentStorage.persistProp('steady.targetBpHigh.v1', '')
@@ -93,6 +94,7 @@ struct Index {
   @StorageLink('steady.reminderHour.v1') private reminderHour: number = 8
   @StorageLink('steady.reminderMinute.v1') private reminderMinute: number = 0
   @StorageLink('steady.trendRange.v1') private trendRange: string = '7D'
+  @StorageLink('steady.trendKind.v1') private trendKind: string = 'Blood pressure'
   @StorageLink('steady.proUnlocked.v1') private proUnlocked: boolean = false
   @StorageLink('steady.targetBpLow.v1') private targetBpLow: string = ''
   @StorageLink('steady.targetBpHigh.v1') private targetBpHigh: string = ''
@@ -787,8 +789,7 @@ struct Index {
   }
 
   private trendSummary(kind: string): string {
-    const cutoff = Date.now() - this.trendDays() * this.dayMs()
-    const readings = this.readingsForKind(kind).filter((reading: Reading) => this.dateTime(reading.date) >= cutoff)
+    const readings = this.trendReadings(kind)
     if (readings.length === 0) {
       return 'No data in range'
     }
@@ -802,6 +803,33 @@ struct Index {
       return value >= low && value <= high
     }).length
     return `${inRange} of ${readings.length} in patient-set range`
+  }
+
+  private trendReadings(kind: string): Reading[] {
+    const cutoff = Date.now() - this.trendDays() * this.dayMs()
+    return this.readingsForKind(kind).filter((reading: Reading) => this.dateTime(reading.date) >= cutoff)
+  }
+
+  private selectedTrendReadings(): Reading[] {
+    return this.trendReadings(this.trendKind)
+  }
+
+  private hasSelectedTrendReadings(): boolean {
+    return this.selectedTrendReadings().length > 0
+  }
+
+  private selectedTrendTargetValue(): string {
+    const readings = this.selectedTrendReadings()
+    if (readings.length === 0 || !this.hasTargetRange(this.trendKind)) {
+      return ''
+    }
+    const low = Number(this.targetLowForKind(this.trendKind))
+    const high = Number(this.targetHighForKind(this.trendKind))
+    const inRange = readings.filter((reading: Reading) => {
+      const value = this.readingNumber(reading)
+      return value >= low && value <= high
+    }).length
+    return `${inRange} of ${readings.length}`
   }
 
   private trendMedicationValue(): string {
@@ -1594,6 +1622,35 @@ struct Index {
   }
 
   @Builder
+  private trendKindButton(kind: string) {
+    Button(kind)
+      .height(36)
+      .padding({ left: 12, right: 12 })
+      .borderRadius(999)
+      .backgroundColor(this.trendKind === kind ? SunColor.ink : SunColor.white)
+      .fontColor(this.trendKind === kind ? SunColor.cream : SunColor.ink)
+      .fontSize(12)
+      .border({ width: 1, color: SunColor.border })
+      .onClick(() => this.trendKind = kind)
+  }
+
+  @Builder
+  private trendFactRow(label: string, value: string) {
+    Row({ space: SunSpacing.md }) {
+      Text(label)
+        .fontSize(SunType.body)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(SunColor.ink)
+        .layoutWeight(1)
+      Text(value)
+        .fontSize(SunType.body)
+        .fontColor(SunColor.pebble)
+    }
+    .width('100%')
+    .height(38)
+  }
+
+  @Builder
   private trends() {
     Column({ space: SunSpacing.md }) {
       SunCard() {
@@ -1610,6 +1667,30 @@ struct Index {
             this.trendRangeButton('90D')
           }
           .width('100%')
+
+          Scroll() {
+            Row({ space: SunSpacing.sm }) {
+              ForEach(this.kinds, (kind: string) => {
+                this.trendKindButton(kind)
+              }, (kind: string) => kind)
+            }
+          }
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
+          .width('100%')
+          .height(44)
+
+          if (this.hasSelectedTrendReadings()) {
+            this.trendFactRow('Average', this.averageForReadings(this.trendKind, this.selectedTrendReadings()))
+            this.trendFactRow('Range', this.rangeForReadings(this.selectedTrendReadings()))
+            if (this.selectedTrendTargetValue().length > 0) {
+              this.trendFactRow('Readings in your range', this.selectedTrendTargetValue())
+            }
+          } else {
+            Text('No data in range')
+              .fontSize(SunType.body)
+              .fontColor(SunColor.pebble)
+          }
 
           ForEach(this.kinds.slice(0, 4), (kind: string) => {
             Row({ space: SunSpacing.md }) {
