@@ -568,19 +568,10 @@ struct Index {
             this.insightRow('CONSISTENCY', `± ${this.hoursText(this.consistencyMinutes() / 60)}`)
           }
         } else {
-          Text('Weekday vs weekend, best & roughest nights — unlock with Pro')
+          Text('🔒 Weekday vs weekend, best & roughest nights — unlock with Pro')
             .fontSize(12)
             .fontColor('#BFB8AA')
             .lineHeight(18)
-
-          Button('Unlock Pro')
-            .height(44)
-            .padding({ left: SunSpacing.lg, right: SunSpacing.lg })
-            .borderRadius(999)
-            .backgroundColor('#F7B733')
-            .fontColor(SunColor.night)
-            .fontSize(SunType.body)
-            .fontWeight(FontWeight.Medium)
             .onClick(() => this.unlockPro())
         }
       }
