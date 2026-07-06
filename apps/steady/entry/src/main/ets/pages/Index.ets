@@ -864,7 +864,8 @@ struct Index {
   }
 
   private csvPreview(): string {
-    const readingRows = this.readings.map((reading: Reading) => {
+    const sorted = [...this.readings].sort((a: Reading, b: Reading) => this.dateTime(a.date) - this.dateTime(b.date))
+    const readingRows = sorted.map((reading: Reading) => {
       return [
         reading.date ? reading.date : '',
         this.csvKind(reading.kind),
