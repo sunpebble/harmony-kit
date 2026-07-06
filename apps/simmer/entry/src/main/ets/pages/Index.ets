@@ -220,6 +220,7 @@ struct Index {
   @State private nowMs: number = Date.now()
   @State private confirmingPresetId: number = -1
   @State private customSaveAsPreset: boolean = false
+  @State private paywallOpen: boolean = false
 
   aboutToAppear(): void {
     this.loadTimers()
@@ -368,7 +369,7 @@ struct Index {
 
   private startTimer(label: string, emoji: string, seconds: number): boolean {
     if (!this.proUnlocked && this.timers.length > 0) {
-      this.showToast('Simmer Pro unlocks every burner at once.')
+      this.showPaywall()
       return false
     }
     this.timers = [...this.timers, new KitchenTimer(this.nextId, label, emoji, seconds, seconds, true, false, Date.now() + seconds * 1000, 0)]
@@ -379,7 +380,12 @@ struct Index {
 
   private unlockPro(): void {
     this.proUnlocked = true
+    this.paywallOpen = false
     this.showToast('Simmer Pro unlocked on this device.')
+  }
+
+  private showPaywall(): void {
+    this.paywallOpen = true
   }
 
   private toggleTimer(id: number): void {
@@ -882,6 +888,72 @@ struct Index {
     .edgeEffect(EdgeEffect.Spring)
   }
 
+  @Builder
+  private paywallFeature(icon: string, text: string) {
+    Row({ space: SunSpacing.md }) {
+      Text(icon)
+        .fontSize(18)
+        .width(24)
+        .textAlign(TextAlign.Center)
+      Text(text)
+        .fontSize(14)
+        .fontColor(SunColor.ink)
+    }
+    .width('100%')
+    .alignItems(VerticalAlign.Center)
+  }
+
+  @Builder
+  private paywallPanel() {
+    if (this.paywallOpen && !this.proUnlocked) {
+      Column({ space: SunSpacing.lg }) {
+        Text('SIMMER PRO')
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(4)
+          .fontColor(SunColor.ink)
+
+        Column({ space: 14 }) {
+          this.paywallFeature('⏱', 'Run every burner at once — unlimited timers')
+          this.paywallFeature('⚡', 'All of them grouped in the Dynamic Island')
+          this.paywallFeature('★', 'Save your go-to timers as presets')
+          this.paywallFeature('↺', 'Restart finished timers without rebuilding them')
+          this.paywallFeature('♥', 'Support an indie developer')
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Start)
+
+        Text('PAY ONCE. YOURS FOREVER.\nNO SUBSCRIPTION. NO ACCOUNT.')
+          .fontSize(11)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(SunColor.pebble)
+          .lineHeight(17)
+          .textAlign(TextAlign.Center)
+
+        Button('UNLOCK FOR $1.99')
+          .height(48)
+          .width('100%')
+          .borderRadius(SunRadius.md)
+          .backgroundColor(SunColor.ink)
+          .fontColor(SunColor.cream)
+          .fontSize(15)
+          .fontWeight(FontWeight.Bold)
+          .onClick(() => this.unlockPro())
+
+        Button('Restore Purchase')
+          .height(36)
+          .backgroundColor(Color.Transparent)
+          .fontSize(12)
+          .fontColor(SunColor.pebble)
+          .onClick(() => this.unlockPro())
+      }
+      .width('100%')
+      .padding(SunSpacing.lg)
+      .backgroundColor(SunColor.cream)
+      .borderRadius(SunRadius.lg)
+    }
+  }
+
   build() {
     Stack({ alignContent: Alignment.TopEnd }) {
       SunToolShell({
@@ -897,6 +969,7 @@ struct Index {
 
           this.customPanel()
           this.presetBar()
+          this.paywallPanel()
         }
         .width('100%')
         .height('100%')
@@ -912,7 +985,7 @@ struct Index {
           .fontSize(SunType.body)
           .fontWeight(FontWeight.Medium)
           .margin({ top: SunSpacing.xl, right: SunSpacing.xl })
-          .onClick(() => this.unlockPro())
+          .onClick(() => this.showPaywall())
       }
     }
     .width('100%')

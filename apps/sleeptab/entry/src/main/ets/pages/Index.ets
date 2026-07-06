@@ -33,6 +33,7 @@ struct Index {
   @StorageLink('sleeptab.proUnlocked.v1') private proUnlocked: boolean = false
   @State private nights: SleepNight[] = []
   @State private confirmingDeleteNightDate: string = ''
+  @State private paywallOpen: boolean = false
 
   aboutToAppear(): void {
     this.loadNights()
@@ -379,7 +380,7 @@ struct Index {
 
   private setRange(value: number): void {
     if (value > 7 && !this.proUnlocked) {
-      this.showToast('Sleeptab Pro unlocks 30 and 90 night trends.')
+      this.showPaywall()
       return
     }
     this.rangeNights = value
@@ -391,7 +392,12 @@ struct Index {
 
   private unlockPro(): void {
     this.proUnlocked = true
+    this.paywallOpen = false
     this.showToast('Sleeptab Pro unlocked on this device.')
+  }
+
+  private showPaywall(): void {
+    this.paywallOpen = true
   }
 
   private showToast(message: string): void {
@@ -572,7 +578,7 @@ struct Index {
             .fontSize(12)
             .fontColor('#BFB8AA')
             .lineHeight(18)
-            .onClick(() => this.unlockPro())
+            .onClick(() => this.showPaywall())
         }
       }
       .width('100%')
@@ -641,6 +647,67 @@ struct Index {
     .borderRadius(20)
   }
 
+  @Builder
+  private paywallFeature(icon: string, text: string) {
+    Row({ space: SunSpacing.md }) {
+      Text(icon)
+        .fontSize(18)
+        .width(24)
+        .textAlign(TextAlign.Center)
+      Text(text)
+        .fontSize(14)
+        .fontColor(SunColor.cream)
+    }
+    .width('100%')
+    .alignItems(VerticalAlign.Center)
+  }
+
+  @Builder
+  private paywallPanel() {
+    if (this.paywallOpen && !this.proUnlocked) {
+      Column({ space: SunSpacing.lg }) {
+        Text('SLEEPTAB PRO')
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(4)
+          .fontColor(SunColor.cream)
+
+        Column({ space: 14 }) {
+          this.paywallFeature('▥', 'Full sleep history — 30 and 90 night trends')
+          this.paywallFeature('◌', 'Insights — bedtime consistency, weekday vs weekend')
+          this.paywallFeature('▦', 'Sleep debt widget on your Home Screen')
+          this.paywallFeature('♥', 'Support an indie developer')
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Start)
+
+        Text('PAY ONCE. YOURS FOREVER.\nNO SUBSCRIPTION. NO ACCOUNT.\nYOUR DATA NEVER LEAVES THIS DEVICE.')
+          .fontSize(11)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#BFB8AA')
+          .lineHeight(17)
+          .textAlign(TextAlign.Center)
+
+        SunButton({
+          label: 'UNLOCK FOR $1.99',
+          action: () => this.unlockPro()
+        })
+
+        Button('Restore Purchase')
+          .height(36)
+          .backgroundColor(Color.Transparent)
+          .fontSize(12)
+          .fontColor('#BFB8AA')
+          .onClick(() => this.unlockPro())
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Center)
+      .padding(SunSpacing.lg)
+      .backgroundColor('#24283A')
+      .borderRadius(20)
+    }
+  }
+
   build() {
     Stack({ alignContent: Alignment.TopEnd }) {
       SunToolShell({
@@ -661,6 +728,8 @@ struct Index {
               this.goalCard()
               this.manualEntryCard()
             }
+
+            this.paywallPanel()
 
             Button(this.hasTodayNight() ? 'Update tonight' : 'Save tonight')
               .height(48)
@@ -689,7 +758,7 @@ struct Index {
           .fontSize(13)
           .fontWeight(FontWeight.Bold)
           .margin({ top: SunSpacing.xl, right: SunSpacing.xl })
-          .onClick(() => this.unlockPro())
+          .onClick(() => this.showPaywall())
       }
     }
     .width('100%')

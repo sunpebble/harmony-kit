@@ -118,6 +118,7 @@ struct Index {
   @State private reportStartAt: number = 0
   @State private reportEndAt: number = 0
   @State private reportOpen: boolean = false
+  @State private paywallOpen: boolean = false
   @State private confirmingTimelineDeleteKey: string = ''
   @State private quickActionsOpen: boolean = false
   private usedEntityIds: number[] = []
@@ -374,17 +375,18 @@ struct Index {
 
   private unlockPro(): void {
     this.proUnlocked = true
+    this.paywallOpen = false
     this.showToast('Steady Pro unlocked on this device.')
   }
 
-  private showProToast(): void {
-    this.showToast('Steady Pro unlocks long trends, doctor reports, and CSV export.')
+  private showPaywall(): void {
+    this.paywallOpen = true
   }
 
   private toggleDoctorReport(): void {
     if (!this.proUnlocked) {
       this.reportOpen = false
-      this.showProToast()
+      this.showPaywall()
       return
     }
     this.reportOpen = !this.reportOpen
@@ -392,7 +394,7 @@ struct Index {
 
   private exportCsv(): void {
     if (!this.proUnlocked) {
-      this.showProToast()
+      this.showPaywall()
       return
     }
     this.shareText('CSV', this.csvPreview())
@@ -1156,7 +1158,7 @@ struct Index {
       .border({ width: 1, color: SunColor.border })
       .onClick(() => {
         if (label !== '7D' && !this.proUnlocked) {
-          this.showProToast()
+          this.showPaywall()
           return
         }
         this.trendRange = label
@@ -1870,6 +1872,63 @@ struct Index {
   }
 
   @Builder
+  private paywallFeature(icon: string, text: string) {
+    Row({ space: SunSpacing.md }) {
+      Text(icon)
+        .fontSize(18)
+        .width(24)
+        .textAlign(TextAlign.Center)
+      Text(text)
+        .fontSize(16)
+        .fontColor(SunColor.ink)
+    }
+    .width('100%')
+    .alignItems(VerticalAlign.Center)
+  }
+
+  @Builder
+  private paywallPanel() {
+    if (this.paywallOpen && !this.proUnlocked) {
+      Column({ space: SunSpacing.lg }) {
+        Text('Steady Pro')
+          .fontSize(32)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(SunColor.ink)
+
+        Column({ space: 12 }) {
+          this.paywallFeature('▣', 'PDF reports for doctor visits')
+          this.paywallFeature('⌁', 'Trends beyond the last 7 days')
+          this.paywallFeature('▦', 'CSV export')
+          this.paywallFeature('▥', 'All widgets')
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Start)
+
+        Text('Pay once. Yours forever. No subscription.')
+          .fontSize(14)
+          .fontColor(SunColor.pebble)
+
+        SunButton({
+          label: 'Unlock for $1.99',
+          action: () => this.unlockPro()
+        })
+
+        Button('Restore purchase')
+          .height(36)
+          .backgroundColor(Color.Transparent)
+          .fontSize(14)
+          .fontColor(SunColor.pebble)
+          .onClick(() => this.unlockPro())
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Center)
+      .padding(SunSpacing.lg)
+      .backgroundColor(SunColor.white)
+      .borderRadius(16)
+    }
+  }
+
+  @Builder
   private settings() {
     Column({ space: SunSpacing.md }) {
       SunCard() {
@@ -1878,9 +1937,10 @@ struct Index {
             SunButton({
               label: 'Unlock Pro',
               role: SunButtonRole.Secondary,
-              action: () => this.unlockPro()
+              action: () => this.showPaywall()
             })
           }
+          this.paywallPanel()
 
           SunButton({
             label: this.reportOpen ? 'Hide Doctor report' : 'Doctor report',
