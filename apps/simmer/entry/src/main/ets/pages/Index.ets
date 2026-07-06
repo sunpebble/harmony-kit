@@ -13,6 +13,17 @@ interface PresetTimer {
   seconds: number
 }
 
+interface TimerSnapshot {
+  id: number
+  label: string
+  emoji: string
+  seconds: number
+  remaining: number
+  running: boolean
+  done: boolean
+  endAt: number
+}
+
 @Observed
 class KitchenTimer {
   id: number
@@ -35,6 +46,9 @@ class KitchenTimer {
     this.endAt = endAt
   }
 }
+
+PersistentStorage.persistProp('simmer.nextId.v1', 1)
+PersistentStorage.persistProp('simmer.timers.v1', '')
 
 @Component
 struct Burner {
@@ -128,12 +142,14 @@ struct Index {
     { emoji: '🥔', label: 'Potatoes', seconds: 20 * 60 },
     { emoji: '🍞', label: 'Oven', seconds: 25 * 60 }
   ]
-  private nextId: number = 1
   private intervalId: number = -1
 
+  @StorageLink('simmer.nextId.v1') private nextId: number = 1
+  @StorageLink('simmer.timers.v1') private timersJson: string = ''
   @State private timers: KitchenTimer[] = []
 
   aboutToAppear(): void {
+    this.loadTimers()
     if (this.intervalId < 0) {
       this.intervalId = setInterval(() => this.tick(), 1000)
     }
@@ -160,6 +176,7 @@ struct Index {
       ...this.timers
     ]
     this.nextId += 1
+    this.saveTimers()
   }
 
   private toggleTimer(id: number): void {
@@ -180,6 +197,7 @@ struct Index {
       timer.endAt = Date.now() + timer.remaining * 1000
     }
     this.tick()
+    this.saveTimers()
   }
 
   private handleTimerTap(id: number): void {
@@ -193,6 +211,7 @@ struct Index {
 
   private deleteTimer(id: number): void {
     this.timers = this.timers.filter((timer: KitchenTimer) => timer.id !== id)
+    this.saveTimers()
   }
 
   private tick(): void {
@@ -217,7 +236,35 @@ struct Index {
       timer.running = false
       timer.done = true
       timer.endAt = 0
+      this.saveTimers()
     })
+  }
+
+  private loadTimers(): void {
+    if (this.timersJson.length === 0) {
+      return
+    }
+
+    try {
+      const saved = JSON.parse(this.timersJson) as TimerSnapshot[]
+      this.timers = saved.map((timer: TimerSnapshot) => this.restoreTimer(timer))
+    } catch (_error) {
+      this.timers = []
+      this.saveTimers()
+    }
+  }
+
+  private restoreTimer(timer: TimerSnapshot): KitchenTimer {
+    if (!timer.running) {
+      return new KitchenTimer(timer.id, timer.label, timer.emoji, timer.seconds, timer.remaining, false, timer.done, 0)
+    }
+
+    const remaining = Math.max(0, Math.ceil((timer.endAt - Date.now()) / 1000))
+    return new KitchenTimer(timer.id, timer.label, timer.emoji, timer.seconds, remaining, remaining > 0, remaining <= 0, remaining > 0 ? timer.endAt : 0)
+  }
+
+  private saveTimers(): void {
+    this.timersJson = JSON.stringify(this.timers)
   }
 
   private remainingFromEnd(timer: KitchenTimer): number {
