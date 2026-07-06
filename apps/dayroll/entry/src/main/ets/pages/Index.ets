@@ -19,6 +19,9 @@ PersistentStorage.persistProp('dayroll.entries.v1', '')
 PersistentStorage.persistProp('dayroll.exportOpen.v1', false)
 PersistentStorage.persistProp('dayroll.statsOpen.v1', false)
 PersistentStorage.persistProp('dayroll.exportFormat.v1', 'Plain Text')
+PersistentStorage.persistProp('dayroll.reminderOpen.v1', false)
+PersistentStorage.persistProp('dayroll.reminderEnabled.v1', false)
+PersistentStorage.persistProp('dayroll.reminderHour.v1', 21)
 
 @Entry
 @Component
@@ -29,6 +32,9 @@ struct Index {
   @StorageLink('dayroll.exportOpen.v1') private exportOpen: boolean = false
   @StorageLink('dayroll.statsOpen.v1') private statsOpen: boolean = false
   @StorageLink('dayroll.exportFormat.v1') private exportFormat: string = 'Plain Text'
+  @StorageLink('dayroll.reminderOpen.v1') private reminderOpen: boolean = false
+  @StorageLink('dayroll.reminderEnabled.v1') private reminderEnabled: boolean = false
+  @StorageLink('dayroll.reminderHour.v1') private reminderHour: number = 21
   @State private draftLine: string = ''
   @State private entries: RollEntry[] = []
 
@@ -99,6 +105,17 @@ struct Index {
     return this.entries.map((entry: RollEntry) => {
       return `${entry.day} ${entry.mood} ${entry.line}`
     }).join('\n')
+  }
+
+  private testReminder(): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({
+        message: 'One line about today?',
+        duration: 2000
+      })
+    } catch (_error) {
+      // ponytail: toast is best-effort; persisted reminder settings are the fallback.
+    }
   }
 
   @Builder
@@ -352,6 +369,69 @@ struct Index {
     }
   }
 
+  @Builder
+  private reminderPanel() {
+    if (this.reminderOpen) {
+      Column({ space: SunSpacing.md }) {
+        Text('DAILY REMINDER')
+          .fontSize(12)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(2)
+          .fontColor(SunColor.pebble)
+
+        Button(this.reminderEnabled ? 'Reminder On' : 'Reminder Off')
+          .height(42)
+          .width('100%')
+          .borderRadius(999)
+          .backgroundColor(this.reminderEnabled ? SunColor.ink : '#F5EBD9')
+          .fontColor(this.reminderEnabled ? SunColor.cream : SunColor.ink)
+          .fontSize(13)
+          .fontWeight(FontWeight.Bold)
+          .onClick(() => this.reminderEnabled = !this.reminderEnabled)
+
+        Row({ space: SunSpacing.sm }) {
+          this.reminderHourButton(20)
+          this.reminderHourButton(21)
+          this.reminderHourButton(22)
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+
+        Text(this.reminderEnabled ? `REMIND ME AT ${this.reminderHour}:00` : 'REMINDER PAUSED')
+          .fontSize(11)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(1.2)
+          .fontColor(SunColor.pebble)
+          .width('100%')
+          .textAlign(TextAlign.Center)
+
+        SunButton({
+          label: 'Test Reminder',
+          role: SunButtonRole.Secondary,
+          action: () => this.testReminder()
+        })
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+      .padding(SunSpacing.md)
+      .backgroundColor('#FFFDF7')
+      .border({ width: 1, color: '#C8BDAA' })
+    }
+  }
+
+  @Builder
+  private reminderHourButton(hour: number) {
+    Button(`${hour}:00`)
+      .height(34)
+      .padding({ left: 14, right: 14 })
+      .borderRadius(999)
+      .backgroundColor(this.reminderHour === hour ? SunColor.ink : '#F5EBD9')
+      .fontColor(this.reminderHour === hour ? SunColor.cream : SunColor.ink)
+      .fontSize(11)
+      .fontWeight(FontWeight.Bold)
+      .onClick(() => this.reminderHour = hour)
+  }
+
   build() {
     Column() {
       SunToolShell({
@@ -366,6 +446,13 @@ struct Index {
             this.perforation()
             this.rollList()
             this.perforation()
+
+            SunButton({
+              label: this.reminderOpen ? 'Hide Reminder' : 'Reminder',
+              role: SunButtonRole.Secondary,
+              action: () => this.reminderOpen = !this.reminderOpen
+            })
+            this.reminderPanel()
 
             SunButton({
               label: this.statsOpen ? 'Hide Stats' : 'Stats',
