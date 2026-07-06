@@ -106,14 +106,26 @@ struct Burner {
     return Math.max(0, Math.min(100, Math.round((1 - this.timer.remaining / this.timer.seconds) * 100)))
   }
 
+  private ringDash(): number[] {
+    const circumference = 2 * Math.PI * 67
+    return [circumference * this.progress() / 100, circumference]
+  }
+
   build() {
     Column({ space: SunSpacing.sm }) {
       Stack() {
-        Progress({ value: this.progress(), total: 100, type: ProgressType.Ring })
-          .width(150)
-          .height(150)
-          .color(this.timer.done ? SunColor.sun : SunColor.ink)
-          .style({ strokeWidth: 8, enableSmoothEffect: false, enableScanEffect: false })
+        Circle({ width: 142, height: 142 })
+          .fillOpacity(0)
+          .stroke('#E6DCCB')
+          .strokeWidth(8)
+
+        Circle({ width: 142, height: 142 })
+          .fillOpacity(0)
+          .stroke(this.timer.done ? SunColor.sun : SunColor.ink)
+          .strokeWidth(8)
+          .strokeLineCap(LineCapStyle.Round)
+          .strokeDashArray(this.ringDash())
+          .rotate({ x: 0, y: 0, z: 1, angle: -90 })
 
         Column({ space: SunSpacing.xs }) {
           Text(this.timer.emoji)
