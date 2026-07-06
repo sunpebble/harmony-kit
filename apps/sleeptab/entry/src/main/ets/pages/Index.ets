@@ -568,7 +568,7 @@ struct Index {
             this.insightRow('CONSISTENCY', `± ${this.hoursText(this.consistencyMinutes() / 60)}`)
           }
         } else {
-          Text('Weekday vs weekend, best & roughest nights - unlock with Pro')
+          Text('Weekday vs weekend, best & roughest nights — unlock with Pro')
             .fontSize(12)
             .fontColor('#BFB8AA')
             .lineHeight(18)
