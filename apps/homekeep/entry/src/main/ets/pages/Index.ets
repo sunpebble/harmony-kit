@@ -25,7 +25,7 @@ interface PresetTask {
   cadence: number
 }
 
-PersistentStorage.persistProp('homekeep.nextId.v1', 4)
+PersistentStorage.persistProp('homekeep.nextId.v1', 1)
 PersistentStorage.persistProp('homekeep.filter.v1', 'Due')
 PersistentStorage.persistProp('homekeep.tasks.v1', '')
 
@@ -38,7 +38,7 @@ struct Index {
     { title: 'Clean dishwasher filter', area: 'Kitchen', cadence: 30 },
     { title: 'Flush water heater', area: 'Utility', cadence: 180 }
   ]
-  @StorageLink('homekeep.nextId.v1') private nextId: number = 4
+  @StorageLink('homekeep.nextId.v1') private nextId: number = 1
   @StorageLink('homekeep.filter.v1') private filter: string = 'Due'
   @StorageLink('homekeep.tasks.v1') private tasksJson: string = ''
   @State private draftTitle: string = ''
@@ -50,26 +50,18 @@ struct Index {
     this.loadTasks()
   }
 
-  private defaultTasks(): KeepTask[] {
-    return [
-      { id: 1, title: 'Replace HVAC filter', area: 'Air', dueAt: this.dueAtFromToday(-2), cadence: 90 },
-      { id: 2, title: 'Test smoke alarms', area: 'Safety', dueAt: this.dueAtFromToday(5), cadence: 30 },
-      { id: 3, title: 'Clean dishwasher filter', area: 'Kitchen', dueAt: this.dueAtFromToday(16), cadence: 30 }
-    ]
-  }
-
   private loadTasks(): void {
     if (this.tasksJson.length === 0) {
-      this.tasks = this.defaultTasks()
+      this.tasks = []
       this.saveTasks()
       return
     }
     try {
       const parsed = JSON.parse(this.tasksJson) as KeepTask[]
-      this.tasks = parsed.length > 0 ? this.normalizeTasks(parsed) : this.defaultTasks()
+      this.tasks = this.normalizeTasks(parsed)
       this.saveTasks()
     } catch (_error) {
-      this.tasks = this.defaultTasks()
+      this.tasks = []
       this.saveTasks()
     }
   }
@@ -128,6 +120,7 @@ struct Index {
       }
     ]
     this.nextId += 1
+    this.filter = 'All'
     this.saveTasks()
   }
 
@@ -143,6 +136,7 @@ struct Index {
       }
     ]
     this.nextId += 1
+    this.filter = 'All'
     this.saveTasks()
   }
 
