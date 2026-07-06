@@ -1542,7 +1542,7 @@ struct Index {
               Column({ space: SunSpacing.xs }) {
                 SunListRow({
                   title: `${symptom.name} · ${String('•').repeat(symptom.severity)}`,
-                  caption: symptom.context.trim().length > 0 ? `Symptom · ${symptom.context.trim()}` : 'Symptom'
+                  caption: 'Symptom'
                 })
 
                 if (this.confirmingTimelineDeleteKey === this.symptomDeleteKey(symptom)) {
