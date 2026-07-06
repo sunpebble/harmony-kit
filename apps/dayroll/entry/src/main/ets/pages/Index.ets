@@ -125,7 +125,7 @@ struct Index {
   }
 
   private composerTitle(): string {
-    return this.editingDate.length > 0 ? this.dayLabel(this.dateFromKey(this.editingDate)) : 'TODAY'
+    return this.composeDateTitle(this.dateFromKey(this.activeDate()))
   }
 
   private streak(): number {
@@ -337,6 +337,12 @@ struct Index {
   private monthLabel(date: Date): string {
     const months: string[] = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']
     return `${months[date.getMonth()]} ${date.getFullYear()}`
+  }
+
+  private composeDateTitle(date: Date): string {
+    const weekdays: string[] = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+    const months: string[] = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+    return `${weekdays[date.getDay()]} ${months[date.getMonth()]} ${date.getDate()}`
   }
 
   private csvValue(value: string): string {
