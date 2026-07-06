@@ -1935,7 +1935,7 @@ struct Index {
         Column({ space: SunSpacing.sm }) {
           if (!this.proUnlocked) {
             SunButton({
-              label: 'Unlock Pro',
+              label: 'Steady Pro…',
               role: SunButtonRole.Secondary,
               action: () => this.showPaywall()
             })
