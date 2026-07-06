@@ -304,6 +304,36 @@ struct Index {
     return normalized
   }
 
+  private normalizeTimers(timers: TimerSnapshot[]): TimerSnapshot[] {
+    const usedIds: number[] = []
+    let nextId = Math.max(1, this.nextId)
+    const normalized = timers.map((timer: TimerSnapshot) => {
+      let id = timer.id
+      if (!id || id <= 0 || usedIds.includes(id)) {
+        while (usedIds.includes(nextId)) {
+          nextId += 1
+        }
+        id = nextId
+      }
+      usedIds.push(id)
+      nextId = Math.max(nextId, id + 1)
+      const normalizedTimer: TimerSnapshot = {
+        id,
+        label: timer.label,
+        emoji: timer.emoji,
+        seconds: timer.seconds,
+        remaining: timer.remaining,
+        running: timer.running,
+        done: timer.done,
+        endAt: timer.endAt,
+        completedAt: timer.completedAt
+      }
+      return normalizedTimer
+    })
+    this.nextId = nextId
+    return normalized
+  }
+
   private customSecondsTotal(): number {
     return this.customMinutes * 60 + this.customSeconds
   }
@@ -452,7 +482,8 @@ struct Index {
 
     try {
       const saved = JSON.parse(this.timersJson) as TimerSnapshot[]
-      this.timers = saved.map((timer: TimerSnapshot) => this.restoreTimer(timer))
+      this.timers = this.normalizeTimers(saved).map((timer: TimerSnapshot) => this.restoreTimer(timer))
+      this.saveTimers()
       this.syncReminders()
     } catch (_error) {
       this.timers = []
