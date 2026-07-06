@@ -21,6 +21,7 @@ PersistentStorage.persistProp('sleeptab.rangeNights.v1', 7)
 PersistentStorage.persistProp('sleeptab.draftHours.v1', 7.5)
 PersistentStorage.persistProp('sleeptab.draftBedtime.v1', '23:30')
 PersistentStorage.persistProp('sleeptab.nights.v1', '')
+PersistentStorage.persistProp('sleeptab.proUnlocked.v1', false)
 
 @Entry
 @Component
@@ -30,6 +31,7 @@ struct Index {
   @StorageLink('sleeptab.draftHours.v1') private draftHours: number = 7.5
   @StorageLink('sleeptab.draftBedtime.v1') private draftBedtime: string = '23:30'
   @StorageLink('sleeptab.nights.v1') private nightsJson: string = ''
+  @StorageLink('sleeptab.proUnlocked.v1') private proUnlocked: boolean = false
   @State private nights: SleepNight[] = []
 
   aboutToAppear(): void {
@@ -296,6 +298,10 @@ struct Index {
   }
 
   private setRange(value: number): void {
+    if (value > 7 && !this.proUnlocked) {
+      this.showToast('Sleeptab Pro unlocks 30 and 90 night trends.')
+      return
+    }
     this.rangeNights = value
   }
 
@@ -303,9 +309,22 @@ struct Index {
     this.goalHours = Math.max(5, Math.min(10, this.goalHours + delta))
   }
 
+  private unlockPro(): void {
+    this.proUnlocked = true
+    this.showToast('Sleeptab Pro unlocked on this device.')
+  }
+
+  private showToast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message, duration: 1800 })
+    } catch (_error) {
+      // ponytail: lock still works if toast is unavailable.
+    }
+  }
+
   @Builder
   private rangeButton(label: string, value: number) {
-    Button(label)
+    Button(value > 7 && !this.proUnlocked ? `${label} Pro` : label)
       .height(34)
       .padding({ left: 14, right: 14 })
       .borderRadius(999)
@@ -422,12 +441,25 @@ struct Index {
           .letterSpacing(1)
           .fontColor(SunColor.pebble)
 
-        this.insightRow('BEST NIGHT', this.bestNightText())
-        this.insightRow('ROUGHEST', this.roughestNightText())
-        this.insightRow('WEEKDAY AVG', this.hoursText(this.averageForDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])))
-        this.insightRow('WEEKEND AVG', this.hoursText(this.averageForDays(['SAT', 'SUN'])))
-        this.insightRow('AVG BEDTIME', this.clockText(this.averageBedtimeMinutes()))
-        this.insightRow('CONSISTENCY', `± ${this.hoursText(this.consistencyMinutes() / 60)}`)
+        if (this.proUnlocked) {
+          this.insightRow('BEST NIGHT', this.bestNightText())
+          this.insightRow('ROUGHEST', this.roughestNightText())
+          this.insightRow('WEEKDAY AVG', this.hoursText(this.averageForDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])))
+          this.insightRow('WEEKEND AVG', this.hoursText(this.averageForDays(['SAT', 'SUN'])))
+          this.insightRow('AVG BEDTIME', this.clockText(this.averageBedtimeMinutes()))
+          this.insightRow('CONSISTENCY', `± ${this.hoursText(this.consistencyMinutes() / 60)}`)
+        } else {
+          Text('Weekday vs weekend, best & roughest nights - unlock with Pro')
+            .fontSize(12)
+            .fontColor(SunColor.pebble)
+            .lineHeight(18)
+
+          SunButton({
+            label: 'Unlock Pro',
+            role: SunButtonRole.Secondary,
+            action: () => this.unlockPro()
+          })
+        }
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
