@@ -5,10 +5,12 @@ import {
   SunSpacing,
   SunToolShell
 } from 'sunpebble_ui'
+import { uniformTypeDescriptor as utd } from '@kit.ArkData'
 import { pasteboard } from '@kit.BasicServicesKit'
 import { common } from '@kit.AbilityKit'
 import { reminderAgentManager } from '@kit.BackgroundTasksKit'
 import { notificationManager } from '@kit.NotificationKit'
+import { systemShare } from '@kit.ShareKit'
 import { appProfile } from '../AppProfile'
 
 interface RollEntry {
@@ -475,6 +477,27 @@ struct Index {
     }
   }
 
+  private async shareExportText(): Promise<void> {
+    const context = this.getUIContext().getHostContext()
+    if (!context) {
+      await this.copyExportText()
+      return
+    }
+    try {
+      const shareData: systemShare.SharedData = new systemShare.SharedData({
+        utd: utd.UniformDataType.TEXT,
+        content: this.exportText()
+      })
+      const controller: systemShare.ShareController = new systemShare.ShareController(shareData)
+      await controller.show(context as common.UIAbilityContext, {
+        selectionMode: systemShare.SelectionMode.SINGLE,
+        previewMode: systemShare.SharePreviewMode.DETAIL
+      })
+    } catch (_error) {
+      await this.copyExportText()
+    }
+  }
+
   @Builder
   private perforation() {
     Row({ space: 4 }) {
@@ -692,10 +715,10 @@ struct Index {
           .width('100%')
 
         SunButton({
-          label: 'Copy Export',
+          label: 'Share Export',
           role: SunButtonRole.Secondary,
           action: () => {
-            this.copyExportText()
+            this.shareExportText()
           }
         })
       }
