@@ -51,6 +51,8 @@ PersistentStorage.persistProp('steady.symptoms.v1', '')
 PersistentStorage.persistProp('steady.reminderEnabled.v1', false)
 PersistentStorage.persistProp('steady.reminderHour.v1', 8)
 PersistentStorage.persistProp('steady.reminderMinute.v1', 0)
+PersistentStorage.persistProp('steady.trendRange.v1', '7D')
+PersistentStorage.persistProp('steady.proUnlocked.v1', false)
 PersistentStorage.persistProp('steady.targetBpLow.v1', '')
 PersistentStorage.persistProp('steady.targetBpHigh.v1', '')
 PersistentStorage.persistProp('steady.targetGlucoseLow.v1', '')
@@ -75,6 +77,8 @@ struct Index {
   @StorageLink('steady.reminderEnabled.v1') private reminderEnabled: boolean = false
   @StorageLink('steady.reminderHour.v1') private reminderHour: number = 8
   @StorageLink('steady.reminderMinute.v1') private reminderMinute: number = 0
+  @StorageLink('steady.trendRange.v1') private trendRange: string = '7D'
+  @StorageLink('steady.proUnlocked.v1') private proUnlocked: boolean = false
   @StorageLink('steady.targetBpLow.v1') private targetBpLow: string = ''
   @StorageLink('steady.targetBpHigh.v1') private targetBpHigh: string = ''
   @StorageLink('steady.targetGlucoseLow.v1') private targetGlucoseLow: string = ''
@@ -260,6 +264,32 @@ struct Index {
     }
   }
 
+  private unlockPro(): void {
+    this.proUnlocked = true
+    this.showToast('Steady Pro unlocked on this device.')
+  }
+
+  private showProToast(): void {
+    this.showToast('Steady Pro unlocks long trends, doctor reports, and CSV export.')
+  }
+
+  private toggleDoctorReport(): void {
+    if (!this.proUnlocked) {
+      this.reportOpen = false
+      this.showProToast()
+      return
+    }
+    this.reportOpen = !this.reportOpen
+  }
+
+  private exportCsv(): void {
+    if (!this.proUnlocked) {
+      this.showProToast()
+      return
+    }
+    this.showToast('CSV preview ready below.')
+  }
+
   private toggleMed(target: Medication): void {
     this.meds = this.meds.map((med: Medication, i: number) => {
       if (med.name !== target.name || med.time !== target.time) {
@@ -384,7 +414,7 @@ struct Index {
   }
 
   private trendSummary(kind: string): string {
-    const readings = this.readingsForKind(kind)
+    const readings = this.readingsForKind(kind).slice(0, this.trendLimit())
     if (readings.length === 0 || !this.hasTargetRange(kind)) {
       return `${readings.length} logs`
     }
@@ -473,6 +503,16 @@ struct Index {
     return [...readingRows, ...symptomRows].join('\n')
   }
 
+  private trendLimit(): number {
+    if (this.trendRange === '90D') {
+      return 90
+    }
+    if (this.trendRange === '30D') {
+      return 30
+    }
+    return 7
+  }
+
   private reminderLabel(): string {
     if (!this.reminderEnabled) {
       return 'Paused'
@@ -486,6 +526,26 @@ struct Index {
 
   private testMeasurementReminder(): void {
     this.showToast('Measurement time: take a minute to log your readings.')
+  }
+
+  @Builder
+  private trendRangeButton(label: string) {
+    Button(label !== '7D' && !this.proUnlocked ? `${label} Pro` : label)
+      .height(36)
+      .padding({ left: 12, right: 12 })
+      .borderRadius(999)
+      .backgroundColor(this.trendRange === label ? SunColor.sun : SunColor.white)
+      .fontColor(SunColor.ink)
+      .fontSize(12)
+      .fontWeight(FontWeight.Bold)
+      .border({ width: 1, color: SunColor.border })
+      .onClick(() => {
+        if (label !== '7D' && !this.proUnlocked) {
+          this.showProToast()
+          return
+        }
+        this.trendRange = label
+      })
   }
 
   @Builder
@@ -774,6 +834,13 @@ struct Index {
             .letterSpacing(1.4)
             .fontColor(SunColor.pebble)
 
+          Row({ space: SunSpacing.sm }) {
+            this.trendRangeButton('7D')
+            this.trendRangeButton('30D')
+            this.trendRangeButton('90D')
+          }
+          .width('100%')
+
           ForEach(this.kinds.slice(0, 4), (kind: string) => {
             Row({ space: SunSpacing.md }) {
               Text(kind)
@@ -899,13 +966,21 @@ struct Index {
     Column({ space: SunSpacing.md }) {
       SunCard() {
         Column({ space: SunSpacing.sm }) {
+          if (!this.proUnlocked) {
+            SunButton({
+              label: 'Unlock Pro',
+              role: SunButtonRole.Secondary,
+              action: () => this.unlockPro()
+            })
+          }
+
           SunButton({
-            label: this.reportOpen ? 'Hide Doctor Report' : 'Doctor Report',
+            label: this.reportOpen ? 'Hide Doctor Report' : (this.proUnlocked ? 'Doctor Report' : 'Doctor Report Pro'),
             role: SunButtonRole.Secondary,
-            action: () => this.reportOpen = !this.reportOpen
+            action: () => this.toggleDoctorReport()
           })
 
-          if (this.reportOpen) {
+          if (this.reportOpen && this.proUnlocked) {
             Text(this.doctorReportText())
               .width('100%')
               .fontSize(12)
@@ -913,10 +988,18 @@ struct Index {
               .lineHeight(18)
           }
 
-          SunListRow({
-            title: 'Export CSV',
-            caption: this.csvPreview()
+          SunButton({
+            label: this.proUnlocked ? 'Export CSV' : 'Export CSV Pro',
+            role: SunButtonRole.Secondary,
+            action: () => this.exportCsv()
           })
+
+          if (this.proUnlocked) {
+            SunListRow({
+              title: 'CSV Preview',
+              caption: this.csvPreview()
+            })
+          }
         }
         .width('100%')
       }
