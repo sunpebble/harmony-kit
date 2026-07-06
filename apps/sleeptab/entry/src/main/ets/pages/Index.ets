@@ -1,7 +1,6 @@
 import {
   SunButton,
   SunButtonRole,
-  SunCard,
   SunColor,
   SunSpacing,
   SunToolShell,
@@ -123,7 +122,7 @@ struct Index {
       .height(34)
       .padding({ left: 12, right: 12 })
       .borderRadius(999)
-      .backgroundColor(this.draftBedtime === time ? '#9B8CFF' : '#24283A')
+      .backgroundColor(this.draftBedtime === time ? '#F7B733' : '#31354A')
       .fontColor(this.draftBedtime === time ? SunColor.night : '#BFB8AA')
       .fontSize(12)
       .fontWeight(FontWeight.Bold)
@@ -132,7 +131,7 @@ struct Index {
 
   @Builder
   private manualEntryCard() {
-    SunCard() {
+    Column() {
       Column({ space: SunSpacing.md }) {
         Row({ space: SunSpacing.md }) {
           Column({ space: SunSpacing.xs }) {
@@ -140,11 +139,11 @@ struct Index {
               .fontSize(11)
               .fontWeight(FontWeight.Bold)
               .letterSpacing(1.5)
-              .fontColor(SunColor.pebble)
+              .fontColor('#BFB8AA')
             Text(`${this.hoursText(this.draftHours)} · ${this.draftBedtime}`)
               .fontSize(22)
               .fontWeight(FontWeight.Bold)
-              .fontColor(SunColor.ink)
+              .fontColor(SunColor.cream)
           }
           .layoutWeight(1)
           .alignItems(HorizontalAlign.Start)
@@ -153,7 +152,7 @@ struct Index {
             .height(38)
             .padding({ left: 12, right: 12 })
             .borderRadius(999)
-            .backgroundColor('#24283A')
+            .backgroundColor('#31354A')
             .fontColor(SunColor.cream)
             .fontSize(12)
             .onClick(() => this.adjustDraftHours(-0.25))
@@ -162,7 +161,7 @@ struct Index {
             .height(38)
             .padding({ left: 12, right: 12 })
             .borderRadius(999)
-            .backgroundColor('#9B8CFF')
+            .backgroundColor('#F7B733')
             .fontColor(SunColor.night)
             .fontSize(12)
             .onClick(() => this.adjustDraftHours(0.25))
@@ -182,7 +181,7 @@ struct Index {
           Column({ space: SunSpacing.sm }) {
             Text(`Saved tonight · ${this.todayNightSummary()}`)
               .fontSize(12)
-              .fontColor(SunColor.pebble)
+              .fontColor('#BFB8AA')
 
             if (this.confirmingDeleteNightDate === this.todayDateKey()) {
               Row({ space: SunSpacing.sm }) {
@@ -214,6 +213,10 @@ struct Index {
       .width('100%')
       .alignItems(HorizontalAlign.Start)
     }
+    .width('100%')
+    .padding(SunSpacing.lg)
+    .backgroundColor('#24283A')
+    .borderRadius(20)
   }
 
   private loadNights(): void {
@@ -374,7 +377,7 @@ struct Index {
       .height(34)
       .padding({ left: 14, right: 14 })
       .borderRadius(999)
-      .backgroundColor(this.rangeNights === value ? '#9B8CFF' : '#24283A')
+      .backgroundColor(this.rangeNights === value ? '#F7B733' : '#31354A')
       .fontColor(this.rangeNights === value ? SunColor.night : '#BFB8AA')
       .fontSize(12)
       .fontWeight(FontWeight.Bold)
@@ -383,21 +386,25 @@ struct Index {
 
   @Builder
   private emptyState() {
-    SunCard() {
+    Column() {
       Column({ space: SunSpacing.sm }) {
         Text('No sleep data yet')
           .fontSize(17)
           .fontWeight(FontWeight.Bold)
-          .fontColor(SunColor.ink)
+          .fontColor(SunColor.cream)
         Text('Add tonight below to start tracking manually.')
           .fontSize(13)
-          .fontColor(SunColor.pebble)
+          .fontColor('#BFB8AA')
           .textAlign(TextAlign.Center)
           .lineHeight(20)
       }
       .width('100%')
       .padding({ top: SunSpacing.lg, bottom: SunSpacing.lg })
     }
+    .width('100%')
+    .padding(SunSpacing.lg)
+    .backgroundColor('#24283A')
+    .borderRadius(20)
   }
 
   @Builder
@@ -407,7 +414,7 @@ struct Index {
         Text('ALL CAUGHT UP')
           .fontSize(34)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#9B8CFF')
+          .fontColor('#F7B733')
       } else {
         Text(this.hoursText(this.debtHours()))
           .fontSize(46)
@@ -429,7 +436,7 @@ struct Index {
 
   @Builder
   private chartCard() {
-    SunCard() {
+    Column() {
       Column({ space: SunSpacing.lg }) {
         Row({ space: SunSpacing.sm }) {
           this.rangeButton('7N', 7)
@@ -443,7 +450,7 @@ struct Index {
               Blank()
                 .width('100%')
                 .height(34 + Math.min(118, Math.round(night.hours / this.goalHours * 92)))
-                .backgroundColor(night.hours >= this.goalHours ? '#9B8CFF' : '#655CA8')
+                .backgroundColor(night.hours >= this.goalHours ? '#F7B733' : '#8C6925')
                 .borderRadius(5)
 
               Text(night.day)
@@ -459,22 +466,26 @@ struct Index {
         .height(176)
       }
     }
+    .width('100%')
+    .padding(SunSpacing.lg)
+    .backgroundColor('#24283A')
+    .borderRadius(20)
   }
 
   @Builder
   private weekCard() {
-    SunCard() {
+    Column() {
       Row() {
         Column({ space: SunSpacing.xs }) {
           Text('AVG · LAST 7 NIGHTS')
             .fontSize(10)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1)
-            .fontColor(SunColor.pebble)
+            .fontColor('#BFB8AA')
           Text(this.hoursText(this.averageHours(7)))
             .fontSize(SunType.title)
             .fontWeight(FontWeight.Bold)
-            .fontColor(SunColor.ink)
+            .fontColor(SunColor.cream)
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
@@ -484,27 +495,31 @@ struct Index {
             .fontSize(10)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1)
-            .fontColor(SunColor.pebble)
+            .fontColor('#BFB8AA')
           Text((this.averageHours(7) >= this.goalHours ? '+' : '-') + this.hoursText(Math.abs(this.averageHours(7) - this.goalHours)))
             .fontSize(SunType.title)
             .fontWeight(FontWeight.Bold)
-            .fontColor(this.averageHours(7) >= this.goalHours ? '#9B8CFF' : SunColor.ink)
+            .fontColor(this.averageHours(7) >= this.goalHours ? '#F7B733' : SunColor.cream)
         }
         .alignItems(HorizontalAlign.End)
       }
       .width('100%')
     }
+    .width('100%')
+    .padding(SunSpacing.lg)
+    .backgroundColor('#24283A')
+    .borderRadius(20)
   }
 
   @Builder
   private insightsCard() {
-    SunCard() {
+    Column() {
       Column({ space: SunSpacing.md }) {
         Text(`INSIGHTS · LAST ${this.shownNights().length} NIGHTS`)
           .fontSize(10)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1)
-          .fontColor(SunColor.pebble)
+          .fontColor('#BFB8AA')
 
         if (this.proUnlocked) {
           this.insightRow('BEST NIGHT', this.bestNightText())
@@ -516,19 +531,27 @@ struct Index {
         } else {
           Text('Weekday vs weekend, best & roughest nights - unlock with Pro')
             .fontSize(12)
-            .fontColor(SunColor.pebble)
+            .fontColor('#BFB8AA')
             .lineHeight(18)
 
-          SunButton({
-            label: 'Unlock Pro',
-            role: SunButtonRole.Secondary,
-            action: () => this.unlockPro()
-          })
+          Button('Unlock Pro')
+            .height(44)
+            .padding({ left: SunSpacing.lg, right: SunSpacing.lg })
+            .borderRadius(999)
+            .backgroundColor('#F7B733')
+            .fontColor(SunColor.night)
+            .fontSize(SunType.body)
+            .fontWeight(FontWeight.Medium)
+            .onClick(() => this.unlockPro())
         }
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
     }
+    .width('100%')
+    .padding(SunSpacing.lg)
+    .backgroundColor('#24283A')
+    .borderRadius(20)
   }
 
   @Builder
@@ -538,50 +561,54 @@ struct Index {
         .fontSize(11)
         .fontWeight(FontWeight.Bold)
         .letterSpacing(1)
-        .fontColor(SunColor.pebble)
+        .fontColor('#BFB8AA')
       Blank().layoutWeight(1)
       Text(value)
         .fontSize(15)
         .fontWeight(FontWeight.Bold)
-        .fontColor(SunColor.ink)
+        .fontColor(SunColor.cream)
     }
     .width('100%')
   }
 
   @Builder
   private goalCard() {
-    SunCard() {
+    Column() {
       Row({ space: SunSpacing.md }) {
         Text('SLEEP NEED')
           .fontSize(11)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.5)
-          .fontColor(SunColor.pebble)
+          .fontColor('#BFB8AA')
           .layoutWeight(1)
 
         Button('-')
           .width(38)
           .height(38)
           .borderRadius(999)
-          .backgroundColor('#24283A')
+          .backgroundColor('#31354A')
           .fontColor(SunColor.cream)
           .onClick(() => this.adjustGoal(-0.25))
 
         Text(this.hoursText(this.goalHours))
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
-          .fontColor(SunColor.ink)
+          .fontColor(SunColor.cream)
 
         Button('+')
           .width(38)
           .height(38)
           .borderRadius(999)
-          .backgroundColor('#9B8CFF')
+          .backgroundColor('#F7B733')
           .fontColor(SunColor.night)
           .onClick(() => this.adjustGoal(0.25))
       }
       .width('100%')
     }
+    .width('100%')
+    .padding(SunSpacing.lg)
+    .backgroundColor('#24283A')
+    .borderRadius(20)
   }
 
   build() {
@@ -605,11 +632,15 @@ struct Index {
               this.manualEntryCard()
             }
 
-            SunButton({
-              label: this.hasTodayNight() ? 'Update tonight' : 'Save tonight',
-              role: SunButtonRole.Secondary,
-              action: () => this.addNight()
-            })
+            Button(this.hasTodayNight() ? 'Update tonight' : 'Save tonight')
+              .height(48)
+              .padding({ left: SunSpacing.lg, right: SunSpacing.lg })
+              .borderRadius(999)
+              .backgroundColor('#F7B733')
+              .fontColor(SunColor.night)
+              .fontSize(SunType.body)
+              .fontWeight(FontWeight.Medium)
+              .onClick(() => this.addNight())
           }
           .width('100%')
           .padding({ bottom: SunSpacing.xl })
@@ -620,13 +651,13 @@ struct Index {
 
       if (!this.proUnlocked) {
         Button('PRO')
-          .height(48)
-          .padding({ left: SunSpacing.lg, right: SunSpacing.lg })
-          .borderRadius(999)
-          .backgroundColor('#9B8CFF')
-          .fontColor(SunColor.night)
-          .fontSize(SunType.body)
-          .fontWeight(FontWeight.Medium)
+          .height(36)
+          .padding({ left: SunSpacing.sm, right: SunSpacing.sm })
+          .borderRadius(0)
+          .backgroundColor(SunColor.night)
+          .fontColor('#F7B733')
+          .fontSize(13)
+          .fontWeight(FontWeight.Bold)
           .margin({ top: SunSpacing.xl, right: SunSpacing.xl })
           .onClick(() => this.unlockPro())
       }

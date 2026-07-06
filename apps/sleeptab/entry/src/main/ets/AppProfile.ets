@@ -4,6 +4,6 @@ export const appProfile: SunAppManifest = {
   name: 'SLEEPTAB',
   tagline: '',
   primaryAction: '',
-  accent: '#9B8CFF',
+  accent: '#F7B733',
   mode: SunMode.Dark
 }
