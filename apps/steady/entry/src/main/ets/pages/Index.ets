@@ -578,7 +578,7 @@ struct Index {
     const times = [...this.medTimes]
     const nextMed: Medication = {
       name,
-      dose: this.medDose.trim().length > 0 ? this.medDose.trim() : 'Dose',
+      dose: this.medDose.trim(),
       times,
       takenLog: []
     }
@@ -1637,7 +1637,7 @@ struct Index {
             .border({ width: 1, color: SunColor.border })
             .onChange((value: string) => this.medName = value)
 
-          TextInput({ placeholder: 'Dose', text: this.medDose })
+          TextInput({ placeholder: 'Dosage (e.g. 500mg)', text: this.medDose })
             .height(46)
             .width('100%')
             .fontSize(14)
