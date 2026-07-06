@@ -839,7 +839,7 @@ struct Index {
       const value = this.readingNumber(reading)
       return value >= low && value <= high
     }).length
-    return `${inRange} of ${readings.length} in range`
+    return `${inRange} of ${readings.length} in patient-set range`
   }
 
   private validMealtime(mealtime?: string): string {
