@@ -19,6 +19,7 @@ interface SleepNight {
 PersistentStorage.persistProp('sleeptab.goalHours.v1', 8)
 PersistentStorage.persistProp('sleeptab.rangeNights.v1', 7)
 PersistentStorage.persistProp('sleeptab.draftHours.v1', 7.5)
+PersistentStorage.persistProp('sleeptab.draftBedtime.v1', '23:30')
 PersistentStorage.persistProp('sleeptab.nights.v1', '')
 
 @Entry
@@ -27,6 +28,7 @@ struct Index {
   @StorageLink('sleeptab.goalHours.v1') private goalHours: number = 8
   @StorageLink('sleeptab.rangeNights.v1') private rangeNights: number = 7
   @StorageLink('sleeptab.draftHours.v1') private draftHours: number = 7.5
+  @StorageLink('sleeptab.draftBedtime.v1') private draftBedtime: string = '23:30'
   @StorageLink('sleeptab.nights.v1') private nightsJson: string = ''
   @State private nights: SleepNight[] = []
 
@@ -89,7 +91,7 @@ struct Index {
       date,
       day: this.dayLabel(today),
       hours: this.draftHours,
-      bedtime: '23:30'
+      bedtime: this.draftBedtime
     }
     this.nights = this.sortNights([
       ...this.nights.filter((item: SleepNight) => item.date !== date),
@@ -99,42 +101,68 @@ struct Index {
   }
 
   @Builder
+  private bedtimeButton(time: string) {
+    Button(time)
+      .height(34)
+      .padding({ left: 12, right: 12 })
+      .borderRadius(999)
+      .backgroundColor(this.draftBedtime === time ? '#9B8CFF' : '#24283A')
+      .fontColor(this.draftBedtime === time ? SunColor.night : '#BFB8AA')
+      .fontSize(12)
+      .fontWeight(FontWeight.Bold)
+      .onClick(() => this.draftBedtime = time)
+  }
+
+  @Builder
   private manualEntryCard() {
     SunCard() {
-      Row({ space: SunSpacing.md }) {
-        Column({ space: SunSpacing.xs }) {
-          Text('TONIGHT')
-            .fontSize(11)
-            .fontWeight(FontWeight.Bold)
-            .letterSpacing(1.5)
-            .fontColor(SunColor.pebble)
-          Text(this.hoursText(this.draftHours))
-            .fontSize(22)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(SunColor.ink)
+      Column({ space: SunSpacing.md }) {
+        Row({ space: SunSpacing.md }) {
+          Column({ space: SunSpacing.xs }) {
+            Text('TONIGHT')
+              .fontSize(11)
+              .fontWeight(FontWeight.Bold)
+              .letterSpacing(1.5)
+              .fontColor(SunColor.pebble)
+            Text(`${this.hoursText(this.draftHours)} · ${this.draftBedtime}`)
+              .fontSize(22)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(SunColor.ink)
+          }
+          .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+          Button('-15m')
+            .height(38)
+            .padding({ left: 12, right: 12 })
+            .borderRadius(999)
+            .backgroundColor('#24283A')
+            .fontColor(SunColor.cream)
+            .fontSize(12)
+            .onClick(() => this.adjustDraftHours(-0.25))
+
+          Button('+15m')
+            .height(38)
+            .padding({ left: 12, right: 12 })
+            .borderRadius(999)
+            .backgroundColor('#9B8CFF')
+            .fontColor(SunColor.night)
+            .fontSize(12)
+            .onClick(() => this.adjustDraftHours(0.25))
         }
-        .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
+        .width('100%')
 
-        Button('-15m')
-          .height(38)
-          .padding({ left: 12, right: 12 })
-          .borderRadius(999)
-          .backgroundColor('#24283A')
-          .fontColor(SunColor.cream)
-          .fontSize(12)
-          .onClick(() => this.adjustDraftHours(-0.25))
-
-        Button('+15m')
-          .height(38)
-          .padding({ left: 12, right: 12 })
-          .borderRadius(999)
-          .backgroundColor('#9B8CFF')
-          .fontColor(SunColor.night)
-          .fontSize(12)
-          .onClick(() => this.adjustDraftHours(0.25))
+        Row({ space: SunSpacing.sm }) {
+          this.bedtimeButton('22:30')
+          this.bedtimeButton('23:00')
+          this.bedtimeButton('23:30')
+          this.bedtimeButton('00:00')
+          this.bedtimeButton('00:30')
+        }
+        .width('100%')
       }
       .width('100%')
+      .alignItems(HorizontalAlign.Start)
     }
   }
 
