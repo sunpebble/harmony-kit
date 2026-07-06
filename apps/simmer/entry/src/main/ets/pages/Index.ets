@@ -219,6 +219,7 @@ struct Index {
   @State private savedPresets: SavedPresetTimer[] = []
   @State private nowMs: number = Date.now()
   @State private confirmingPresetId: number = -1
+  @State private customSaveAsPreset: boolean = false
 
   aboutToAppear(): void {
     this.loadTimers()
@@ -246,7 +247,11 @@ struct Index {
 
   private startCustom(): void {
     this.confirmingPresetId = -1
-    this.customOpen = !this.customOpen
+    const nextOpen = !this.customOpen
+    this.customOpen = nextOpen
+    if (nextOpen) {
+      this.customSaveAsPreset = false
+    }
   }
 
   private startCustomTimer(): void {
@@ -256,6 +261,15 @@ struct Index {
     }
     if (this.startTimer(this.customLabel(), this.customEmoji, seconds)) {
       this.customOpen = false
+      this.customSaveAsPreset = false
+    }
+  }
+
+  private startCustomFromPanel(): void {
+    if (this.proUnlocked && this.customSaveAsPreset) {
+      this.saveCustomPresetAndStart()
+    } else {
+      this.startCustomTimer()
     }
   }
 
@@ -275,6 +289,7 @@ struct Index {
     this.saveSavedPresets()
     if (this.startTimer(label, this.customEmoji, seconds)) {
       this.customOpen = false
+      this.customSaveAsPreset = false
     }
   }
 
@@ -720,40 +735,27 @@ struct Index {
           .onChange((value: string) => this.customLabelText = value)
 
         if (this.proUnlocked) {
-          Row({ space: SunSpacing.sm }) {
-            Button('Save + Start')
-              .height(44)
-              .layoutWeight(1)
-              .borderRadius(SunRadius.pill)
-              .backgroundColor(SunColor.white)
-              .fontColor(SunColor.ink)
-              .fontSize(13)
-              .fontWeight(FontWeight.Bold)
-              .border({ width: 1, color: '#D8CFBD' })
-              .onClick(() => this.saveCustomPresetAndStart())
-
-            Button('Start Custom')
-              .height(44)
-              .layoutWeight(1)
-              .borderRadius(SunRadius.pill)
-              .backgroundColor(SunColor.ink)
-              .fontColor(SunColor.cream)
-              .fontSize(13)
-              .fontWeight(FontWeight.Bold)
-              .onClick(() => this.startCustomTimer())
-          }
-          .width('100%')
-        } else {
-          Button('Start Custom')
-            .height(44)
+          Button('SAVE AS PRESET')
+            .height(38)
             .width('100%')
             .borderRadius(SunRadius.pill)
-            .backgroundColor(SunColor.ink)
-            .fontColor(SunColor.cream)
-            .fontSize(13)
+            .backgroundColor(this.customSaveAsPreset ? SunColor.sun : SunColor.white)
+            .fontColor(SunColor.ink)
+            .fontSize(12)
             .fontWeight(FontWeight.Bold)
-            .onClick(() => this.startCustomTimer())
+            .border({ width: 1, color: '#D8CFBD' })
+            .onClick(() => this.customSaveAsPreset = !this.customSaveAsPreset)
         }
+
+        Button('START')
+          .height(44)
+          .width('100%')
+          .borderRadius(SunRadius.pill)
+          .backgroundColor(SunColor.ink)
+          .fontColor(SunColor.cream)
+          .fontSize(15)
+          .fontWeight(FontWeight.Bold)
+          .onClick(() => this.startCustomFromPanel())
 
         Button('Cancel')
           .height(38)
@@ -764,7 +766,10 @@ struct Index {
           .fontSize(12)
           .fontWeight(FontWeight.Bold)
           .border({ width: 1, color: '#D8CFBD' })
-          .onClick(() => this.customOpen = false)
+          .onClick(() => {
+            this.customOpen = false
+            this.customSaveAsPreset = false
+          })
 
         if (!this.proUnlocked) {
           Button('Unlock Pro')
