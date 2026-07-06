@@ -327,6 +327,7 @@ struct Index {
     this.nextId += 1
     this.draftNote = ''
     this.draftReadingAt = 0
+    this.selectedMealtime = ''
     this.confirmingTimelineDeleteKey = ''
     this.saveReadings()
   }
