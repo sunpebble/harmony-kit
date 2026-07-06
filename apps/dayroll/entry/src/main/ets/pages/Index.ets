@@ -8,6 +8,7 @@ import {
 import { appProfile } from '../AppProfile'
 
 interface RollEntry {
+  date: string
   day: string
   month: string
   mood: string
@@ -47,7 +48,9 @@ struct Index {
       return
     }
     try {
-      this.entries = JSON.parse(this.entriesJson) as RollEntry[]
+      const parsed = JSON.parse(this.entriesJson) as RollEntry[]
+      this.entries = this.sortEntries(parsed.map((entry: RollEntry) => this.normalizeEntry(entry)))
+      this.saveEntries()
     } catch (_error) {
       this.entries = []
       this.saveEntries()
@@ -63,24 +66,57 @@ struct Index {
     if (line.length === 0) {
       return
     }
-    const today: RollEntry = { day: 'TODAY', month: 'JULY 2026', mood: this.mood, line }
-    const rest = this.entries.filter((entry: RollEntry) => entry.day !== 'TODAY')
-    this.entries = [today, ...rest]
+    const now = new Date()
+    const date = this.dateKey(now)
+    const today: RollEntry = { date, day: this.dayLabel(now), month: this.monthLabel(now), mood: this.mood, line }
+    const rest = this.entries.filter((entry: RollEntry) => entry.date !== date)
+    this.entries = this.sortEntries([today, ...rest])
     this.draftLine = ''
     this.saveEntries()
   }
 
   private deleteToday(): void {
-    this.entries = this.entries.filter((entry: RollEntry) => entry.day !== 'TODAY')
+    const today = this.dateKey(new Date())
+    this.entries = this.entries.filter((entry: RollEntry) => entry.date !== today)
     this.saveEntries()
   }
 
   private streak(): number {
-    return this.entries.length
+    if (this.entries.length === 0) {
+      return 0
+    }
+    const logged = this.dateKeys()
+    let cursor = this.dateKey(new Date())
+    if (!logged.includes(cursor)) {
+      cursor = this.addDays(cursor, -1)
+      if (!logged.includes(cursor)) {
+        return 0
+      }
+    }
+    let count = 0
+    while (logged.includes(cursor)) {
+      count += 1
+      cursor = this.addDays(cursor, -1)
+    }
+    return count
   }
 
   private longestStreak(): number {
-    return this.entries.length
+    const logged = this.dateKeys()
+    let best = 0
+    logged.forEach((date: string) => {
+      if (logged.includes(this.addDays(date, -1))) {
+        return
+      }
+      let cursor = date
+      let count = 0
+      while (logged.includes(cursor)) {
+        count += 1
+        cursor = this.addDays(cursor, 1)
+      }
+      best = Math.max(best, count)
+    })
+    return best
   }
 
   private moodCount(mood: string): number {
@@ -91,20 +127,100 @@ struct Index {
     if (this.entries.length === 0) {
       return 'No entries yet.'
     }
+    const sorted = [...this.entries].sort((a: RollEntry, b: RollEntry) => a.date.localeCompare(b.date))
     if (this.exportFormat === 'Markdown') {
-      return this.entries.map((entry: RollEntry) => {
-        return `- **${entry.day}** ${entry.mood} ${entry.line}`
+      return sorted.map((entry: RollEntry) => {
+        return `- **${entry.date}** ${entry.mood} ${entry.line}`
       }).join('\n')
     }
     if (this.exportFormat === 'CSV') {
-      const rows = this.entries.map((entry: RollEntry) => {
-        return `${entry.day},${entry.mood},${entry.line.replaceAll('"', '""')}`
+      const rows = sorted.map((entry: RollEntry) => {
+        return `${entry.date},${entry.mood},${this.csvValue(entry.line)}`
       })
-      return ['day,mood,line', ...rows].join('\n')
+      return ['date,mood,line', ...rows].join('\n')
     }
-    return this.entries.map((entry: RollEntry) => {
-      return `${entry.day} ${entry.mood} ${entry.line}`
+    return sorted.map((entry: RollEntry) => {
+      return `${entry.date} [${entry.mood}] ${entry.line}`
     }).join('\n')
+  }
+
+  private normalizeEntry(entry: RollEntry): RollEntry {
+    const date = entry.date ? entry.date : this.dateKey(new Date())
+    const parsed = this.dateFromKey(date)
+    return {
+      date,
+      day: this.dayLabel(parsed),
+      month: this.monthLabel(parsed),
+      mood: entry.mood,
+      line: entry.line
+    }
+  }
+
+  private sortEntries(entries: RollEntry[]): RollEntry[] {
+    return [...entries].sort((a: RollEntry, b: RollEntry) => b.date.localeCompare(a.date))
+  }
+
+  private dateKeys(): string[] {
+    const keys: string[] = []
+    this.entries.forEach((entry: RollEntry) => {
+      if (!keys.includes(entry.date)) {
+        keys.push(entry.date)
+      }
+    })
+    return keys.sort((a: string, b: string) => a.localeCompare(b))
+  }
+
+  private months(): string[] {
+    const months: string[] = []
+    this.entries.forEach((entry: RollEntry) => {
+      if (!months.includes(entry.month)) {
+        months.push(entry.month)
+      }
+    })
+    return months
+  }
+
+  private entriesForMonth(month: string): RollEntry[] {
+    return this.entries.filter((entry: RollEntry) => entry.month === month)
+  }
+
+  private dateKey(date: Date): string {
+    return `${date.getFullYear()}-${this.pad(date.getMonth() + 1)}-${this.pad(date.getDate())}`
+  }
+
+  private dateFromKey(key: string): Date {
+    const parts = key.split('-')
+    if (parts.length !== 3) {
+      return new Date()
+    }
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+  }
+
+  private addDays(key: string, delta: number): string {
+    const date = this.dateFromKey(key)
+    date.setDate(date.getDate() + delta)
+    return this.dateKey(date)
+  }
+
+  private dayLabel(date: Date): string {
+    const months: string[] = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+    return `${months[date.getMonth()]} ${this.pad(date.getDate())}`
+  }
+
+  private monthLabel(date: Date): string {
+    const months: string[] = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']
+    return `${months[date.getMonth()]} ${date.getFullYear()}`
+  }
+
+  private csvValue(value: string): string {
+    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+      return `"${value.replaceAll('"', '""')}"`
+    }
+    return value
+  }
+
+  private pad(value: number): string {
+    return value < 10 ? `0${value}` : `${value}`
   }
 
   private testReminder(): void {
@@ -223,32 +339,38 @@ struct Index {
           .width('100%')
           .padding({ top: 30, bottom: 30 })
       } else {
-        Text(this.entries[0].month)
-          .fontSize(11)
-          .fontWeight(FontWeight.Bold)
-          .letterSpacing(1.5)
-          .fontColor(SunColor.pebble)
-          .width('100%')
-
-        ForEach(this.entries, (entry: RollEntry) => {
-          Row({ space: 10 }) {
-            Text(entry.day)
-              .fontSize(12)
+        ForEach(this.months(), (month: string) => {
+          Column({ space: SunSpacing.sm }) {
+            Text(month)
+              .fontSize(11)
               .fontWeight(FontWeight.Bold)
+              .letterSpacing(1.5)
               .fontColor(SunColor.pebble)
-              .width(68)
-            Text(entry.mood)
-              .fontSize(14)
-            Text(entry.line)
-              .fontSize(13)
-              .fontColor(SunColor.ink)
-              .layoutWeight(1)
-              .maxLines(2)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
+              .width('100%')
+
+            ForEach(this.entriesForMonth(month), (entry: RollEntry) => {
+              Row({ space: 10 }) {
+                Text(entry.day)
+                  .fontSize(12)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor(SunColor.pebble)
+                  .width(68)
+                Text(entry.mood)
+                  .fontSize(14)
+                Text(entry.line)
+                  .fontSize(13)
+                  .fontColor(SunColor.ink)
+                  .layoutWeight(1)
+                  .maxLines(2)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+              }
+              .width('100%')
+              .padding({ top: SunSpacing.xs, bottom: SunSpacing.xs })
+            }, (entry: RollEntry) => entry.date)
           }
           .width('100%')
-          .padding({ top: SunSpacing.xs, bottom: SunSpacing.xs })
-        }, (entry: RollEntry) => `${entry.day}-${entry.line}`)
+          .alignItems(HorizontalAlign.Start)
+        }, (month: string) => month)
       }
     }
     .width('100%')
