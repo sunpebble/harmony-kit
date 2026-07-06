@@ -264,10 +264,9 @@ struct Index {
     if (seconds <= 0) {
       return
     }
-    if (this.startTimer(this.customLabel(), this.customEmoji, seconds)) {
-      this.customOpen = false
-      this.customSaveAsPreset = false
-    }
+    this.startTimer(this.customLabel(), this.customEmoji, seconds)
+    this.customOpen = false
+    this.customSaveAsPreset = false
   }
 
   private startCustomFromPanel(): void {
