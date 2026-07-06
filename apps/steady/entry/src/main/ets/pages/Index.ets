@@ -8,10 +8,12 @@ import {
   SunToolShell,
   SunType
 } from 'sunpebble_ui'
+import { uniformTypeDescriptor as utd } from '@kit.ArkData'
 import { pasteboard } from '@kit.BasicServicesKit'
 import { common } from '@kit.AbilityKit'
 import { reminderAgentManager } from '@kit.BackgroundTasksKit'
 import { notificationManager } from '@kit.NotificationKit'
+import { systemShare } from '@kit.ShareKit'
 import { appProfile } from '../AppProfile'
 
 interface Reading {
@@ -324,11 +326,11 @@ struct Index {
       this.showProToast()
       return
     }
-    this.copyText('CSV', this.csvPreview())
+    this.shareText('CSV', this.csvPreview())
   }
 
-  private copyDoctorReport(): void {
-    this.copyText('Doctor report', this.doctorReportText())
+  private shareDoctorReport(): void {
+    this.shareText('Doctor report', this.doctorReportText())
   }
 
   private async copyText(label: string, text: string): Promise<void> {
@@ -338,6 +340,27 @@ struct Index {
       this.showToast(`${label} copied.`)
     } catch (_error) {
       this.showToast('Copy failed.')
+    }
+  }
+
+  private async shareText(label: string, text: string): Promise<void> {
+    const context = this.getUIContext().getHostContext()
+    if (!context) {
+      await this.copyText(label, text)
+      return
+    }
+    try {
+      const shareData: systemShare.SharedData = new systemShare.SharedData({
+        utd: utd.UniformDataType.TEXT,
+        content: text
+      })
+      const controller: systemShare.ShareController = new systemShare.ShareController(shareData)
+      await controller.show(context as common.UIAbilityContext, {
+        selectionMode: systemShare.SelectionMode.SINGLE,
+        previewMode: systemShare.SharePreviewMode.DETAIL
+      })
+    } catch (_error) {
+      await this.copyText(label, text)
     }
   }
 
@@ -1369,10 +1392,10 @@ struct Index {
               .lineHeight(18)
 
             SunButton({
-              label: 'Copy Doctor Report',
+              label: 'Share Doctor Report',
               role: SunButtonRole.Secondary,
               action: () => {
-                this.copyDoctorReport()
+                this.shareDoctorReport()
               }
             })
           }
