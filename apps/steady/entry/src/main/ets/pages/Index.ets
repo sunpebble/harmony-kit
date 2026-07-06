@@ -481,13 +481,51 @@ struct Index {
   }
 
   private toggleMedTime(time: string): void {
-    if (this.medTimes.includes(time)) {
+    const value = this.validMedTime(time)
+    if (value.length === 0) {
+      return
+    }
+    if (this.medTimes.includes(value)) {
       if (this.medTimes.length > 1) {
-        this.medTimes = this.medTimes.filter((item: string) => item !== time)
+        this.medTimes = this.medTimes.filter((item: string) => item !== value)
       }
       return
     }
-    this.medTimes = [...this.medTimes, time].sort((a: string, b: string) => a.localeCompare(b))
+    this.medTimes = [...this.medTimes, value].sort((a: string, b: string) => a.localeCompare(b))
+  }
+
+  private addMedTime(time: string): void {
+    const value = this.validMedTime(time)
+    if (value.length === 0 || this.medTimes.includes(value)) {
+      return
+    }
+    this.medTimes = [...this.medTimes, value].sort((a: string, b: string) => a.localeCompare(b))
+  }
+
+  private validMedTime(time: string): string {
+    const parts = time.split(':')
+    if (parts.length < 2) {
+      return ''
+    }
+    const hour = Number(parts[0])
+    const minute = Number(parts[1])
+    if (Number.isNaN(hour) || Number.isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      return ''
+    }
+    return `${this.pad(hour)}:${this.pad(minute)}`
+  }
+
+  private customMedTimes(): string[] {
+    const presets: string[] = ['08:00', '12:00', '20:00', '21:00']
+    return this.medTimes.filter((time: string) => !presets.includes(time))
+  }
+
+  private medTimeDate(time: string): Date {
+    const value = this.validMedTime(time) || '08:00'
+    const parts = value.split(':')
+    const date = new Date()
+    date.setHours(Number(parts[0]), Number(parts[1]), 0, 0)
+    return date
   }
 
   private toggleMedSlot(targetKey: string, time: string): void {
@@ -1155,6 +1193,23 @@ struct Index {
       .onClick(() => this.toggleMedTime(time))
   }
 
+  private pickMedTime(): void {
+    try {
+      this.getUIContext().showTimePickerDialog({
+        selected: this.medTimeDate('08:00'),
+        useMilitaryTime: true,
+        onAccept: (value: TimePickerResult) => {
+          if (value.hour === undefined || value.minute === undefined) {
+            return
+          }
+          this.addMedTime(`${this.pad(value.hour)}:${this.pad(value.minute)}`)
+        }
+      })
+    } catch (_error) {
+      this.showToast('Time picker unavailable.')
+    }
+  }
+
   @Builder
   private medDoseRow(name: string, targetKey: string, time: string, taken: boolean) {
     Button(`${name} · ${time} · ${taken ? 'Taken' : 'Due'}`)
@@ -1552,6 +1607,21 @@ struct Index {
             this.medTimeButton('21:00')
           }
           .width('100%')
+
+          if (this.customMedTimes().length > 0) {
+            Row({ space: SunSpacing.sm }) {
+              ForEach(this.customMedTimes(), (time: string) => {
+                this.medTimeButton(time)
+              }, (time: string) => time)
+            }
+            .width('100%')
+          }
+
+          SunButton({
+            label: 'Add Time',
+            role: SunButtonRole.Secondary,
+            action: () => this.pickMedTime()
+          })
 
           SunButton({
             label: this.editingMedKey.length > 0 ? 'Save Medication' : 'Add Medication',
