@@ -1728,75 +1728,6 @@ struct Index {
   private medsView() {
     Column({ space: SunSpacing.md }) {
       SunCard() {
-        Column({ space: SunSpacing.md }) {
-          Text(this.editingMedKey.length > 0 ? 'EDIT MEDICATION' : 'NEW MEDICATION')
-            .fontSize(10)
-            .fontWeight(FontWeight.Bold)
-            .letterSpacing(1.4)
-            .fontColor(SunColor.pebble)
-
-          TextInput({ placeholder: 'Name', text: this.medName })
-            .height(46)
-            .width('100%')
-            .fontSize(14)
-            .fontColor(SunColor.ink)
-            .backgroundColor(SunColor.white)
-            .borderRadius(8)
-            .border({ width: 1, color: SunColor.border })
-            .onChange((value: string) => this.medName = value)
-
-          TextInput({ placeholder: 'Dosage (e.g. 500mg)', text: this.medDose })
-            .height(46)
-            .width('100%')
-            .fontSize(14)
-            .fontColor(SunColor.ink)
-            .backgroundColor(SunColor.white)
-            .borderRadius(8)
-            .border({ width: 1, color: SunColor.border })
-            .onChange((value: string) => this.medDose = value)
-
-          Row({ space: SunSpacing.sm }) {
-            this.medTimeButton('08:00')
-            this.medTimeButton('12:00')
-            this.medTimeButton('20:00')
-            this.medTimeButton('21:00')
-          }
-          .width('100%')
-
-          if (this.customMedTimes().length > 0) {
-            Row({ space: SunSpacing.sm }) {
-              ForEach(this.customMedTimes(), (time: string) => {
-                this.medTimeButton(time)
-              }, (time: string) => time)
-            }
-            .width('100%')
-          }
-
-          SunButton({
-            label: 'Add Time',
-            role: SunButtonRole.Secondary,
-            action: () => this.pickMedTime()
-          })
-
-          SunButton({
-            label: this.editingMedKey.length > 0 ? 'Save Medication' : 'Add Medication',
-            role: SunButtonRole.Secondary,
-            action: () => this.addMedication()
-          })
-
-          if (this.editingMedKey.length > 0) {
-            SunButton({
-              label: 'Cancel Edit',
-              role: SunButtonRole.Secondary,
-              action: () => this.resetMedicationForm()
-            })
-          }
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Start)
-      }
-
-      SunCard() {
         Column({ space: SunSpacing.sm }) {
           Text('TODAY')
             .fontSize(10)
@@ -1863,6 +1794,75 @@ struct Index {
                 .fontColor(SunColor.pebble)
             }
             .width('100%')
+          }
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Start)
+      }
+
+      SunCard() {
+        Column({ space: SunSpacing.md }) {
+          Text(this.editingMedKey.length > 0 ? 'EDIT MEDICATION' : 'NEW MEDICATION')
+            .fontSize(10)
+            .fontWeight(FontWeight.Bold)
+            .letterSpacing(1.4)
+            .fontColor(SunColor.pebble)
+
+          TextInput({ placeholder: 'Name', text: this.medName })
+            .height(46)
+            .width('100%')
+            .fontSize(14)
+            .fontColor(SunColor.ink)
+            .backgroundColor(SunColor.white)
+            .borderRadius(8)
+            .border({ width: 1, color: SunColor.border })
+            .onChange((value: string) => this.medName = value)
+
+          TextInput({ placeholder: 'Dosage (e.g. 500mg)', text: this.medDose })
+            .height(46)
+            .width('100%')
+            .fontSize(14)
+            .fontColor(SunColor.ink)
+            .backgroundColor(SunColor.white)
+            .borderRadius(8)
+            .border({ width: 1, color: SunColor.border })
+            .onChange((value: string) => this.medDose = value)
+
+          Row({ space: SunSpacing.sm }) {
+            this.medTimeButton('08:00')
+            this.medTimeButton('12:00')
+            this.medTimeButton('20:00')
+            this.medTimeButton('21:00')
+          }
+          .width('100%')
+
+          if (this.customMedTimes().length > 0) {
+            Row({ space: SunSpacing.sm }) {
+              ForEach(this.customMedTimes(), (time: string) => {
+                this.medTimeButton(time)
+              }, (time: string) => time)
+            }
+            .width('100%')
+          }
+
+          SunButton({
+            label: 'Add Time',
+            role: SunButtonRole.Secondary,
+            action: () => this.pickMedTime()
+          })
+
+          SunButton({
+            label: this.editingMedKey.length > 0 ? 'Save Medication' : 'Add Medication',
+            role: SunButtonRole.Secondary,
+            action: () => this.addMedication()
+          })
+
+          if (this.editingMedKey.length > 0) {
+            SunButton({
+              label: 'Cancel Edit',
+              role: SunButtonRole.Secondary,
+              action: () => this.resetMedicationForm()
+            })
           }
         }
         .width('100%')
