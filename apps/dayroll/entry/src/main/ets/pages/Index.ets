@@ -49,6 +49,7 @@ struct Index {
   @StorageLink('dayroll.proUnlocked.v1') private proUnlocked: boolean = false
   @State private draftLine: string = ''
   @State private editingDate: string = ''
+  @State private confirmingDelete: boolean = false
   @State private entries: RollEntry[] = []
 
   aboutToAppear(): void {
@@ -82,6 +83,7 @@ struct Index {
     this.entries = this.sortEntries([entry, ...rest])
     this.draftLine = ''
     this.editingDate = ''
+    this.confirmingDelete = false
     this.saveEntries()
   }
 
@@ -90,6 +92,7 @@ struct Index {
     this.entries = this.entries.filter((entry: RollEntry) => entry.date !== date)
     this.draftLine = ''
     this.editingDate = ''
+    this.confirmingDelete = false
     this.saveEntries()
   }
 
@@ -97,6 +100,7 @@ struct Index {
     this.editingDate = entry.date
     this.mood = entry.mood
     this.draftLine = entry.line
+    this.confirmingDelete = false
   }
 
   private activeDate(): string {
@@ -476,18 +480,34 @@ struct Index {
         .padding({ top: 4, bottom: 4 })
       }
 
-      Row({ space: SunSpacing.md }) {
-        SunButton({
-          label: 'Save',
-          action: () => this.saveToday()
-        })
-
-        if (this.hasActiveEntry()) {
+      if (this.confirmingDelete) {
+        Row({ space: SunSpacing.md }) {
           SunButton({
-            label: 'Delete Entry',
+            label: 'Confirm Delete',
             role: SunButtonRole.Danger,
             action: () => this.deleteToday()
           })
+
+          SunButton({
+            label: 'Cancel',
+            role: SunButtonRole.Secondary,
+            action: () => this.confirmingDelete = false
+          })
+        }
+      } else {
+        Row({ space: SunSpacing.md }) {
+          SunButton({
+            label: 'Save',
+            action: () => this.saveToday()
+          })
+
+          if (this.hasActiveEntry()) {
+            SunButton({
+              label: 'Delete Entry',
+              role: SunButtonRole.Danger,
+              action: () => this.confirmingDelete = true
+            })
+          }
         }
       }
     }
