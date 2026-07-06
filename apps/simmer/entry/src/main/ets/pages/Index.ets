@@ -5,6 +5,9 @@ import {
   SunToolShell,
   SunType
 } from 'sunpebble_ui'
+import { common } from '@kit.AbilityKit'
+import { reminderAgentManager } from '@kit.BackgroundTasksKit'
+import { notificationManager } from '@kit.NotificationKit'
 import { appProfile } from '../AppProfile'
 
 interface PresetTimer {
@@ -311,7 +314,7 @@ struct Index {
       ...this.timers
     ]
     this.nextId += 1
-    this.saveTimers()
+    this.saveTimersAndSyncReminders()
     return true
   }
 
@@ -340,7 +343,7 @@ struct Index {
       timer.completedAt = 0
     }
     this.tick()
-    this.saveTimers()
+    this.saveTimersAndSyncReminders()
   }
 
   private handleTimerTap(id: number): void {
@@ -354,7 +357,7 @@ struct Index {
 
   private deleteTimer(id: number): void {
     this.timers = this.timers.filter((timer: KitchenTimer) => timer.id !== id)
-    this.saveTimers()
+    this.saveTimersAndSyncReminders()
   }
 
   private addMinute(id: number): void {
@@ -376,7 +379,7 @@ struct Index {
       timer.endAt = Date.now() + timer.remaining * 1000
       timer.completedAt = 0
     }
-    this.saveTimers()
+    this.saveTimersAndSyncReminders()
   }
 
   private restartTimer(id: number): void {
@@ -390,7 +393,7 @@ struct Index {
     timer.done = false
     timer.endAt = Date.now() + timer.seconds * 1000
     timer.completedAt = 0
-    this.saveTimers()
+    this.saveTimersAndSyncReminders()
   }
 
   private tick(): void {
@@ -418,7 +421,7 @@ struct Index {
       timer.done = true
       timer.completedAt = timer.endAt > 0 ? timer.endAt : now
       timer.endAt = 0
-      this.saveTimers()
+      this.saveTimersAndSyncReminders()
     })
   }
 
@@ -430,6 +433,7 @@ struct Index {
     try {
       const saved = JSON.parse(this.timersJson) as TimerSnapshot[]
       this.timers = saved.map((timer: TimerSnapshot) => this.restoreTimer(timer))
+      this.syncReminders()
     } catch (_error) {
       this.timers = []
       this.saveTimers()
@@ -463,12 +467,55 @@ struct Index {
     this.timersJson = JSON.stringify(this.timers)
   }
 
+  private saveTimersAndSyncReminders(): void {
+    this.saveTimers()
+    this.syncReminders()
+  }
+
   private saveSavedPresets(): void {
     this.savedPresetsJson = JSON.stringify(this.savedPresets)
   }
 
   private remainingFromEnd(timer: KitchenTimer, now: number = Date.now()): number {
     return Math.max(0, Math.ceil((timer.endAt - now) / 1000))
+  }
+
+  private async syncReminders(): Promise<void> {
+    try {
+      await reminderAgentManager.cancelAllReminders()
+      const running = this.timers.filter((timer: KitchenTimer) => timer.running && !timer.done && timer.endAt > Date.now())
+      if (running.length === 0 || !await this.requestNotificationAccess()) {
+        return
+      }
+      const now = Date.now()
+      for (const timer of running) {
+        const request: reminderAgentManager.ReminderRequestTimer = {
+          reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_TIMER,
+          triggerTimeInSeconds: Math.max(1, Math.ceil((timer.endAt - now) / 1000)),
+          title: `${timer.emoji} ${timer.label}`,
+          content: "Time's up!",
+          expiredContent: `${timer.label} is done.`,
+          notificationId: 400000 + timer.id,
+          tapDismissed: true
+        }
+        await reminderAgentManager.publishReminder(request)
+      }
+    } catch (_error) {
+      // ponytail: visible timers are source of truth; reminders rebuild on the next timer edit.
+    }
+  }
+
+  private async requestNotificationAccess(): Promise<boolean> {
+    const context = this.getUIContext().getHostContext()
+    if (!context) {
+      return false
+    }
+    try {
+      await notificationManager.requestEnableNotification(context as common.UIAbilityContext)
+      return true
+    } catch (_error) {
+      return false
+    }
   }
 
   private showToast(message: string): void {
