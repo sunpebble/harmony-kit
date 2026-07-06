@@ -269,10 +269,7 @@ struct Index {
       return
     }
     const label = this.customLabel()
-    this.savedPresets = [
-      { id: this.nextPresetId, emoji: this.customEmoji, label, seconds },
-      ...this.savedPresets
-    ]
+    this.savedPresets = [...this.savedPresets, { id: this.nextPresetId, emoji: this.customEmoji, label, seconds }]
     this.nextPresetId += 1
     this.confirmingPresetId = -1
     this.saveSavedPresets()
@@ -309,10 +306,7 @@ struct Index {
       this.showToast('Simmer Pro unlocks every burner at once.')
       return false
     }
-    this.timers = [
-      new KitchenTimer(this.nextId, label, emoji, seconds, seconds, true, false, Date.now() + seconds * 1000, 0),
-      ...this.timers
-    ]
+    this.timers = [...this.timers, new KitchenTimer(this.nextId, label, emoji, seconds, seconds, true, false, Date.now() + seconds * 1000, 0)]
     this.nextId += 1
     this.saveTimersAndSyncReminders()
     return true
