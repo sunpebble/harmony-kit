@@ -23,6 +23,7 @@ PersistentStorage.persistProp('dayroll.exportFormat.v1', 'Plain Text')
 PersistentStorage.persistProp('dayroll.reminderOpen.v1', false)
 PersistentStorage.persistProp('dayroll.reminderEnabled.v1', false)
 PersistentStorage.persistProp('dayroll.reminderHour.v1', 21)
+PersistentStorage.persistProp('dayroll.reminderMinute.v1', 0)
 
 @Entry
 @Component
@@ -36,6 +37,7 @@ struct Index {
   @StorageLink('dayroll.reminderOpen.v1') private reminderOpen: boolean = false
   @StorageLink('dayroll.reminderEnabled.v1') private reminderEnabled: boolean = false
   @StorageLink('dayroll.reminderHour.v1') private reminderHour: number = 21
+  @StorageLink('dayroll.reminderMinute.v1') private reminderMinute: number = 0
   @State private draftLine: string = ''
   @State private editingDate: string = ''
   @State private entries: RollEntry[] = []
@@ -263,6 +265,16 @@ struct Index {
     } catch (_error) {
       // ponytail: toast is best-effort; persisted reminder settings are the fallback.
     }
+  }
+
+  private reminderTimeLabel(): string {
+    return `${this.pad(this.reminderHour)}:${this.pad(this.reminderMinute)}`
+  }
+
+  private adjustReminder(delta: number): void {
+    const total = (this.reminderHour * 60 + this.reminderMinute + delta + 1440) % 1440
+    this.reminderHour = Math.floor(total / 60)
+    this.reminderMinute = total % 60
   }
 
   @Builder
@@ -576,15 +588,23 @@ struct Index {
           .fontWeight(FontWeight.Bold)
           .onClick(() => this.reminderEnabled = !this.reminderEnabled)
 
+        Text(this.reminderTimeLabel())
+          .fontSize(24)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(SunColor.ink)
+          .width('100%')
+          .textAlign(TextAlign.Center)
+
         Row({ space: SunSpacing.sm }) {
-          this.reminderHourButton(20)
-          this.reminderHourButton(21)
-          this.reminderHourButton(22)
+          this.reminderAdjustButton('-15m', -15)
+          this.reminderAdjustButton('-5m', -5)
+          this.reminderAdjustButton('+5m', 5)
+          this.reminderAdjustButton('+15m', 15)
         }
         .width('100%')
         .justifyContent(FlexAlign.Center)
 
-        Text(this.reminderEnabled ? `REMIND ME AT ${this.reminderHour}:00` : 'REMINDER PAUSED')
+        Text(this.reminderEnabled ? `REMIND ME AT ${this.reminderTimeLabel()}` : 'REMINDER PAUSED')
           .fontSize(11)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.2)
@@ -607,16 +627,16 @@ struct Index {
   }
 
   @Builder
-  private reminderHourButton(hour: number) {
-    Button(`${hour}:00`)
+  private reminderAdjustButton(label: string, delta: number) {
+    Button(label)
       .height(34)
-      .padding({ left: 14, right: 14 })
+      .padding({ left: 12, right: 12 })
       .borderRadius(999)
-      .backgroundColor(this.reminderHour === hour ? SunColor.ink : '#F5EBD9')
-      .fontColor(this.reminderHour === hour ? SunColor.cream : SunColor.ink)
+      .backgroundColor('#F5EBD9')
+      .fontColor(SunColor.ink)
       .fontSize(11)
       .fontWeight(FontWeight.Bold)
-      .onClick(() => this.reminderHour = hour)
+      .onClick(() => this.adjustReminder(delta))
   }
 
   build() {
