@@ -798,7 +798,7 @@ struct Index {
   private presetBar() {
     Scroll() {
       Row({ space: 10 }) {
-        Button('+  Custom')
+        Button('+ Custom')
           .height(44)
           .padding({ left: 16, right: 16 })
           .borderRadius(SunRadius.pill)
@@ -836,7 +836,7 @@ struct Index {
             .height(56)
           } else {
             Row({ space: 4 }) {
-              Button(`${preset.emoji}  ${preset.label} · ${this.timerText(preset.seconds)}`)
+              Button(`${preset.emoji} ${preset.label} · ${this.timerText(preset.seconds)}`)
                 .height(44)
                 .padding({ left: 16, right: 12 })
                 .borderRadius(SunRadius.pill)
@@ -862,7 +862,7 @@ struct Index {
         }, (preset: SavedPresetTimer) => preset.id.toString())
 
         ForEach(this.presets, (preset: PresetTimer) => {
-          Button(`${preset.emoji}  ${preset.label} · ${this.timerText(preset.seconds)}`)
+          Button(`${preset.emoji} ${preset.label} · ${this.timerText(preset.seconds)}`)
             .height(44)
             .padding({ left: 16, right: 16 })
             .borderRadius(SunRadius.pill)
