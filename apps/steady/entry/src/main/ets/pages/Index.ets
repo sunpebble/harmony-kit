@@ -39,8 +39,19 @@ interface Medication {
 
 interface MedicationTimelineLog {
   key: string
+  time: number
   title: string
   caption: string
+}
+
+interface TimelineItem {
+  key: string
+  kind: string
+  time: number
+  title: string
+  caption: string
+  readingId: number
+  symptomId: number
 }
 
 interface Symptom {
@@ -497,14 +508,59 @@ struct Index {
         const parts = key.split('|')
         const date = parts.length > 0 ? parts[0] : this.todayKey()
         const time = this.medLogTime(key)
+        const timestamp = this.medicationLogTimestamp(date, time)
         logs.push({
           key: `${this.medKey(med)}|${key}`,
+          time: timestamp,
           title: `${med.name} — taken`,
           caption: `${date} ${time}${med.dose.length > 0 ? ` · ${med.dose}` : ''}`
         })
       })
     })
-    return logs.sort((a: MedicationTimelineLog, b: MedicationTimelineLog) => b.caption.localeCompare(a.caption))
+    return logs.sort((a: MedicationTimelineLog, b: MedicationTimelineLog) => b.time - a.time)
+  }
+
+  private medicationLogTimestamp(date: string, time: string): number {
+    const timestamp = new Date(`${date}T${time}:00`).getTime()
+    return Number.isNaN(timestamp) ? Date.now() : timestamp
+  }
+
+  private timelineItems(): TimelineItem[] {
+    const items: TimelineItem[] = []
+    this.readings.forEach((reading: Reading) => {
+      items.push({
+        key: this.readingDeleteKey(reading),
+        kind: 'Reading',
+        time: this.dateTime(reading.date),
+        title: `${reading.value} ${reading.unit}`,
+        caption: this.readingTimelineCaption(reading),
+        readingId: reading.id,
+        symptomId: -1
+      })
+    })
+    this.symptoms.forEach((symptom: Symptom) => {
+      items.push({
+        key: this.symptomDeleteKey(symptom),
+        kind: 'Symptom',
+        time: this.dateTime(symptom.date),
+        title: `${symptom.name} · ${String('•').repeat(symptom.severity)}`,
+        caption: 'Symptom',
+        readingId: -1,
+        symptomId: symptom.id
+      })
+    })
+    this.medicationTimelineLogs().forEach((log: MedicationTimelineLog) => {
+      items.push({
+        key: `medication-${log.key}`,
+        kind: 'Medication',
+        time: log.time,
+        title: log.title,
+        caption: log.caption,
+        readingId: -1,
+        symptomId: -1
+      })
+    })
+    return items.sort((a: TimelineItem, b: TimelineItem) => b.time - a.time)
   }
 
   private medKey(med: Medication): string {
@@ -1543,7 +1599,7 @@ struct Index {
 
       SunCard() {
         Column({ space: SunSpacing.sm }) {
-          if (this.readings.length === 0 && this.symptoms.length === 0 && this.medicationTimelineLogs().length === 0) {
+          if (this.timelineItems().length === 0) {
             Column({ space: SunSpacing.xs }) {
               Text('Nothing yet')
                 .fontSize(SunType.body)
@@ -1557,78 +1613,63 @@ struct Index {
             .width('100%')
             .alignItems(HorizontalAlign.Start)
           } else {
-            ForEach(this.readings, (reading: Reading) => {
+            ForEach(this.timelineItems(), (item: TimelineItem) => {
               Column({ space: SunSpacing.xs }) {
                 SunListRow({
-                  title: `${reading.value} ${reading.unit}`,
-                  caption: this.readingTimelineCaption(reading)
+                  title: item.title,
+                  caption: item.caption
                 })
 
-                if (this.confirmingTimelineDeleteKey === this.readingDeleteKey(reading)) {
-                  Row({ space: SunSpacing.sm }) {
-                    SunButton({
-                      label: 'Confirm Delete',
-                      role: SunButtonRole.Danger,
-                      action: () => this.deleteReading(reading.id)
-                    })
+                if (item.kind === 'Reading') {
+                  if (this.confirmingTimelineDeleteKey === item.key) {
+                    Row({ space: SunSpacing.sm }) {
+                      SunButton({
+                        label: 'Confirm Delete',
+                        role: SunButtonRole.Danger,
+                        action: () => this.deleteReading(item.readingId)
+                      })
 
+                      SunButton({
+                        label: 'Cancel',
+                        role: SunButtonRole.Secondary,
+                        action: () => this.confirmingTimelineDeleteKey = ''
+                      })
+                    }
+                    .width('100%')
+                  } else {
                     SunButton({
-                      label: 'Cancel',
-                      role: SunButtonRole.Secondary,
-                      action: () => this.confirmingTimelineDeleteKey = ''
+                      label: 'Delete',
+                      role: SunButtonRole.Danger,
+                      action: () => this.confirmingTimelineDeleteKey = item.key
                     })
                   }
-                  .width('100%')
-                } else {
-                  SunButton({
-                    label: 'Delete',
-                    role: SunButtonRole.Danger,
-                    action: () => this.confirmingTimelineDeleteKey = this.readingDeleteKey(reading)
-                  })
+                } else if (item.kind === 'Symptom') {
+                  if (this.confirmingTimelineDeleteKey === item.key) {
+                    Row({ space: SunSpacing.sm }) {
+                      SunButton({
+                        label: 'Confirm Delete',
+                        role: SunButtonRole.Danger,
+                        action: () => this.deleteSymptom(item.symptomId)
+                      })
+
+                      SunButton({
+                        label: 'Cancel',
+                        role: SunButtonRole.Secondary,
+                        action: () => this.confirmingTimelineDeleteKey = ''
+                      })
+                    }
+                    .width('100%')
+                  } else {
+                    SunButton({
+                      label: 'Delete',
+                      role: SunButtonRole.Danger,
+                      action: () => this.confirmingTimelineDeleteKey = item.key
+                    })
+                  }
                 }
               }
               .width('100%')
-            }, (reading: Reading) => reading.id.toString())
-
-            ForEach(this.symptoms, (symptom: Symptom) => {
-              Column({ space: SunSpacing.xs }) {
-                SunListRow({
-                  title: `${symptom.name} · ${String('•').repeat(symptom.severity)}`,
-                  caption: 'Symptom'
-                })
-
-                if (this.confirmingTimelineDeleteKey === this.symptomDeleteKey(symptom)) {
-                  Row({ space: SunSpacing.sm }) {
-                    SunButton({
-                      label: 'Confirm Delete',
-                      role: SunButtonRole.Danger,
-                      action: () => this.deleteSymptom(symptom.id)
-                    })
-
-                    SunButton({
-                      label: 'Cancel',
-                      role: SunButtonRole.Secondary,
-                      action: () => this.confirmingTimelineDeleteKey = ''
-                    })
-                  }
-                  .width('100%')
-                } else {
-                  SunButton({
-                    label: 'Delete',
-                    role: SunButtonRole.Danger,
-                    action: () => this.confirmingTimelineDeleteKey = this.symptomDeleteKey(symptom)
-                  })
-                }
-              }
-              .width('100%')
-            }, (symptom: Symptom) => symptom.id.toString())
-
-            ForEach(this.medicationTimelineLogs(), (log: MedicationTimelineLog) => {
-              SunListRow({
-                title: log.title,
-                caption: log.caption
-              })
-            }, (log: MedicationTimelineLog) => log.key)
+            }, (item: TimelineItem) => item.key)
           }
         }
         .width('100%')
