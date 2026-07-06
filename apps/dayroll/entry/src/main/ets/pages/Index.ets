@@ -492,7 +492,7 @@ struct Index {
   private rollList() {
     Column({ space: SunSpacing.md }) {
       if (this.entries.length === 0) {
-        Text('NO ENTRIES YET\nTAP + TO LOG TODAY')
+        Text('NO ENTRIES YET\nSAVE ONE LINE ABOVE')
           .fontSize(13)
           .fontColor(SunColor.pebble)
           .textAlign(TextAlign.Center)
