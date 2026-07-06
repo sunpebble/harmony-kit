@@ -44,6 +44,12 @@ PersistentStorage.persistProp('steady.symptoms.v1', '')
 PersistentStorage.persistProp('steady.reminderEnabled.v1', false)
 PersistentStorage.persistProp('steady.reminderHour.v1', 8)
 PersistentStorage.persistProp('steady.reminderMinute.v1', 0)
+PersistentStorage.persistProp('steady.targetBpLow.v1', '')
+PersistentStorage.persistProp('steady.targetBpHigh.v1', '')
+PersistentStorage.persistProp('steady.targetGlucoseLow.v1', '')
+PersistentStorage.persistProp('steady.targetGlucoseHigh.v1', '')
+PersistentStorage.persistProp('steady.targetWeightLow.v1', '')
+PersistentStorage.persistProp('steady.targetWeightHigh.v1', '')
 
 @Entry
 @Component
@@ -61,6 +67,12 @@ struct Index {
   @StorageLink('steady.reminderEnabled.v1') private reminderEnabled: boolean = false
   @StorageLink('steady.reminderHour.v1') private reminderHour: number = 8
   @StorageLink('steady.reminderMinute.v1') private reminderMinute: number = 0
+  @StorageLink('steady.targetBpLow.v1') private targetBpLow: string = ''
+  @StorageLink('steady.targetBpHigh.v1') private targetBpHigh: string = ''
+  @StorageLink('steady.targetGlucoseLow.v1') private targetGlucoseLow: string = ''
+  @StorageLink('steady.targetGlucoseHigh.v1') private targetGlucoseHigh: string = ''
+  @StorageLink('steady.targetWeightLow.v1') private targetWeightLow: string = ''
+  @StorageLink('steady.targetWeightHigh.v1') private targetWeightHigh: string = ''
   @State private readings: Reading[] = []
   @State private meds: Medication[] = []
   @State private medName: string = ''
@@ -259,6 +271,83 @@ struct Index {
 
   private readingsForKind(kind: string): Reading[] {
     return this.readings.filter((reading: Reading) => reading.kind === kind)
+  }
+
+  private targetLowForKind(kind: string): string {
+    if (kind === 'Blood pressure') {
+      return this.targetBpLow
+    }
+    if (kind === 'Blood glucose') {
+      return this.targetGlucoseLow
+    }
+    if (kind === 'Weight') {
+      return this.targetWeightLow
+    }
+    return ''
+  }
+
+  private targetHighForKind(kind: string): string {
+    if (kind === 'Blood pressure') {
+      return this.targetBpHigh
+    }
+    if (kind === 'Blood glucose') {
+      return this.targetGlucoseHigh
+    }
+    if (kind === 'Weight') {
+      return this.targetWeightHigh
+    }
+    return ''
+  }
+
+  private setTargetLow(kind: string, value: string): void {
+    if (kind === 'Blood pressure') {
+      this.targetBpLow = value
+    } else if (kind === 'Blood glucose') {
+      this.targetGlucoseLow = value
+    } else if (kind === 'Weight') {
+      this.targetWeightLow = value
+    }
+  }
+
+  private setTargetHigh(kind: string, value: string): void {
+    if (kind === 'Blood pressure') {
+      this.targetBpHigh = value
+    } else if (kind === 'Blood glucose') {
+      this.targetGlucoseHigh = value
+    } else if (kind === 'Weight') {
+      this.targetWeightHigh = value
+    }
+  }
+
+  private hasTargetRange(kind: string): boolean {
+    const lowText = this.targetLowForKind(kind).trim()
+    const highText = this.targetHighForKind(kind).trim()
+    return lowText.length > 0 && highText.length > 0 && Number(highText) > Number(lowText)
+  }
+
+  private readingNumber(reading: Reading): number {
+    return Number(reading.value.split('/')[0])
+  }
+
+  private targetRangeLabel(kind: string): string {
+    if (!this.hasTargetRange(kind)) {
+      return 'Not set'
+    }
+    return `${this.targetLowForKind(kind)}-${this.targetHighForKind(kind)} ${this.unitForKind(kind)}`
+  }
+
+  private trendSummary(kind: string): string {
+    const readings = this.readingsForKind(kind)
+    if (readings.length === 0 || !this.hasTargetRange(kind)) {
+      return `${readings.length} logs`
+    }
+    const low = Number(this.targetLowForKind(kind))
+    const high = Number(this.targetHighForKind(kind))
+    const inRange = readings.filter((reading: Reading) => {
+      const value = this.readingNumber(reading)
+      return value >= low && value <= high
+    }).length
+    return `${inRange} of ${readings.length} in range`
   }
 
   private csvPreview(): string {
@@ -484,6 +573,48 @@ struct Index {
   }
 
   @Builder
+  private targetRangeEditor(kind: string) {
+    Column({ space: SunSpacing.sm }) {
+      Row({ space: SunSpacing.md }) {
+        Text(kind)
+          .fontSize(SunType.body)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(SunColor.ink)
+          .layoutWeight(1)
+
+        Text(this.targetRangeLabel(kind))
+          .fontSize(SunType.caption)
+          .fontColor(SunColor.pebble)
+      }
+      .width('100%')
+
+      Row({ space: SunSpacing.sm }) {
+        TextInput({ placeholder: 'low', text: this.targetLowForKind(kind) })
+          .height(42)
+          .layoutWeight(1)
+          .fontSize(14)
+          .fontColor(SunColor.ink)
+          .backgroundColor(SunColor.white)
+          .borderRadius(8)
+          .border({ width: 1, color: SunColor.border })
+          .onChange((value: string) => this.setTargetLow(kind, value))
+
+        TextInput({ placeholder: 'high', text: this.targetHighForKind(kind) })
+          .height(42)
+          .layoutWeight(1)
+          .fontSize(14)
+          .fontColor(SunColor.ink)
+          .backgroundColor(SunColor.white)
+          .borderRadius(8)
+          .border({ width: 1, color: SunColor.border })
+          .onChange((value: string) => this.setTargetHigh(kind, value))
+      }
+      .width('100%')
+    }
+    .width('100%')
+  }
+
+  @Builder
   private timeline() {
     Column({ space: SunSpacing.md }) {
       this.quickLogCard()
@@ -534,7 +665,7 @@ struct Index {
                 .fontWeight(FontWeight.Medium)
                 .fontColor(SunColor.ink)
                 .layoutWeight(1)
-              Text(`${this.readingsForKind(kind).length} logs`)
+              Text(this.trendSummary(kind))
                 .fontSize(SunType.body)
                 .fontColor(SunColor.pebble)
             }
@@ -653,6 +784,27 @@ struct Index {
           })
         }
         .width('100%')
+      }
+
+      SunCard() {
+        Column({ space: SunSpacing.md }) {
+          Text('MY TARGET RANGES')
+            .fontSize(10)
+            .fontWeight(FontWeight.Bold)
+            .letterSpacing(1.4)
+            .fontColor(SunColor.pebble)
+
+          ForEach(this.kinds.slice(0, 3), (kind: string) => {
+            this.targetRangeEditor(kind)
+          }, (kind: string) => kind)
+
+          Text('Set these with your doctor. Steady only counts readings against ranges you enter.')
+            .fontSize(12)
+            .fontColor(SunColor.pebble)
+            .lineHeight(18)
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Start)
       }
 
       SunCard() {
