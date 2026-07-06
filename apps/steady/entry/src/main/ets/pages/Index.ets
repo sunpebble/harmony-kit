@@ -21,8 +21,10 @@ interface Reading {
 interface Medication {
   name: string
   dose: string
-  time: string
-  taken: boolean
+  time?: string
+  times?: string[]
+  taken?: boolean
+  takenSlots?: string[]
 }
 
 interface Symptom {
@@ -89,7 +91,8 @@ struct Index {
   @State private meds: Medication[] = []
   @State private medName: string = ''
   @State private medDose: string = ''
-  @State private medTime: string = '08:00'
+  @State private medTimes: string[] = ['08:00']
+  @State private medRevision: number = 0
   @State private symptoms: Symptom[] = []
   @State private symptomName: string = ''
   @State private symptomSeverity: number = 1
@@ -115,8 +118,8 @@ struct Index {
 
   private defaultMeds(): Medication[] {
     return [
-      { name: 'Metformin', dose: '500mg', time: '08:00', taken: true },
-      { name: 'Vitamin D', dose: '1000 IU', time: '20:00', taken: false }
+      { name: 'Metformin', dose: '500mg', times: ['08:00'], takenSlots: ['08:00'] },
+      { name: 'Vitamin D', dose: '1000 IU', times: ['20:00'], takenSlots: [] }
     ]
   }
 
@@ -143,7 +146,8 @@ struct Index {
     }
     try {
       const parsed = JSON.parse(this.medsJson) as Medication[]
-      this.meds = parsed.length > 0 ? parsed : this.defaultMeds()
+      this.meds = parsed.length > 0 ? this.normalizeMeds(parsed) : this.defaultMeds()
+      this.saveMeds()
     } catch (_error) {
       this.meds = this.defaultMeds()
       this.saveMeds()
@@ -194,6 +198,19 @@ struct Index {
 
   private saveMeds(): void {
     this.medsJson = JSON.stringify(this.meds)
+  }
+
+  private normalizeMeds(meds: Medication[]): Medication[] {
+    return meds.map((med: Medication) => {
+      const times = this.medTimesFor(med)
+      const normalized: Medication = {
+        name: med.name,
+        dose: med.dose,
+        times,
+        takenSlots: med.takenSlots ? med.takenSlots.filter((time: string) => times.includes(time)) : (med.taken ? [times[0]] : [])
+      }
+      return normalized
+    })
   }
 
   private saveSymptoms(): void {
@@ -290,14 +307,57 @@ struct Index {
     this.showToast('CSV preview ready below.')
   }
 
-  private toggleMed(target: Medication): void {
-    this.meds = this.meds.map((med: Medication, i: number) => {
-      if (med.name !== target.name || med.time !== target.time) {
-        return med
+  private medTimesFor(med: Medication): string[] {
+    if (med.times && med.times.length > 0) {
+      return [...med.times].sort((a: string, b: string) => a.localeCompare(b))
+    }
+    return [med.time ? med.time : '08:00']
+  }
+
+  private takenSlotsFor(med: Medication): string[] {
+    const times = this.medTimesFor(med)
+    if (med.takenSlots) {
+      return med.takenSlots.filter((time: string) => times.includes(time))
+    }
+    return med.taken ? [times[0]] : []
+  }
+
+  private timesLabel(med: Medication): string {
+    return this.medTimesFor(med).join(', ')
+  }
+
+  private medKey(med: Medication): string {
+    return `${med.name}|${med.dose}|${this.timesLabel(med)}`
+  }
+
+  private toggleMedTime(time: string): void {
+    if (this.medTimes.includes(time)) {
+      if (this.medTimes.length > 1) {
+        this.medTimes = this.medTimes.filter((item: string) => item !== time)
       }
-      return { name: med.name, dose: med.dose, time: med.time, taken: !med.taken }
-    })
+      return
+    }
+    this.medTimes = [...this.medTimes, time].sort((a: string, b: string) => a.localeCompare(b))
+  }
+
+  private toggleMedSlot(name: string, time: string): void {
+    const index = this.meds.findIndex((med: Medication) => med.name === name)
+    if (index < 0) {
+      return
+    }
+    const med = this.meds[index]
+    const times = this.medTimesFor(med)
+    const slot = times.includes(time) ? time : times[0]
+    const taken = this.takenSlotsFor(med)
+    const updatedTaken = taken.includes(slot)
+      ? taken.filter((takenSlot: string) => takenSlot !== slot)
+      : [...taken, slot].sort((a: string, b: string) => a.localeCompare(b))
+    const updated: Medication = { name: med.name, dose: med.dose, times, takenSlots: updatedTaken }
+    const next = [...this.meds]
+    next[index] = updated
+    this.meds = next
     this.saveMeds()
+    this.medRevision += 1
   }
 
   private addMedication(): void {
@@ -311,17 +371,19 @@ struct Index {
       {
         name,
         dose: this.medDose.trim().length > 0 ? this.medDose.trim() : 'Dose',
-        time: this.medTime,
-        taken: false
+        times: this.medTimes,
+        takenSlots: []
       }
     ]
     this.medName = ''
     this.medDose = ''
+    this.medTimes = ['08:00']
     this.saveMeds()
   }
 
   private deleteMedication(target: Medication): void {
-    this.meds = this.meds.filter((med: Medication) => med !== target)
+    const targetKey = this.medKey(target)
+    this.meds = this.meds.filter((med: Medication) => this.medKey(med) !== targetKey)
     this.saveMeds()
   }
 
@@ -465,8 +527,9 @@ struct Index {
     if (this.meds.length === 0) {
       return 'No medications set up.'
     }
-    const taken = this.meds.filter((med: Medication) => med.taken).length
-    return `${taken} of ${this.meds.length} scheduled doses logged today`
+    const expected = this.meds.reduce((total: number, med: Medication) => total + this.medTimesFor(med).length, 0)
+    const taken = this.meds.reduce((total: number, med: Medication) => total + this.takenSlotsFor(med).length, 0)
+    return `${taken} of ${expected} scheduled doses logged today`
   }
 
   private symptomReportLines(): string {
@@ -584,12 +647,26 @@ struct Index {
       .height(34)
       .padding({ left: 12, right: 12 })
       .borderRadius(999)
-      .backgroundColor(this.medTime === time ? SunColor.sun : SunColor.white)
+      .backgroundColor(this.medTimes.includes(time) ? SunColor.sun : SunColor.white)
       .fontColor(SunColor.ink)
       .fontSize(12)
       .fontWeight(FontWeight.Bold)
       .border({ width: 1, color: SunColor.border })
-      .onClick(() => this.medTime = time)
+      .onClick(() => this.toggleMedTime(time))
+  }
+
+  @Builder
+  private medDoseRow(name: string, time: string, taken: boolean) {
+    Button(`${name} · ${time} · ${taken ? 'Taken' : 'Due'}`)
+      .height(42)
+      .width('100%')
+      .borderRadius(999)
+      .backgroundColor(taken ? SunColor.sun : SunColor.white)
+      .fontColor(SunColor.ink)
+      .fontSize(13)
+      .fontWeight(FontWeight.Medium)
+      .border({ width: 1, color: SunColor.border })
+      .onClick(() => this.toggleMedSlot(name, time))
   }
 
   @Builder
@@ -920,27 +997,15 @@ struct Index {
             .fontColor(SunColor.pebble)
 
           ForEach(this.meds, (med: Medication) => {
-            Row({ space: SunSpacing.md }) {
-              Column({ space: SunSpacing.xs }) {
-                Text(`${med.name} · ${med.time}`)
-                  .fontSize(SunType.body)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor(SunColor.ink)
-                Text(med.dose)
-                  .fontSize(SunType.caption)
-                  .fontColor(SunColor.pebble)
-              }
-              .layoutWeight(1)
-              .alignItems(HorizontalAlign.Start)
+            Column({ space: SunSpacing.sm }) {
+              SunListRow({
+                title: med.name,
+                caption: `${med.dose} · ${this.timesLabel(med)}`
+              })
 
-              Button(med.taken ? 'Taken' : 'Due')
-                .height(34)
-                .padding({ left: 12, right: 12 })
-                .borderRadius(999)
-                .backgroundColor(med.taken ? SunColor.sun : SunColor.white)
-                .fontColor(SunColor.ink)
-                .border({ width: 1, color: SunColor.border })
-                .onClick(() => this.toggleMed(med))
+              ForEach(this.medTimesFor(med), (time: string) => {
+                this.medDoseRow(med.name, time, this.takenSlotsFor(med).includes(time))
+              }, (time: string) => `${med.name}-${time}-${this.medRevision}`)
 
               Button('Delete')
                 .height(34)
@@ -952,8 +1017,15 @@ struct Index {
                 .onClick(() => this.deleteMedication(med))
             }
             .width('100%')
-            .height(58)
-          }, (med: Medication) => `${med.name}-${med.time}`)
+            .padding({ bottom: SunSpacing.sm })
+            .border({ width: { bottom: 1 }, color: SunColor.border })
+          }, (med: Medication) => `${med.name}-${this.timesLabel(med)}-${this.medRevision}`)
+
+          if (this.meds.length === 0) {
+            Text('No medications set up.')
+              .fontSize(SunType.body)
+              .fontColor(SunColor.pebble)
+          }
         }
         .width('100%')
         .alignItems(HorizontalAlign.Start)
