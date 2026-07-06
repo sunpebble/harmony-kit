@@ -647,7 +647,7 @@ struct Index {
   private rollList() {
     Column({ space: SunSpacing.md }) {
       if (this.entries.length === 0) {
-        Text('NO ENTRIES YET\nSAVE ONE LINE ABOVE')
+        Text('NO ENTRIES YET\nTAP + TO LOG TODAY')
           .fontSize(13)
           .fontColor(SunColor.pebble)
           .textAlign(TextAlign.Center)
@@ -964,6 +964,17 @@ struct Index {
             this.perforation()
             this.rollList()
             this.perforation()
+
+            Button('+')
+              .width(52)
+              .height(52)
+              .borderRadius(999)
+              .backgroundColor(SunColor.ink)
+              .fontColor('#FFFDF7')
+              .fontSize(28)
+              .fontWeight(FontWeight.Bold)
+              .alignSelf(ItemAlign.Center)
+              .onClick(() => this.saveToday())
 
             SunButton({
               label: this.reminderOpen ? 'Hide Reminder' : 'Reminder',
