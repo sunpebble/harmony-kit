@@ -110,6 +110,7 @@ struct Index {
   @State private symptomNote: string = ''
   @State private reportOpen: boolean = false
   @State private confirmingTimelineDeleteKey: string = ''
+  @State private quickActionsOpen: boolean = false
 
   aboutToAppear(): void {
     this.loadReadings()
@@ -266,6 +267,13 @@ struct Index {
     this.draftNote = ''
     this.confirmingTimelineDeleteKey = ''
     this.saveReadings()
+  }
+
+  private selectQuickKind(kind: string): void {
+    this.selectedKind = kind
+    this.applyLastReading(kind)
+    this.tab = 'Timeline'
+    this.quickActionsOpen = false
   }
 
   private readingDeleteKey(reading: Reading): string {
@@ -984,7 +992,10 @@ struct Index {
       .fontSize(12)
       .fontWeight(FontWeight.Bold)
       .border({ width: 1, color: SunColor.border })
-      .onClick(() => this.tab = label)
+      .onClick(() => {
+        this.tab = label
+        this.quickActionsOpen = false
+      })
   }
 
   @Builder
@@ -1608,7 +1619,7 @@ struct Index {
   }
 
   build() {
-    Column() {
+    Stack({ alignContent: Alignment.BottomEnd }) {
       SunToolShell({
         manifest: appProfile,
         onPrimaryAction: () => this.logReading()
@@ -1644,6 +1655,42 @@ struct Index {
         .width('100%')
         .height('100%')
       }
+
+      Column({ space: SunSpacing.sm }) {
+        if (this.quickActionsOpen) {
+          Column({ space: SunSpacing.sm }) {
+            ForEach(this.kinds, (kind: string) => {
+              Button(kind)
+                .height(38)
+                .padding({ left: SunSpacing.lg, right: SunSpacing.lg })
+                .borderRadius(999)
+                .backgroundColor(SunColor.white)
+                .fontColor(SunColor.ink)
+                .fontSize(12)
+                .fontWeight(FontWeight.Bold)
+                .border({ width: 1, color: SunColor.border })
+                .onClick(() => this.selectQuickKind(kind))
+            }, (kind: string) => kind)
+          }
+          .alignItems(HorizontalAlign.End)
+          .padding(SunSpacing.sm)
+          .borderRadius(18)
+          .backgroundColor('#FFF6E8')
+          .border({ width: 1, color: SunColor.border })
+        }
+
+        Button(this.quickActionsOpen ? '×' : '+')
+          .width(56)
+          .height(56)
+          .borderRadius(999)
+          .backgroundColor(SunColor.sun)
+          .fontColor(SunColor.ink)
+          .fontSize(28)
+          .fontWeight(FontWeight.Bold)
+          .onClick(() => this.quickActionsOpen = !this.quickActionsOpen)
+      }
+      .alignItems(HorizontalAlign.End)
+      .margin({ right: SunSpacing.xl, bottom: SunSpacing.xl })
     }
     .width('100%')
     .height('100%')
