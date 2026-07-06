@@ -36,6 +36,7 @@ interface Medication {
 
 interface Symptom {
   id: number
+  date?: string
   name: string
   severity: number
   context: string
@@ -154,7 +155,9 @@ struct Index {
       return
     }
     try {
-      this.symptoms = JSON.parse(this.symptomsJson) as Symptom[]
+      const parsed = JSON.parse(this.symptomsJson) as Symptom[]
+      this.symptoms = parsed.map((symptom: Symptom) => this.normalizeSymptom(symptom))
+      this.saveSymptoms()
     } catch (_error) {
       this.symptoms = []
       this.saveSymptoms()
@@ -215,6 +218,16 @@ struct Index {
 
   private saveSymptoms(): void {
     this.symptomsJson = JSON.stringify(this.symptoms)
+  }
+
+  private normalizeSymptom(symptom: Symptom): Symptom {
+    return {
+      id: symptom.id,
+      date: symptom.date ? symptom.date : new Date().toISOString(),
+      name: symptom.name,
+      severity: symptom.severity,
+      context: symptom.context
+    }
   }
 
   private logReading(): void {
@@ -493,6 +506,7 @@ struct Index {
     this.symptoms = [
       {
         id: this.nextId,
+        date: new Date().toISOString(),
         name,
         severity: this.symptomSeverity,
         context: this.symptomNote.trim().length > 0 ? this.symptomNote.trim() : 'Just now'
@@ -566,6 +580,31 @@ struct Index {
     return Number(reading.value.split('/')[0])
   }
 
+  private dayMs(): number {
+    return 24 * 60 * 60 * 1000
+  }
+
+  private dateTime(value?: string): number {
+    if (!value) {
+      return Date.now()
+    }
+    const time = new Date(value).getTime()
+    return Number.isNaN(time) ? Date.now() : time
+  }
+
+  private dateLabel(time: number): string {
+    const date = new Date(time)
+    return `${date.getFullYear()}-${this.pad(date.getMonth() + 1)}-${this.pad(date.getDate())}`
+  }
+
+  private reportCutoffTime(): number {
+    return Date.now() - 30 * this.dayMs()
+  }
+
+  private reportDateRangeLabel(): string {
+    return `${this.dateLabel(this.reportCutoffTime())} - ${this.dateLabel(Date.now())}`
+  }
+
   private targetRangeLabel(kind: string): string {
     if (!this.hasTargetRange(kind)) {
       return 'Not set'
@@ -604,19 +643,48 @@ struct Index {
     return `${this.cleanNumber(Math.min(...values))}-${this.cleanNumber(Math.max(...values))}`
   }
 
+  private averageForReadings(kind: string, readings: Reading[]): string {
+    if (readings.length === 0) {
+      return 'No readings'
+    }
+    const total = readings.reduce((sum: number, reading: Reading) => sum + this.readingNumber(reading), 0)
+    return `${this.cleanNumber(total / readings.length)} ${this.unitForKind(kind)}`
+  }
+
+  private rangeForReadings(readings: Reading[]): string {
+    if (readings.length === 0) {
+      return 'No readings'
+    }
+    const values = readings.map((reading: Reading) => this.readingNumber(reading))
+    return `${this.cleanNumber(Math.min(...values))}-${this.cleanNumber(Math.max(...values))}`
+  }
+
+  private targetSummaryForReadings(kind: string, readings: Reading[]): string {
+    const low = Number(this.targetLowForKind(kind))
+    const high = Number(this.targetHighForKind(kind))
+    const inRange = readings.filter((reading: Reading) => {
+      const value = this.readingNumber(reading)
+      return value >= low && value <= high
+    }).length
+    return `${inRange} of ${readings.length} in range`
+  }
+
   private reportKindSection(kind: string): string {
+    const cutoff = this.reportCutoffTime()
     const readings = this.readingsForKind(kind)
+      .filter((reading: Reading) => this.dateTime(reading.date) >= cutoff)
+      .sort((a: Reading, b: Reading) => this.dateTime(a.date) - this.dateTime(b.date))
     if (readings.length === 0) {
       return ''
     }
     const lines: string[] = [
       kind,
-      `Average ${this.averageForKind(kind)}`,
-      `Range ${this.rangeForKind(kind)}`,
-      this.hasTargetRange(kind) ? this.trendSummary(kind) : 'No patient-set range'
+      `Average ${this.averageForReadings(kind, readings)}`,
+      `Range ${this.rangeForReadings(readings)}`,
+      this.hasTargetRange(kind) ? this.targetSummaryForReadings(kind, readings) : 'No patient-set range'
     ]
-    readings.slice(0, 3).forEach((reading: Reading) => {
-      lines.push(`${reading.value} ${reading.unit} · ${reading.context}`)
+    readings.forEach((reading: Reading) => {
+      lines.push(`${this.dateLabel(this.dateTime(reading.date))}  ${reading.value} ${reading.unit} · ${reading.context}`)
     })
     return lines.join('\n')
   }
@@ -631,11 +699,15 @@ struct Index {
   }
 
   private symptomReportLines(): string {
-    if (this.symptoms.length === 0) {
+    const cutoff = this.reportCutoffTime()
+    const symptoms = this.symptoms
+      .filter((symptom: Symptom) => this.dateTime(symptom.date) >= cutoff)
+      .sort((a: Symptom, b: Symptom) => this.dateTime(a.date) - this.dateTime(b.date))
+    if (symptoms.length === 0) {
       return 'No symptoms logged.'
     }
-    return this.symptoms.slice(0, 3).map((symptom: Symptom) => {
-      return `${symptom.name} (${symptom.severity}/3) · ${symptom.context}`
+    return symptoms.map((symptom: Symptom) => {
+      return `${this.dateLabel(this.dateTime(symptom.date))} - ${symptom.name} (${symptom.severity}/3) · ${symptom.context}`
     }).join('\n')
   }
 
@@ -644,7 +716,8 @@ struct Index {
       .filter((section: string) => section.length > 0)
     return [
       'Steady - Health record',
-      'Current snapshot',
+      'Last 30 days',
+      this.reportDateRangeLabel(),
       ...sections,
       'Medication',
       this.medicationReportLine(),
