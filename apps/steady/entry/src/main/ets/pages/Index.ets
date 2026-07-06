@@ -1823,7 +1823,7 @@ struct Index {
             this.targetRangeEditor(kind)
           }, (kind: string) => kind)
 
-          Text('Set these with your doctor. Steady only counts readings against ranges you enter.')
+          Text('Set these with your doctor. Steady only counts readings against ranges you enter — it never judges them.')
             .fontSize(12)
             .fontColor(SunColor.pebble)
             .lineHeight(18)
