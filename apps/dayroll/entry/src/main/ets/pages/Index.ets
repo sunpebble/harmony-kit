@@ -24,6 +24,7 @@ PersistentStorage.persistProp('dayroll.reminderOpen.v1', false)
 PersistentStorage.persistProp('dayroll.reminderEnabled.v1', false)
 PersistentStorage.persistProp('dayroll.reminderHour.v1', 21)
 PersistentStorage.persistProp('dayroll.reminderMinute.v1', 0)
+PersistentStorage.persistProp('dayroll.proUnlocked.v1', false)
 
 @Entry
 @Component
@@ -38,6 +39,7 @@ struct Index {
   @StorageLink('dayroll.reminderEnabled.v1') private reminderEnabled: boolean = false
   @StorageLink('dayroll.reminderHour.v1') private reminderHour: number = 21
   @StorageLink('dayroll.reminderMinute.v1') private reminderMinute: number = 0
+  @StorageLink('dayroll.proUnlocked.v1') private proUnlocked: boolean = false
   @State private draftLine: string = ''
   @State private editingDate: string = ''
   @State private entries: RollEntry[] = []
@@ -202,6 +204,9 @@ struct Index {
   }
 
   private memories(): RollEntry[] {
+    if (!this.proUnlocked) {
+      return []
+    }
     const active = this.dateFromKey(this.activeDate())
     return this.entries.filter((entry: RollEntry) => {
       if (entry.date === this.activeDate()) {
@@ -257,13 +262,17 @@ struct Index {
   }
 
   private testReminder(): void {
+    this.showToast('One line about today?')
+  }
+
+  private showToast(message: string): void {
     try {
       this.getUIContext().getPromptAction().showToast({
-        message: 'One line about today?',
+        message,
         duration: 2000
       })
     } catch (_error) {
-      // ponytail: toast is best-effort; persisted reminder settings are the fallback.
+      // ponytail: visible lock state is enough if toast is unavailable.
     }
   }
 
@@ -275,6 +284,29 @@ struct Index {
     const total = (this.reminderHour * 60 + this.reminderMinute + delta + 1440) % 1440
     this.reminderHour = Math.floor(total / 60)
     this.reminderMinute = total % 60
+  }
+
+  private unlockPro(): void {
+    this.proUnlocked = true
+    this.showToast('Dayroll Pro unlocked on this device.')
+  }
+
+  private toggleStats(): void {
+    if (!this.proUnlocked) {
+      this.statsOpen = false
+      this.showToast('Dayroll Pro unlocks stats and yearly review.')
+      return
+    }
+    this.statsOpen = !this.statsOpen
+  }
+
+  private toggleExport(): void {
+    if (!this.proUnlocked) {
+      this.exportOpen = false
+      this.showToast('Dayroll Pro unlocks text, Markdown, and CSV export.')
+      return
+    }
+    this.exportOpen = !this.exportOpen
   }
 
   @Builder
@@ -455,7 +487,7 @@ struct Index {
 
   @Builder
   private exportPreview() {
-    if (this.exportOpen) {
+    if (this.exportOpen && this.proUnlocked) {
       Column({ space: SunSpacing.sm }) {
         Text('EXPORT PREVIEW')
           .fontSize(10)
@@ -498,7 +530,7 @@ struct Index {
 
   @Builder
   private statsPreview() {
-    if (this.statsOpen) {
+    if (this.statsOpen && this.proUnlocked) {
       Column({ space: SunSpacing.md }) {
         Text('YOUR TAPE, COUNTED')
           .fontSize(14)
@@ -661,17 +693,25 @@ struct Index {
             })
             this.reminderPanel()
 
+            if (!this.proUnlocked) {
+              SunButton({
+                label: 'Unlock Pro',
+                role: SunButtonRole.Secondary,
+                action: () => this.unlockPro()
+              })
+            }
+
             SunButton({
-              label: this.statsOpen ? 'Hide Stats' : 'Stats',
+              label: this.statsOpen ? 'Hide Stats' : (this.proUnlocked ? 'Stats' : 'Stats Pro'),
               role: SunButtonRole.Secondary,
-              action: () => this.statsOpen = !this.statsOpen
+              action: () => this.toggleStats()
             })
             this.statsPreview()
 
             SunButton({
-              label: this.exportOpen ? 'Hide Export' : 'Export',
+              label: this.exportOpen ? 'Hide Export' : (this.proUnlocked ? 'Export' : 'Export Pro'),
               role: SunButtonRole.Secondary,
-              action: () => this.exportOpen = !this.exportOpen
+              action: () => this.toggleExport()
             })
             this.exportPreview()
           }

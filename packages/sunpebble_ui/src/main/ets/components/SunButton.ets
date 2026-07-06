@@ -8,9 +8,13 @@ export enum SunButtonRole {
 
 @Component
 export struct SunButton {
+  @Prop
   label: string = ''
+  @Prop
   role: SunButtonRole = SunButtonRole.Primary
+  @Prop
   disabled: boolean = false
+  @Prop
   loading: boolean = false
   action: () => void = () => {}
 
