@@ -1003,9 +1003,13 @@ struct Index {
     if (expected === 0) {
       return '0 of 0 (0%)'
     }
-    const cutoff = this.dateLabel(Date.now() - this.trendDays() * this.dayMs())
+    const cutoff = Date.now() - this.trendDays() * this.dayMs()
     const taken = this.meds.reduce((total: number, med: Medication) => {
-      return total + this.takenLogFor(med).filter((key: string) => key.split('|')[0] >= cutoff).length
+      return total + this.takenLogFor(med).filter((key: string) => {
+        const parts = key.split('|')
+        const date = parts.length > 0 ? parts[0] : this.todayKey()
+        return this.medicationLogTimestamp(date, this.medLogTime(key)) >= cutoff
+      }).length
     }, 0)
     return `${taken} of ${expected} (${Math.round(taken / expected * 100)}%)`
   }
