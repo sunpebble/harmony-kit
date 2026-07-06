@@ -354,6 +354,18 @@ struct Index {
     return this.customMinutes * 60 + this.customSeconds
   }
 
+  private customMinuteOptions(): string[] {
+    const options: string[] = []
+    for (let minute = 0; minute <= 180; minute++) {
+      options.push(`${minute} min`)
+    }
+    return options
+  }
+
+  private customSecondLabels(): string[] {
+    return this.customSecondOptions.map((seconds: number) => `${seconds} sec`)
+  }
+
   private customLabel(): string {
     const label = this.customLabelText.trim()
     return label.length > 0 ? label : 'Timer'
@@ -691,45 +703,33 @@ struct Index {
         .scrollable(ScrollDirection.Horizontal)
         .scrollBar(BarState.Off)
 
-        Column({ space: SunSpacing.xs }) {
-          Text(`${this.customMinutes}m ${this.pad(this.customSeconds)}s`)
-            .fontSize(22)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(SunColor.ink)
-            .textAlign(TextAlign.Center)
+        Row({ space: SunSpacing.sm }) {
+          TextPicker({ range: this.customMinuteOptions(), selected: this.customMinutes })
+            .layoutWeight(1)
+            .height(130)
+            .selectedTextStyle({ color: SunColor.ink, font: { size: 22, weight: FontWeight.Bold } })
+            .textStyle({ color: SunColor.pebble, font: { size: 18, weight: FontWeight.Medium } })
+            .onChange((_value: string | string[], index: number | number[]) => {
+              if (typeof index === 'number') {
+                this.setCustomMinutes(index)
+              }
+            })
 
-          Slider({ value: this.customMinutes, min: 0, max: 180, step: 1, style: SliderStyle.InSet })
-            .width('100%')
-            .selectedColor(SunColor.sun)
-            .trackColor('#D8CFBD')
-            .blockColor(SunColor.ink)
-            .showTips(true)
-            .onChange((value: number) => this.setCustomMinutes(value))
-
-          Row() {
-            Text('0 min')
-              .fontSize(10)
-              .fontColor(SunColor.pebble)
-            Blank()
-            Text('180 min')
-              .fontSize(10)
-              .fontColor(SunColor.pebble)
-          }
-          .width('100%')
+          TextPicker({
+            range: this.customSecondLabels(),
+            selected: Math.max(0, this.customSecondOptions.indexOf(this.customSeconds))
+          })
+            .layoutWeight(1)
+            .height(130)
+            .selectedTextStyle({ color: SunColor.ink, font: { size: 22, weight: FontWeight.Bold } })
+            .textStyle({ color: SunColor.pebble, font: { size: 18, weight: FontWeight.Medium } })
+            .onChange((_value: string | string[], index: number | number[]) => {
+              if (typeof index === 'number') {
+                this.setCustomSeconds(this.customSecondOptions[index])
+              }
+            })
         }
         .width('100%')
-
-        Scroll() {
-          Row({ space: SunSpacing.sm }) {
-            ForEach(this.customSecondOptions, (seconds: number) => {
-              this.secondsButton(seconds)
-            }, (seconds: number) => seconds.toString())
-          }
-        }
-        .width('100%')
-        .height(40)
-        .scrollable(ScrollDirection.Horizontal)
-        .scrollBar(BarState.Off)
 
         TextInput({ placeholder: 'Label (optional)', text: this.customLabelText })
           .height(44)
@@ -785,20 +785,6 @@ struct Index {
       .border({ width: 1, color: '#D8CFBD' })
       .borderRadius(18)
     }
-  }
-
-  @Builder
-  private secondsButton(seconds: number) {
-    Button(`${seconds}s`)
-      .height(32)
-      .padding({ left: 12, right: 12 })
-      .borderRadius(SunRadius.pill)
-      .backgroundColor(this.customSeconds === seconds ? SunColor.sun : SunColor.white)
-      .fontColor(SunColor.ink)
-      .fontSize(11)
-      .fontWeight(FontWeight.Bold)
-      .border({ width: 1, color: '#D8CFBD' })
-      .onClick(() => this.setCustomSeconds(seconds))
   }
 
   @Builder
