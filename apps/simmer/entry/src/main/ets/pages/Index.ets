@@ -366,11 +366,17 @@ struct Index {
       timer.remaining = this.remainingFromEnd(timer)
       timer.done = false
       timer.completedAt = 0
-    } else {
+    } else if (timer.done) {
       timer.remaining += 60
       timer.running = true
       timer.done = false
       timer.endAt = Date.now() + timer.remaining * 1000
+      timer.completedAt = 0
+    } else {
+      timer.remaining += 60
+      timer.running = false
+      timer.done = false
+      timer.endAt = 0
       timer.completedAt = 0
     }
     this.saveTimersAndSyncReminders()
