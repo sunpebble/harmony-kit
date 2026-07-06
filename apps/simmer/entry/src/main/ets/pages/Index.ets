@@ -644,7 +644,7 @@ struct Index {
   @Builder
   private burnerList() {
     Scroll() {
-      Row({ space: SunSpacing.lg }) {
+      Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
         ForEach(this.timers, (timer: KitchenTimer) => {
           Burner({
             timer: timer,
@@ -657,6 +657,7 @@ struct Index {
         }, (timer: KitchenTimer) => timer.id.toString())
       }
       .padding(SunSpacing.xl)
+      .width('100%')
     }
     .width('100%')
     .layoutWeight(1)
