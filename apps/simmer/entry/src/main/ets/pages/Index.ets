@@ -157,7 +157,7 @@ struct Burner {
         .textOverflow({ overflow: TextOverflow.Ellipsis })
 
       Row({ space: 6 }) {
-        this.actionButton('+1m', () => this.onAddMinute(this.timer.id), SunColor.ink)
+        this.actionButton('+1 minute', () => this.onAddMinute(this.timer.id), SunColor.ink)
         this.actionButton('Restart', () => this.onRestart(this.timer.id), SunColor.ink)
         this.actionButton('Cancel', () => this.onCancel(this.timer.id), SunColor.danger)
       }
