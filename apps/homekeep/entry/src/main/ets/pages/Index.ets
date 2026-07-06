@@ -8,6 +8,9 @@ import {
   SunToolShell,
   SunType
 } from 'sunpebble_ui'
+import { common } from '@kit.AbilityKit'
+import { reminderAgentManager } from '@kit.BackgroundTasksKit'
+import { notificationManager } from '@kit.NotificationKit'
 import { appProfile } from '../AppProfile'
 
 interface KeepTask {
@@ -71,6 +74,11 @@ struct Index {
     this.tasksJson = JSON.stringify(this.tasks)
   }
 
+  private saveTasksAndSyncReminders(): void {
+    this.saveTasks()
+    this.syncReminders()
+  }
+
   private dayMs(): number {
     return 24 * 60 * 60 * 1000
   }
@@ -123,7 +131,7 @@ struct Index {
     this.nextId += 1
     this.filter = 'All'
     this.confirmingTaskId = -1
-    this.saveTasks()
+    this.saveTasksAndSyncReminders()
   }
 
   private addPreset(preset: PresetTask): void {
@@ -140,7 +148,7 @@ struct Index {
     this.nextId += 1
     this.filter = 'All'
     this.confirmingTaskId = -1
-    this.saveTasks()
+    this.saveTasksAndSyncReminders()
   }
 
   private addCustomTask(): void {
@@ -162,7 +170,7 @@ struct Index {
     this.draftArea = ''
     this.filter = 'Due'
     this.confirmingTaskId = -1
-    this.saveTasks()
+    this.saveTasksAndSyncReminders()
   }
 
   private showToast(message: string): void {
@@ -187,7 +195,7 @@ struct Index {
       }
     })
     this.confirmingTaskId = -1
-    this.saveTasks()
+    this.saveTasksAndSyncReminders()
   }
 
   private snoozeTask(id: number): void {
@@ -204,13 +212,62 @@ struct Index {
       }
     })
     this.confirmingTaskId = -1
-    this.saveTasks()
+    this.saveTasksAndSyncReminders()
   }
 
   private deleteTask(id: number): void {
     this.tasks = this.tasks.filter((task: KeepTask) => task.id !== id)
     this.confirmingTaskId = -1
-    this.saveTasks()
+    this.saveTasksAndSyncReminders()
+  }
+
+  private async syncReminders(): Promise<void> {
+    try {
+      await reminderAgentManager.cancelAllReminders()
+      if (this.tasks.length === 0 || !await this.requestNotificationAccess()) {
+        return
+      }
+      const now = Date.now()
+      for (const task of this.tasks) {
+        const due = new Date(this.dueAt(task))
+        due.setHours(9, 0, 0, 0)
+        if (due.getTime() <= now) {
+          due.setTime(now + 60 * 1000)
+        }
+        const request: reminderAgentManager.ReminderRequestCalendar = {
+          reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_CALENDAR,
+          dateTime: {
+            year: due.getFullYear(),
+            month: due.getMonth() + 1,
+            day: due.getDate(),
+            hour: due.getHours(),
+            minute: due.getMinutes(),
+            second: 0
+          },
+          title: 'Homekeep',
+          content: `${task.title} · ${task.area}`,
+          expiredContent: `${task.title} is due.`,
+          notificationId: 300000 + task.id,
+          tapDismissed: true
+        }
+        await reminderAgentManager.publishReminder(request)
+      }
+    } catch (_error) {
+      // ponytail: task storage is source of truth; reminders can be rebuilt on the next edit.
+    }
+  }
+
+  private async requestNotificationAccess(): Promise<boolean> {
+    const context = this.getUIContext().getHostContext()
+    if (!context) {
+      return false
+    }
+    try {
+      await notificationManager.requestEnableNotification(context as common.UIAbilityContext)
+      return true
+    } catch (_error) {
+      return false
+    }
   }
 
   private visibleTasks(): KeepTask[] {
