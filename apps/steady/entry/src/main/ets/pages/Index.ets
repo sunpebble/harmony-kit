@@ -112,6 +112,7 @@ struct Index {
   @State private symptomName: string = ''
   @State private symptomSeverity: number = 1
   @State private symptomNote: string = ''
+  @State private draftReadingAt: number = 0
   @State private reportOpen: boolean = false
   @State private confirmingTimelineDeleteKey: string = ''
   @State private quickActionsOpen: boolean = false
@@ -288,7 +289,7 @@ struct Index {
     this.readings = [
       {
         id: this.nextId,
-        date: new Date().toISOString(),
+        date: this.readingDate().toISOString(),
         kind: this.selectedKind,
         value: this.selectedKind === 'Blood pressure'
           ? `${this.cleanNumber(primary)}/${this.cleanNumber(secondary)}`
@@ -301,6 +302,7 @@ struct Index {
     ]
     this.nextId += 1
     this.draftNote = ''
+    this.draftReadingAt = 0
     this.confirmingTimelineDeleteKey = ''
     this.saveReadings()
   }
@@ -686,6 +688,14 @@ struct Index {
   private dateTimeLabel(time: number): string {
     const date = new Date(time)
     return `${this.dateLabel(time)} ${this.pad(date.getHours())}:${this.pad(date.getMinutes())}`
+  }
+
+  private readingDate(): Date {
+    return this.draftReadingAt > 0 ? new Date(this.draftReadingAt) : new Date()
+  }
+
+  private readingTimeLabel(): string {
+    return this.draftReadingAt > 0 ? this.dateTimeLabel(this.draftReadingAt) : 'Now'
   }
 
   private reportCutoffTime(): number {
@@ -1113,6 +1123,24 @@ struct Index {
       .onClick(() => this.selectedMealtime = value)
   }
 
+  private pickReadingTime(): void {
+    try {
+      this.getUIContext().showDatePickerDialog({
+        start: new Date('2000-01-01T00:00:00'),
+        end: new Date('2100-12-31T23:59:59'),
+        selected: this.readingDate(),
+        showTime: true,
+        useMilitaryTime: true,
+        dateTimeOptions: { hour: '2-digit', minute: '2-digit' },
+        onDateAccept: (value: Date) => {
+          this.draftReadingAt = value.getTime()
+        }
+      })
+    } catch (_error) {
+      this.showToast('Time picker unavailable.')
+    }
+  }
+
   @Builder
   private medTimeButton(time: string) {
     Button(time)
@@ -1240,6 +1268,17 @@ struct Index {
           }
           .width('100%')
         }
+
+        Button(`Time · ${this.readingTimeLabel()}`)
+          .height(40)
+          .width('100%')
+          .borderRadius(999)
+          .backgroundColor(SunColor.white)
+          .fontColor(SunColor.ink)
+          .fontSize(13)
+          .fontWeight(FontWeight.Medium)
+          .border({ width: 1, color: SunColor.border })
+          .onClick(() => this.pickReadingTime())
 
         TextInput({ placeholder: 'Note (optional)', text: this.draftNote })
           .height(46)
