@@ -876,7 +876,7 @@ struct Index {
       SunCard() {
         Column({ space: SunSpacing.sm }) {
           if (this.readings.length === 0 && this.symptoms.length === 0) {
-            Text('Log your first reading with the + button.')
+            Text('Log your first reading with Quick Log.')
               .fontSize(SunType.body)
               .fontColor(SunColor.pebble)
           } else {

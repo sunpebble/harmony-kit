@@ -500,7 +500,7 @@ struct Index {
         .fontWeight(FontWeight.Bold)
         .fontColor(SunColor.ink)
 
-      Text('Tap a preset below to start a timer.\nIt lives on your Lock Screen and\nin the Dynamic Island.')
+      Text('Tap a preset below to start a timer.\nKeep it open while you cook.')
         .fontSize(13)
         .fontColor(SunColor.pebble)
         .textAlign(TextAlign.Center)
