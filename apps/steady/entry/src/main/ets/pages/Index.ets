@@ -111,8 +111,10 @@ struct Index {
   @State private reportOpen: boolean = false
   @State private confirmingTimelineDeleteKey: string = ''
   @State private quickActionsOpen: boolean = false
+  private usedEntityIds: number[] = []
 
   aboutToAppear(): void {
+    this.usedEntityIds = []
     this.loadReadings()
     this.loadMeds()
     this.loadSymptoms()
@@ -129,7 +131,8 @@ struct Index {
     }
     try {
       const parsed = JSON.parse(this.readingsJson) as Reading[]
-      this.readings = parsed
+      this.readings = parsed.map((reading: Reading) => this.normalizeReading(reading))
+      this.saveReadings()
     } catch (_error) {
       this.readings = []
       this.saveReadings()
@@ -218,13 +221,39 @@ struct Index {
     })
   }
 
+  private normalizeEntityId(id: number): number {
+    let nextId = Math.max(1, this.nextId)
+    if (!id || id <= 0 || this.usedEntityIds.includes(id)) {
+      while (this.usedEntityIds.includes(nextId)) {
+        nextId += 1
+      }
+      id = nextId
+    }
+    this.usedEntityIds.push(id)
+    this.nextId = Math.max(nextId, id + 1)
+    return id
+  }
+
+  private normalizeReading(reading: Reading): Reading {
+    const kind = this.kinds.includes(reading.kind) ? reading.kind : 'Blood pressure'
+    const normalized: Reading = {
+      id: this.normalizeEntityId(reading.id),
+      date: reading.date ? reading.date : new Date().toISOString(),
+      kind,
+      value: reading.value,
+      unit: reading.unit ? reading.unit : this.unitForKind(kind),
+      context: reading.context ? reading.context : 'Just now'
+    }
+    return normalized
+  }
+
   private saveSymptoms(): void {
     this.symptomsJson = JSON.stringify(this.symptoms)
   }
 
   private normalizeSymptom(symptom: Symptom): Symptom {
     return {
-      id: symptom.id,
+      id: this.normalizeEntityId(symptom.id),
       date: symptom.date ? symptom.date : new Date().toISOString(),
       name: symptom.name,
       severity: symptom.severity,
