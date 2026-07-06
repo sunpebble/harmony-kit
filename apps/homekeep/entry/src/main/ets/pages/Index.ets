@@ -182,7 +182,7 @@ struct Index {
     this.nextId += 1
     this.draftTitle = ''
     this.draftArea = ''
-    this.filter = 'Due'
+    this.filter = 'All'
     this.confirmingTaskId = -1
     this.saveTasksAndSyncReminders()
   }
