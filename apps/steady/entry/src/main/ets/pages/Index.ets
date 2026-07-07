@@ -290,12 +290,13 @@ struct Index {
   }
 
   private normalizeSymptom(symptom: Symptom): Symptom {
-    const context = symptom.context === 'Just now' ? '' : symptom.context
+    const context = symptom.context === 'Just now' ? '' : (symptom.context ? symptom.context : '')
+    const severity = Number.isFinite(symptom.severity) ? Math.max(1, Math.min(3, Math.round(symptom.severity))) : 1
     return {
       id: this.normalizeEntityId(symptom.id),
       date: symptom.date ? symptom.date : new Date().toISOString(),
-      name: symptom.name,
-      severity: symptom.severity,
+      name: symptom.name && symptom.name.length > 0 ? symptom.name : 'Symptom',
+      severity,
       context
     }
   }
