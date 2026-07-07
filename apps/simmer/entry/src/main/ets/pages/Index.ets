@@ -38,17 +38,17 @@ interface TimerSnapshot {
   completedAt?: number
 }
 
-@Observed
+@ObservedV2
 class KitchenTimer {
   id: number
   label: string
   emoji: string
   seconds: number
-  remaining: number
-  running: boolean
-  done: boolean
-  endAt: number
-  completedAt: number
+  @Trace remaining: number
+  @Trace running: boolean
+  @Trace done: boolean
+  @Trace endAt: number
+  @Trace completedAt: number
 
   constructor(id: number, label: string, emoji: string, seconds: number, remaining: number, running: boolean, done: boolean, endAt: number, completedAt: number) {
     this.id = id
@@ -105,15 +105,14 @@ function displayLabel(context: common.Context | undefined, label: string): strin
   }
 }
 
-@Component
+@ComponentV2
 struct Burner {
-  @ObjectLink timer: KitchenTimer
-  @Prop
-  nowMs: number = Date.now()
-  onTap: (id: number) => void = (_id: number) => {}
-  onAddMinute: (id: number) => void = (_id: number) => {}
-  onRestart: (id: number) => void = (_id: number) => {}
-  onCancel: (id: number) => void = (_id: number) => {}
+  @Require @Param timer: KitchenTimer
+  @Param nowMs: number = Date.now()
+  @Param onTap: (id: number) => void = (_id: number) => {}
+  @Param onAddMinute: (id: number) => void = (_id: number) => {}
+  @Param onRestart: (id: number) => void = (_id: number) => {}
+  @Param onCancel: (id: number) => void = (_id: number) => {}
 
   private timerText(seconds: number): string {
     const total = Math.max(0, Math.round(seconds))
@@ -232,7 +231,7 @@ struct Burner {
 }
 
 @Entry
-@Component
+@ComponentV2
 struct Index {
   private presets: PresetTimer[] = [
     { emoji: '🍵', label: 'Tea', seconds: 3 * 60 },
@@ -252,24 +251,35 @@ struct Index {
   private customSecondOptions: number[] = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
   private intervalId: number = -1
 
-  @StorageLink('simmer.nextId.v1') private nextId: number = 1
-  @StorageLink('simmer.timers.v1') private timersJson: string = ''
-  @StorageLink('simmer.customMinutes.v1') private customMinutes: number = 5
-  @StorageLink('simmer.customSeconds.v1') private customSeconds: number = 0
-  @StorageLink('simmer.customEmoji.v1') private customEmoji: string = '🍲'
-  @StorageLink('simmer.customLabel.v1') private customLabelText: string = ''
-  @StorageLink('simmer.savedPresets.v1') private savedPresetsJson: string = ''
-  @StorageLink('simmer.nextPresetId.v1') private nextPresetId: number = 1
-  @StorageLink('simmer.proUnlocked.v1') private proUnlocked: boolean = true
-  @State private customOpen: boolean = false
-  @State private timers: KitchenTimer[] = []
-  @State private savedPresets: SavedPresetTimer[] = []
-  @State private nowMs: number = Date.now()
-  @State private confirmingPresetId: number = -1
-  @State private customSaveAsPreset: boolean = false
-  @State private paywallOpen: boolean = false
+  @Local private nextId: number = 1
+  @Local private timersJson: string = ''
+  @Local private customMinutes: number = 5
+  @Local private customSeconds: number = 0
+  @Local private customEmoji: string = '🍲'
+  @Local private customLabelText: string = ''
+  @Local private savedPresetsJson: string = ''
+  @Local private nextPresetId: number = 1
+  @Local private proUnlocked: boolean = true
+  @Local private customOpen: boolean = false
+  @Local private timers: KitchenTimer[] = []
+  @Local private savedPresets: SavedPresetTimer[] = []
+  @Local private nowMs: number = Date.now()
+  @Local private confirmingPresetId: number = -1
+  @Local private customSaveAsPreset: boolean = false
+  @Local private paywallOpen: boolean = false
+  @Local private containerWidth: number = 0
 
   aboutToAppear(): void {
+    this.nextId = AppStorage.get<number>('simmer.nextId.v1') ?? 1
+    this.timersJson = AppStorage.get<string>('simmer.timers.v1') ?? ''
+    this.customMinutes = AppStorage.get<number>('simmer.customMinutes.v1') ?? 5
+    this.customSeconds = AppStorage.get<number>('simmer.customSeconds.v1') ?? 0
+    this.customEmoji = AppStorage.get<string>('simmer.customEmoji.v1') ?? '🍲'
+    this.customLabelText = AppStorage.get<string>('simmer.customLabel.v1') ?? ''
+    this.savedPresetsJson = AppStorage.get<string>('simmer.savedPresets.v1') ?? ''
+    this.nextPresetId = AppStorage.get<number>('simmer.nextPresetId.v1') ?? 1
+    this.proUnlocked = AppStorage.get<boolean>('simmer.proUnlocked.v1') ?? true
+
     this.loadTimers()
     this.loadSavedPresets()
     if (this.intervalId < 0) {
@@ -303,6 +313,10 @@ struct Index {
       this.customEmoji = '🍲'
       this.customLabelText = ''
       this.customSaveAsPreset = false
+      AppStorage.setOrCreate('simmer.customMinutes.v1', this.customMinutes)
+      AppStorage.setOrCreate('simmer.customSeconds.v1', this.customSeconds)
+      AppStorage.setOrCreate('simmer.customEmoji.v1', this.customEmoji)
+      AppStorage.setOrCreate('simmer.customLabel.v1', this.customLabelText)
     }
   }
 
@@ -337,6 +351,7 @@ struct Index {
     const label = this.customLabel()
     this.savedPresets = [...this.savedPresets, { id: this.nextPresetId, emoji: this.customEmoji, label, seconds }]
     this.nextPresetId += 1
+    AppStorage.setOrCreate('simmer.nextPresetId.v1', this.nextPresetId)
     this.confirmingPresetId = -1
     this.saveSavedPresets()
     if (this.startTimer(label, this.customEmoji, seconds)) {
@@ -368,6 +383,7 @@ struct Index {
       return normalizedPreset
     })
     this.nextPresetId = nextId
+    AppStorage.setOrCreate('simmer.nextPresetId.v1', this.nextPresetId)
     return normalized
   }
 
@@ -398,6 +414,7 @@ struct Index {
       return normalizedTimer
     })
     this.nextId = nextId
+    AppStorage.setOrCreate('simmer.nextId.v1', this.nextId)
     return normalized
   }
 
@@ -426,10 +443,12 @@ struct Index {
 
   private setCustomMinutes(minutes: number): void {
     this.customMinutes = Math.max(0, Math.min(180, Math.round(minutes)))
+    AppStorage.setOrCreate('simmer.customMinutes.v1', this.customMinutes)
   }
 
   private setCustomSeconds(seconds: number): void {
     this.customSeconds = seconds
+    AppStorage.setOrCreate('simmer.customSeconds.v1', this.customSeconds)
   }
 
   private startTimer(label: string, emoji: string, seconds: number): boolean {
@@ -439,12 +458,14 @@ struct Index {
     }
     this.timers = [...this.timers, new KitchenTimer(this.nextId, label, emoji, seconds, seconds, true, false, Date.now() + seconds * 1000, 0)]
     this.nextId += 1
+    AppStorage.setOrCreate('simmer.nextId.v1', this.nextId)
     this.saveTimersAndSyncReminders()
     return true
   }
 
   private unlockPro(): void {
     this.proUnlocked = true
+    AppStorage.setOrCreate('simmer.proUnlocked.v1', this.proUnlocked)
     this.paywallOpen = false
     this.showToast($r('app.string.simmer_toast_pro_unlocked'))
   }
@@ -610,7 +631,13 @@ struct Index {
   }
 
   private saveTimers(): void {
-    this.timersJson = JSON.stringify(this.timers)
+    const snapshots: TimerSnapshot[] = this.timers.map((t: KitchenTimer): TimerSnapshot => ({
+      id: t.id, label: t.label, emoji: t.emoji, seconds: t.seconds,
+      remaining: t.remaining, running: t.running, done: t.done,
+      endAt: t.endAt, completedAt: t.completedAt
+    }))
+    this.timersJson = JSON.stringify(snapshots)
+    AppStorage.setOrCreate('simmer.timers.v1', this.timersJson)
   }
 
   private saveTimersAndSyncReminders(): void {
@@ -620,6 +647,7 @@ struct Index {
 
   private saveSavedPresets(): void {
     this.savedPresetsJson = JSON.stringify(this.savedPresets)
+    AppStorage.setOrCreate('simmer.savedPresets.v1', this.savedPresetsJson)
   }
 
   private remainingFromEnd(timer: KitchenTimer, now: number = Date.now()): number {
@@ -775,7 +803,10 @@ struct Index {
               .padding(0)
               .borderRadius(999)
               .backgroundColor(this.customEmoji === emoji ? SunColor.sun : SunColor.white)
-              .onClick(() => this.customEmoji = emoji)
+              .onClick(() => {
+                this.customEmoji = emoji
+                AppStorage.setOrCreate('simmer.customEmoji.v1', this.customEmoji)
+              })
             }, (emoji: string) => emoji)
           }
         }
@@ -820,7 +851,10 @@ struct Index {
           .backgroundColor(SunColor.white)
           .borderRadius(8)
           .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
-          .onChange((value: string) => this.customLabelText = value)
+          .onChange((value: string) => {
+            this.customLabelText = value
+            AppStorage.setOrCreate('simmer.customLabel.v1', this.customLabelText)
+          })
 
         if (this.proUnlocked) {
           Button($r('app.string.simmer_save_as_preset'))
