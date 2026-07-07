@@ -245,6 +245,10 @@
       "value": "%dN"
     },
     {
+      "name": "sleeptab_range_nights_locked",
+      "value": "%dN 🔒"
+    },
+    {
       "name": "sleeptab_minus_15m",
       "value": "-15m"
     },

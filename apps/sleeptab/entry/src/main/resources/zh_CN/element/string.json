@@ -245,6 +245,10 @@
       "value": "%d 晚"
     },
     {
+      "name": "sleeptab_range_nights_locked",
+      "value": "%d 晚 🔒"
+    },
+    {
       "name": "sleeptab_minus_15m",
       "value": "−15 分"
     },

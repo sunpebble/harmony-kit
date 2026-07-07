@@ -508,8 +508,11 @@ struct Index {
   }
 
   @Builder
-  private rangeButton(label: string, value: number) {
-    Button(value > 7 && !this.proUnlocked ? `${label} 🔒` : label)
+  private rangeButton(value: number) {
+    // Resource label (not a pre-resolved string) so chips re-render on system language change.
+    Button(value > 7 && !this.proUnlocked
+      ? $r('app.string.sleeptab_range_nights_locked', value)
+      : $r('app.string.sleeptab_range_nights', value))
       .height(34)
       .padding({ left: 14, right: 14 })
       .borderRadius(999)
@@ -577,9 +580,9 @@ struct Index {
     Column() {
       Column({ space: SunSpacing.lg }) {
         Row({ space: SunSpacing.sm }) {
-          this.rangeButton(this.resString($r('app.string.sleeptab_range_nights'), 7), 7)
-          this.rangeButton(this.resString($r('app.string.sleeptab_range_nights'), 30), 30)
-          this.rangeButton(this.resString($r('app.string.sleeptab_range_nights'), 90), 90)
+          this.rangeButton(7)
+          this.rangeButton(30)
+          this.rangeButton(90)
         }
 
         Stack({ alignContent: Alignment.Bottom }) {
