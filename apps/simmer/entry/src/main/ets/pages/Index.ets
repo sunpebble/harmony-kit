@@ -140,26 +140,14 @@ struct Burner {
     return Math.max(0, Math.min(100, Math.round((1 - this.timer.remaining / this.timer.seconds) * 100)))
   }
 
-  private ringDash(): number[] {
-    const circumference = 2 * Math.PI * 67
-    return [circumference * this.progress() / 100, circumference]
-  }
-
   build() {
     Column({ space: SunSpacing.sm }) {
       Stack() {
-        Circle({ width: 142, height: 142 })
-          .fillOpacity(0)
-          .stroke(SunColor.border)
-          .strokeWidth(8)
-
-        Circle({ width: 142, height: 142 })
-          .fillOpacity(0)
-          .stroke(this.timer.done ? SunColor.sun : SunColor.ink)
-          .strokeWidth(8)
-          .strokeLineCap(LineCapStyle.Round)
-          .strokeDashArray(this.ringDash())
-          .rotate({ x: 0, y: 0, z: 1, angle: -90 })
+        Progress({ value: this.progress(), total: 100, type: ProgressType.Ring })
+          .style({ strokeWidth: 8 })
+          .color(this.timer.done ? SunColor.sun : SunColor.ink)
+          .width(142)
+          .height(142)
 
         Column({ space: SunSpacing.xs }) {
           Text(this.timer.emoji)
@@ -193,40 +181,41 @@ struct Burner {
       .width(150)
       .height(150)
       .onClick(() => this.onTap(this.timer.id))
+      .bindContextMenu(this.burnerMenu, ResponseType.LongPress)
 
-      Text(displayLabel(this.getUIContext().getHostContext(), this.timer.label).toUpperCase())
-        .fontSize(11)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(SunColor.pebble)
-        .letterSpacing(1)
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
+      Row() {
+        Text(displayLabel(this.getUIContext().getHostContext(), this.timer.label).toUpperCase())
+          .fontSize(11)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(SunColor.pebble)
+          .letterSpacing(1)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .layoutWeight(1)
 
-      Row({ space: 6 }) {
-        this.actionButton($r('app.string.simmer_action_add_minute'), () => this.onAddMinute(this.timer.id), SunColor.ink)
-        this.actionButton($r('app.string.simmer_action_restart'), () => this.onRestart(this.timer.id), SunColor.ink)
-        this.actionButton($r('app.string.simmer_action_cancel'), () => this.onCancel(this.timer.id), SunColor.danger)
+        Text('⋯')
+          .fontSize(14)
+          .opacity(0.4)
+          .fontColor(SunColor.pebble)
       }
       .width('100%')
-      .justifyContent(FlexAlign.Center)
     }
     .width(190)
     .height(250)
     .justifyContent(FlexAlign.Center)
+    .transition({ type: TransitionType.All, opacity: 0, scale: { x: 0.9, y: 0.9 } })
   }
 
   @Builder
-  private actionButton(label: ResourceStr, action: () => void, color: string) {
-    Button(label)
-      .height(30)
-      .padding({ left: 8, right: 8 })
-      .borderRadius(SunRadius.pill)
-      .backgroundColor(SunColor.white)
-      .fontColor(color)
-      .fontSize(10)
-      .fontWeight(FontWeight.Bold)
-      .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
-      .onClick(action)
+  private burnerMenu() {
+    Menu() {
+      MenuItem({ content: $r('app.string.simmer_action_add_minute') })
+        .onClick(() => this.onAddMinute(this.timer.id))
+      MenuItem({ content: $r('app.string.simmer_action_restart') })
+        .onClick(() => this.onRestart(this.timer.id))
+      MenuItem({ content: $r('app.string.simmer_action_delete') })
+        .onClick(() => this.onCancel(this.timer.id))
+    }
   }
 }
 
