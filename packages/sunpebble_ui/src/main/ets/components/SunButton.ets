@@ -6,17 +6,17 @@ export enum SunButtonRole {
   Danger = 'danger'
 }
 
-@Component
+@ComponentV2
 export struct SunButton {
-  @Prop
+  @Param
   label: ResourceStr = ''
-  @Prop
+  @Param
   role: SunButtonRole = SunButtonRole.Primary
-  @Prop
+  @Param
   disabled: boolean = false
-  @Prop
+  @Param
   loading: boolean = false
-  action: () => void = () => {}
+  @Param action: () => void = () => {}
 
   private buttonBackground(): ResourceColor {
     if (this.disabled || this.loading) {

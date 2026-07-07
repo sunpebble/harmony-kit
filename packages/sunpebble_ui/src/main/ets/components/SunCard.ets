@@ -3,7 +3,7 @@ import { SunColor, SunRadius, SunSpacing } from '../tokens/SunTheme'
 @Builder
 function emptyContent() {}
 
-@Component
+@ComponentV2
 export struct SunCard {
   @BuilderParam content: () => void = emptyContent
 

@@ -1,26 +1,26 @@
 import { SunColor, SunType } from '../tokens/SunTheme'
 
-@Component
+@ComponentV2
 export struct SunEllipsisText {
-  @Prop
+  @Param
   text: ResourceStr = ''
 
-  @Prop
+  @Param
   fontSize: number = SunType.body
 
-  @Prop
+  @Param
   fontColor: ResourceColor = SunColor.ink
 
-  @Prop
+  @Param
   fontWeight: FontWeight = FontWeight.Regular
 
-  @Prop
+  @Param
   maxLines: number = 1
 
-  @Prop
+  @Param
   textAlign: TextAlign = TextAlign.Start
 
-  @Prop
+  @Param
   letterSpacing: number = 0
 
   build() {
