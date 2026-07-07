@@ -1,6 +1,6 @@
 {
   "app": {
-    "bundleName": "com.sunpebble.steady.harmony",
+    "bundleName": "com.sunpebble.steady",
     "vendor": "sunpebble",
     "versionCode": 1000000,
     "versionName": "0.1.0",

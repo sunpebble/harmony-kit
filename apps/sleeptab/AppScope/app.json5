@@ -1,6 +1,6 @@
 {
   "app": {
-    "bundleName": "com.sunpebble.sleeptab.harmony",
+    "bundleName": "com.sunpebble.sleeptab",
     "vendor": "sunpebble",
     "versionCode": 1000000,
     "versionName": "0.1.0",

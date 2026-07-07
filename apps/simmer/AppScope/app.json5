@@ -1,6 +1,6 @@
 {
   "app": {
-    "bundleName": "com.sunpebble.simmer.harmony",
+    "bundleName": "com.sunpebble.simmer",
     "vendor": "sunpebble",
     "versionCode": 1000000,
     "versionName": "0.1.0",
