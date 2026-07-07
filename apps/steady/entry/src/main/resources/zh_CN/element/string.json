@@ -1,108 +1,444 @@
 {
   "string": [
-    { "name": "steady_kind_blood_pressure", "value": "血压" },
-    { "name": "steady_kind_blood_glucose", "value": "血糖" },
-    { "name": "steady_kind_weight", "value": "体重" },
-    { "name": "steady_kind_heart_rate", "value": "心率" },
-    { "name": "steady_kind_blood_oxygen", "value": "血氧" },
-    { "name": "steady_tab_timeline", "value": "时间线" },
-    { "name": "steady_tab_trends", "value": "趋势" },
-    { "name": "steady_tab_meds", "value": "用药" },
-    { "name": "steady_tab_settings", "value": "设置" },
-    { "name": "steady_section_quick_log", "value": "快速记录" },
-    { "name": "steady_placeholder_systolic", "value": "收缩压" },
-    { "name": "steady_placeholder_diastolic", "value": "舒张压" },
-    { "name": "steady_mealtime_fasting", "value": "空腹" },
-    { "name": "steady_mealtime_after_meal", "value": "餐后" },
-    { "name": "steady_time_button_format", "value": "时间 · %1$s" },
-    { "name": "steady_time_now", "value": "现在" },
-    { "name": "steady_placeholder_note_optional", "value": "备注（可选）" },
-    { "name": "steady_save_kind_format", "value": "保存%1$s" },
-    { "name": "steady_section_symptom", "value": "症状" },
-    { "name": "steady_placeholder_symptom", "value": "症状（如头痛）" },
-    { "name": "steady_severity_mild", "value": "轻度" },
-    { "name": "steady_severity_moderate", "value": "中度" },
-    { "name": "steady_severity_severe", "value": "重度" },
-    { "name": "steady_placeholder_note", "value": "备注" },
-    { "name": "steady_save", "value": "保存" },
-    { "name": "steady_placeholder_low", "value": "下限" },
-    { "name": "steady_placeholder_high", "value": "上限" },
-    { "name": "steady_target_not_set", "value": "未设置" },
-    { "name": "steady_timeline_empty_title", "value": "还没有记录" },
-    { "name": "steady_timeline_empty_message", "value": "用右下角 + 按钮记录第一条读数。" },
-    { "name": "steady_confirm_delete", "value": "确认删除" },
-    { "name": "steady_cancel", "value": "取消" },
-    { "name": "steady_delete", "value": "删除" },
-    { "name": "steady_word_symptom", "value": "症状" },
-    { "name": "steady_med_taken_format", "value": "%1$s — 已服用" },
-    { "name": "steady_section_trends", "value": "趋势" },
-    { "name": "steady_range_7d", "value": "7天" },
-    { "name": "steady_range_30d", "value": "30天" },
-    { "name": "steady_range_90d", "value": "90天" },
-    { "name": "steady_trend_average", "value": "平均值" },
-    { "name": "steady_trend_range", "value": "范围" },
-    { "name": "steady_trend_in_your_range", "value": "范围内读数" },
-    { "name": "steady_trend_no_data", "value": "该范围内暂无数据" },
-    { "name": "steady_trend_logs_format", "value": "%1$d 条记录" },
-    { "name": "steady_trend_in_range_format", "value": "%1$d/%2$d 在自设范围内" },
-    { "name": "steady_ratio_format", "value": "%1$d / %2$d" },
-    { "name": "steady_section_medication", "value": "用药" },
-    { "name": "steady_no_meds_set_up", "value": "尚未设置药物。" },
-    { "name": "steady_doses_logged", "value": "已记录剂量" },
-    { "name": "steady_doses_ratio_format", "value": "%1$d/%2$d（%3$d%%）" },
-    { "name": "steady_no_readings", "value": "暂无读数" },
-    { "name": "steady_section_today", "value": "今日" },
-    { "name": "steady_meds_empty_title", "value": "暂无药物" },
-    { "name": "steady_meds_empty_message", "value": "添加药物即可获得提醒和每日清单。" },
-    { "name": "steady_section_edit_medication", "value": "编辑药物" },
-    { "name": "steady_section_new_medication", "value": "新建药物" },
-    { "name": "steady_placeholder_med_name", "value": "名称" },
-    { "name": "steady_placeholder_med_dose", "value": "剂量（如 500mg）" },
-    { "name": "steady_add_time", "value": "添加时间" },
-    { "name": "steady_save_medication", "value": "保存药物" },
-    { "name": "steady_add_medication", "value": "添加药物" },
-    { "name": "steady_cancel_edit", "value": "取消编辑" },
-    { "name": "steady_paywall_feature_reports", "value": "就诊用 PDF 报告" },
-    { "name": "steady_paywall_feature_trends", "value": "查看 7 天以上的趋势" },
-    { "name": "steady_paywall_feature_csv", "value": "CSV 导出" },
-    { "name": "steady_paywall_feature_widgets", "value": "全部小组件" },
-    { "name": "steady_paywall_pitch", "value": "一次付费，永久拥有，无订阅。" },
-    { "name": "steady_paywall_unlock", "value": "以 $1.99 解锁" },
-    { "name": "steady_paywall_restore", "value": "恢复购买" },
-    { "name": "steady_pro_unlocked_row", "value": "Steady Pro — 已解锁" },
-    { "name": "steady_doctor_report", "value": "医生报告" },
-    { "name": "steady_hide_doctor_report", "value": "收起医生报告" },
-    { "name": "steady_report_from_format", "value": "从 %1$s" },
-    { "name": "steady_report_to_format", "value": "至 %1$s" },
-    { "name": "steady_share_report", "value": "分享报告" },
-    { "name": "steady_generate_report", "value": "生成报告" },
-    { "name": "steady_export_csv", "value": "导出 CSV" },
-    { "name": "steady_csv_preview", "value": "CSV 预览" },
-    { "name": "steady_section_target_ranges", "value": "我的目标范围" },
-    { "name": "steady_target_ranges_note", "value": "请与医生一起设定。Steady 只按你输入的范围统计读数——从不作评判。" },
-    { "name": "steady_section_measurement_reminder", "value": "测量提醒" },
-    { "name": "steady_reminder_on_label", "value": "每日提醒已开启" },
-    { "name": "steady_reminder_off_label", "value": "每日提醒已关闭" },
-    { "name": "steady_measurement_reminder", "value": "测量提醒" },
-    { "name": "steady_reminder_caption", "value": "花一分钟记录你的读数。" },
-    { "name": "steady_disclaimer", "value": "Steady 是记录工具，不是医疗器械，不提供诊断、治疗或医疗建议。显示的目标范围均由你自己输入。关于读数请务必咨询医生。" },
-    { "name": "steady_paused", "value": "已暂停" },
-    { "name": "steady_toast_enter_bp", "value": "请先输入收缩压和舒张压。" },
-    { "name": "steady_toast_enter_value", "value": "请先输入数值。" },
-    { "name": "steady_toast_pro_unlocked", "value": "已在本设备解锁 Steady Pro。" },
-    { "name": "steady_toast_copied_format", "value": "%1$s 已复制。" },
-    { "name": "steady_toast_copy_failed", "value": "复制失败。" },
-    { "name": "steady_toast_enable_notifications", "value": "请开启通知以使用提醒。" },
-    { "name": "steady_toast_reminder_set_format", "value": "每日提醒已设为 %1$s。" },
-    { "name": "steady_toast_reminder_off", "value": "每日提醒已关闭。" },
-    { "name": "steady_toast_time_picker_unavailable", "value": "时间选择器不可用。" },
-    { "name": "steady_toast_date_picker_unavailable", "value": "日期选择器不可用。" },
-    { "name": "steady_toast_enter_med_name", "value": "请先输入药物名称。" },
-    { "name": "steady_toast_enter_symptom", "value": "请先输入症状。" },
-    { "name": "steady_reminder_med_content_format", "value": "该服用 %1$s 了。" },
-    { "name": "steady_reminder_med_missed_format", "value": "错过了 %1$s 的提醒。" },
-    { "name": "steady_reminder_measure_content", "value": "测量时间：花一分钟记录你的读数。" },
-    { "name": "steady_reminder_measure_missed", "value": "错过了 Steady 提醒。" },
-    { "name": "steady_card_ready", "value": "就绪" }
+    {
+      "name": "steady_kind_blood_pressure",
+      "value": "血压"
+    },
+    {
+      "name": "steady_kind_blood_glucose",
+      "value": "血糖"
+    },
+    {
+      "name": "steady_kind_weight",
+      "value": "体重"
+    },
+    {
+      "name": "steady_kind_heart_rate",
+      "value": "心率"
+    },
+    {
+      "name": "steady_kind_blood_oxygen",
+      "value": "血氧"
+    },
+    {
+      "name": "steady_tab_timeline",
+      "value": "时间线"
+    },
+    {
+      "name": "steady_tab_trends",
+      "value": "趋势"
+    },
+    {
+      "name": "steady_tab_meds",
+      "value": "用药"
+    },
+    {
+      "name": "steady_tab_settings",
+      "value": "设置"
+    },
+    {
+      "name": "steady_section_quick_log",
+      "value": "快速记录"
+    },
+    {
+      "name": "steady_placeholder_systolic",
+      "value": "收缩压"
+    },
+    {
+      "name": "steady_placeholder_diastolic",
+      "value": "舒张压"
+    },
+    {
+      "name": "steady_mealtime_fasting",
+      "value": "空腹"
+    },
+    {
+      "name": "steady_mealtime_after_meal",
+      "value": "餐后"
+    },
+    {
+      "name": "steady_time_button_format",
+      "value": "时间 · %1$s"
+    },
+    {
+      "name": "steady_time_now",
+      "value": "现在"
+    },
+    {
+      "name": "steady_placeholder_note_optional",
+      "value": "备注（可选）"
+    },
+    {
+      "name": "steady_save_kind_format",
+      "value": "保存%1$s"
+    },
+    {
+      "name": "steady_section_symptom",
+      "value": "症状"
+    },
+    {
+      "name": "steady_placeholder_symptom",
+      "value": "症状（如头痛）"
+    },
+    {
+      "name": "steady_severity_mild",
+      "value": "轻度"
+    },
+    {
+      "name": "steady_severity_moderate",
+      "value": "中度"
+    },
+    {
+      "name": "steady_severity_severe",
+      "value": "重度"
+    },
+    {
+      "name": "steady_placeholder_note",
+      "value": "备注"
+    },
+    {
+      "name": "steady_save",
+      "value": "保存"
+    },
+    {
+      "name": "steady_placeholder_low",
+      "value": "下限"
+    },
+    {
+      "name": "steady_placeholder_high",
+      "value": "上限"
+    },
+    {
+      "name": "steady_target_not_set",
+      "value": "未设置"
+    },
+    {
+      "name": "steady_timeline_empty_title",
+      "value": "还没有记录"
+    },
+    {
+      "name": "steady_timeline_empty_message",
+      "value": "用右下角 + 按钮记录第一条读数。"
+    },
+    {
+      "name": "steady_confirm_delete",
+      "value": "确认删除"
+    },
+    {
+      "name": "steady_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "steady_delete",
+      "value": "删除"
+    },
+    {
+      "name": "steady_word_symptom",
+      "value": "症状"
+    },
+    {
+      "name": "steady_med_taken_format",
+      "value": "%1$s — 已服用"
+    },
+    {
+      "name": "steady_section_trends",
+      "value": "趋势"
+    },
+    {
+      "name": "steady_range_7d",
+      "value": "7天"
+    },
+    {
+      "name": "steady_range_30d",
+      "value": "30天"
+    },
+    {
+      "name": "steady_range_90d",
+      "value": "90天"
+    },
+    {
+      "name": "steady_trend_average",
+      "value": "平均值"
+    },
+    {
+      "name": "steady_trend_range",
+      "value": "范围"
+    },
+    {
+      "name": "steady_trend_in_your_range",
+      "value": "范围内读数"
+    },
+    {
+      "name": "steady_trend_no_data",
+      "value": "该范围内暂无数据"
+    },
+    {
+      "name": "steady_trend_logs_format",
+      "value": "%1$d 条记录"
+    },
+    {
+      "name": "steady_trend_in_range_format",
+      "value": "%1$d/%2$d 在自设范围内"
+    },
+    {
+      "name": "steady_ratio_format",
+      "value": "%1$d / %2$d"
+    },
+    {
+      "name": "steady_section_medication",
+      "value": "用药"
+    },
+    {
+      "name": "steady_no_meds_set_up",
+      "value": "尚未设置药物。"
+    },
+    {
+      "name": "steady_doses_logged",
+      "value": "已记录剂量"
+    },
+    {
+      "name": "steady_doses_ratio_format",
+      "value": "%1$d/%2$d（%3$d%%）"
+    },
+    {
+      "name": "steady_no_readings",
+      "value": "暂无读数"
+    },
+    {
+      "name": "steady_section_today",
+      "value": "今日"
+    },
+    {
+      "name": "steady_meds_empty_title",
+      "value": "暂无药物"
+    },
+    {
+      "name": "steady_meds_empty_message",
+      "value": "添加药物即可获得提醒和每日清单。"
+    },
+    {
+      "name": "steady_section_edit_medication",
+      "value": "编辑药物"
+    },
+    {
+      "name": "steady_section_new_medication",
+      "value": "新建药物"
+    },
+    {
+      "name": "steady_placeholder_med_name",
+      "value": "名称"
+    },
+    {
+      "name": "steady_placeholder_med_dose",
+      "value": "剂量（如 500mg）"
+    },
+    {
+      "name": "steady_add_time",
+      "value": "添加时间"
+    },
+    {
+      "name": "steady_save_medication",
+      "value": "保存药物"
+    },
+    {
+      "name": "steady_add_medication",
+      "value": "添加药物"
+    },
+    {
+      "name": "steady_cancel_edit",
+      "value": "取消编辑"
+    },
+    {
+      "name": "steady_paywall_feature_reports",
+      "value": "就诊用 PDF 报告"
+    },
+    {
+      "name": "steady_paywall_feature_trends",
+      "value": "查看 7 天以上的趋势"
+    },
+    {
+      "name": "steady_paywall_feature_csv",
+      "value": "CSV 导出"
+    },
+    {
+      "name": "steady_paywall_feature_widgets",
+      "value": "全部小组件"
+    },
+    {
+      "name": "steady_paywall_pitch",
+      "value": "一次付费，永久拥有，无订阅。"
+    },
+    {
+      "name": "steady_paywall_unlock",
+      "value": "以 $1.99 解锁"
+    },
+    {
+      "name": "steady_paywall_restore",
+      "value": "恢复购买"
+    },
+    {
+      "name": "steady_pro_unlocked_row",
+      "value": "Steady Pro — 已解锁"
+    },
+    {
+      "name": "steady_doctor_report",
+      "value": "医生报告"
+    },
+    {
+      "name": "steady_hide_doctor_report",
+      "value": "收起医生报告"
+    },
+    {
+      "name": "steady_report_from_format",
+      "value": "从 %1$s"
+    },
+    {
+      "name": "steady_report_to_format",
+      "value": "至 %1$s"
+    },
+    {
+      "name": "steady_share_report",
+      "value": "分享报告"
+    },
+    {
+      "name": "steady_generate_report",
+      "value": "生成报告"
+    },
+    {
+      "name": "steady_export_csv",
+      "value": "导出 CSV"
+    },
+    {
+      "name": "steady_csv_preview",
+      "value": "CSV 预览"
+    },
+    {
+      "name": "steady_section_target_ranges",
+      "value": "我的目标范围"
+    },
+    {
+      "name": "steady_target_ranges_note",
+      "value": "请与医生一起设定。Steady 只按你输入的范围统计读数——从不作评判。"
+    },
+    {
+      "name": "steady_section_measurement_reminder",
+      "value": "测量提醒"
+    },
+    {
+      "name": "steady_reminder_on_label",
+      "value": "每日提醒已开启"
+    },
+    {
+      "name": "steady_reminder_off_label",
+      "value": "每日提醒已关闭"
+    },
+    {
+      "name": "steady_measurement_reminder",
+      "value": "测量提醒"
+    },
+    {
+      "name": "steady_reminder_caption",
+      "value": "花一分钟记录你的读数。"
+    },
+    {
+      "name": "steady_disclaimer",
+      "value": "Steady 是记录工具，不是医疗器械，不提供诊断、治疗或医疗建议。显示的目标范围均由你自己输入。关于读数请务必咨询医生。"
+    },
+    {
+      "name": "steady_paused",
+      "value": "已暂停"
+    },
+    {
+      "name": "steady_toast_enter_bp",
+      "value": "请先输入收缩压和舒张压。"
+    },
+    {
+      "name": "steady_toast_enter_value",
+      "value": "请先输入数值。"
+    },
+    {
+      "name": "steady_toast_pro_unlocked",
+      "value": "已在本设备解锁 Steady Pro。"
+    },
+    {
+      "name": "steady_toast_copied_format",
+      "value": "%1$s 已复制。"
+    },
+    {
+      "name": "steady_toast_copy_failed",
+      "value": "复制失败。"
+    },
+    {
+      "name": "steady_toast_enable_notifications",
+      "value": "请开启通知以使用提醒。"
+    },
+    {
+      "name": "steady_toast_reminder_set_format",
+      "value": "每日提醒已设为 %1$s。"
+    },
+    {
+      "name": "steady_toast_reminder_off",
+      "value": "每日提醒已关闭。"
+    },
+    {
+      "name": "steady_toast_time_picker_unavailable",
+      "value": "时间选择器不可用。"
+    },
+    {
+      "name": "steady_toast_date_picker_unavailable",
+      "value": "日期选择器不可用。"
+    },
+    {
+      "name": "steady_toast_enter_med_name",
+      "value": "请先输入药物名称。"
+    },
+    {
+      "name": "steady_toast_enter_symptom",
+      "value": "请先输入症状。"
+    },
+    {
+      "name": "steady_reminder_med_content_format",
+      "value": "该服用 %1$s 了。"
+    },
+    {
+      "name": "steady_reminder_med_missed_format",
+      "value": "错过了 %1$s 的提醒。"
+    },
+    {
+      "name": "steady_reminder_measure_content",
+      "value": "测量时间：花一分钟记录你的读数。"
+    },
+    {
+      "name": "steady_reminder_measure_missed",
+      "value": "错过了 Steady 提醒。"
+    },
+    {
+      "name": "steady_card_ready",
+      "value": "就绪"
+    },
+    {
+      "name": "steady_paywall_close",
+      "value": "暂不解锁"
+    },
+    {
+      "name": "steady_pro_button",
+      "value": "Steady Pro…"
+    },
+    {
+      "name": "steady_range_pro_format",
+      "value": "%1$s Pro"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Steady"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Steady"
+    },
+    {
+      "name": "module_desc",
+      "value": "Steady"
+    }
   ]
 }

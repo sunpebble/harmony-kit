@@ -12,46 +12,229 @@
       "name": "EntryAbility_label",
       "value": "Sleeptab"
     },
-    { "name": "sleeptab_entry_night_label", "value": "NIGHT" },
-    { "name": "sleeptab_entry_night_date_format", "value": "Night · %1$s" },
-    { "name": "sleeptab_entry_saved_night_format", "value": "Saved night · %1$s" },
-    { "name": "sleeptab_confirm_delete", "value": "Confirm Delete" },
-    { "name": "sleeptab_cancel", "value": "Cancel" },
-    { "name": "sleeptab_delete_night", "value": "Delete night" },
-    { "name": "sleeptab_toast_date_picker_unavailable", "value": "Date picker unavailable." },
-    { "name": "sleeptab_toast_pro_unlocked", "value": "Sleeptab Pro unlocked on this device." },
-    { "name": "sleeptab_empty_title", "value": "No sleep data yet" },
-    { "name": "sleeptab_empty_message", "value": "Add a night below to start tracking manually." },
-    { "name": "sleeptab_debt_caught_up", "value": "ALL CAUGHT UP" },
-    { "name": "sleeptab_debt_none_label", "value": "NO SLEEP DEBT · LAST 14 NIGHTS" },
-    { "name": "sleeptab_debt_label", "value": "SLEEP DEBT · LAST 14 NIGHTS" },
-    { "name": "sleeptab_chart_goal_format", "value": "GOAL %1$s" },
-    { "name": "sleeptab_week_avg_label", "value": "AVG · LAST 7 NIGHTS" },
-    { "name": "sleeptab_week_vs_goal_label", "value": "VS GOAL" },
-    { "name": "sleeptab_insights_title_format", "value": "INSIGHTS · LAST %1$d NIGHTS" },
-    { "name": "sleeptab_insight_weekday_avg", "value": "WEEKDAY AVG" },
-    { "name": "sleeptab_insight_weekend_avg", "value": "WEEKEND AVG" },
-    { "name": "sleeptab_insight_best_night", "value": "BEST NIGHT" },
-    { "name": "sleeptab_insight_roughest", "value": "ROUGHEST" },
-    { "name": "sleeptab_insight_avg_bedtime", "value": "AVG BEDTIME" },
-    { "name": "sleeptab_insight_consistency", "value": "CONSISTENCY" },
-    { "name": "sleeptab_insights_locked", "value": "🔒 Weekday vs weekend, best & roughest nights — unlock with Pro" },
-    { "name": "sleeptab_goal_label", "value": "SLEEP NEED" },
-    { "name": "sleeptab_paywall_feature_history", "value": "Full sleep history — 30 and 90 night trends" },
-    { "name": "sleeptab_paywall_feature_insights", "value": "Insights — bedtime consistency, weekday vs weekend" },
-    { "name": "sleeptab_paywall_feature_widget", "value": "Sleep debt widget on your Home Screen" },
-    { "name": "sleeptab_paywall_feature_indie", "value": "Support an indie developer" },
-    { "name": "sleeptab_paywall_promise", "value": "PAY ONCE. YOURS FOREVER.\nNO SUBSCRIPTION. NO ACCOUNT.\nYOUR DATA NEVER LEAVES THIS DEVICE." },
-    { "name": "sleeptab_paywall_unlock", "value": "UNLOCK FOR $1.99" },
-    { "name": "sleeptab_paywall_restore", "value": "Restore Purchase" },
-    { "name": "sleeptab_day_sun", "value": "SUN" },
-    { "name": "sleeptab_day_mon", "value": "MON" },
-    { "name": "sleeptab_day_tue", "value": "TUE" },
-    { "name": "sleeptab_day_wed", "value": "WED" },
-    { "name": "sleeptab_day_thu", "value": "THU" },
-    { "name": "sleeptab_day_fri", "value": "FRI" },
-    { "name": "sleeptab_day_sat", "value": "SAT" },
-    { "name": "sleeptab_card_value", "value": "--" },
-    { "name": "sleeptab_card_label", "value": "Ready" }
+    {
+      "name": "sleeptab_entry_night_label",
+      "value": "NIGHT"
+    },
+    {
+      "name": "sleeptab_entry_night_date_format",
+      "value": "Night · %1$s"
+    },
+    {
+      "name": "sleeptab_entry_saved_night_format",
+      "value": "Saved night · %1$s"
+    },
+    {
+      "name": "sleeptab_confirm_delete",
+      "value": "Confirm Delete"
+    },
+    {
+      "name": "sleeptab_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "sleeptab_delete_night",
+      "value": "Delete night"
+    },
+    {
+      "name": "sleeptab_toast_date_picker_unavailable",
+      "value": "Date picker unavailable."
+    },
+    {
+      "name": "sleeptab_toast_pro_unlocked",
+      "value": "Sleeptab Pro unlocked on this device."
+    },
+    {
+      "name": "sleeptab_empty_title",
+      "value": "No sleep data yet"
+    },
+    {
+      "name": "sleeptab_empty_message",
+      "value": "Add a night below to start tracking manually."
+    },
+    {
+      "name": "sleeptab_debt_caught_up",
+      "value": "ALL CAUGHT UP"
+    },
+    {
+      "name": "sleeptab_debt_none_label",
+      "value": "NO SLEEP DEBT · LAST 14 DAYS"
+    },
+    {
+      "name": "sleeptab_debt_label",
+      "value": "SLEEP DEBT · LAST 14 DAYS"
+    },
+    {
+      "name": "sleeptab_chart_goal_format",
+      "value": "GOAL %1$s"
+    },
+    {
+      "name": "sleeptab_week_avg_label",
+      "value": "AVG · LAST 7 NIGHTS"
+    },
+    {
+      "name": "sleeptab_week_vs_goal_label",
+      "value": "VS GOAL"
+    },
+    {
+      "name": "sleeptab_insights_title_format",
+      "value": "INSIGHTS · LAST %1$d NIGHTS"
+    },
+    {
+      "name": "sleeptab_insight_weekday_avg",
+      "value": "WEEKDAY AVG"
+    },
+    {
+      "name": "sleeptab_insight_weekend_avg",
+      "value": "WEEKEND AVG"
+    },
+    {
+      "name": "sleeptab_insight_best_night",
+      "value": "BEST NIGHT"
+    },
+    {
+      "name": "sleeptab_insight_roughest",
+      "value": "ROUGHEST"
+    },
+    {
+      "name": "sleeptab_insight_avg_bedtime",
+      "value": "AVG BEDTIME"
+    },
+    {
+      "name": "sleeptab_insight_consistency",
+      "value": "CONSISTENCY"
+    },
+    {
+      "name": "sleeptab_insights_locked",
+      "value": "🔒 Weekday vs weekend, best & roughest nights — unlock with Pro"
+    },
+    {
+      "name": "sleeptab_goal_label",
+      "value": "SLEEP NEED"
+    },
+    {
+      "name": "sleeptab_paywall_feature_history",
+      "value": "Full sleep history — 30 and 90 night trends"
+    },
+    {
+      "name": "sleeptab_paywall_feature_insights",
+      "value": "Insights — bedtime consistency, weekday vs weekend"
+    },
+    {
+      "name": "sleeptab_paywall_feature_widget",
+      "value": "Sleep debt widget on your Home Screen"
+    },
+    {
+      "name": "sleeptab_paywall_feature_indie",
+      "value": "Support an indie developer"
+    },
+    {
+      "name": "sleeptab_paywall_promise",
+      "value": "PAY ONCE. YOURS FOREVER.\nNO SUBSCRIPTION. NO ACCOUNT.\nYOUR DATA NEVER LEAVES THIS DEVICE."
+    },
+    {
+      "name": "sleeptab_paywall_unlock",
+      "value": "UNLOCK FOR $1.99"
+    },
+    {
+      "name": "sleeptab_paywall_restore",
+      "value": "Restore Purchase"
+    },
+    {
+      "name": "sleeptab_day_sun",
+      "value": "SUN"
+    },
+    {
+      "name": "sleeptab_day_mon",
+      "value": "MON"
+    },
+    {
+      "name": "sleeptab_day_tue",
+      "value": "TUE"
+    },
+    {
+      "name": "sleeptab_day_wed",
+      "value": "WED"
+    },
+    {
+      "name": "sleeptab_day_thu",
+      "value": "THU"
+    },
+    {
+      "name": "sleeptab_day_fri",
+      "value": "FRI"
+    },
+    {
+      "name": "sleeptab_day_sat",
+      "value": "SAT"
+    },
+    {
+      "name": "sleeptab_card_value",
+      "value": "--"
+    },
+    {
+      "name": "sleeptab_card_label",
+      "value": "Ready"
+    },
+    {
+      "name": "sleeptab_paywall_title",
+      "value": "SLEEPTAB PRO"
+    },
+    {
+      "name": "sleeptab_paywall_close",
+      "value": "Not now"
+    },
+    {
+      "name": "sleeptab_month_day_format",
+      "value": "%1$s %2$d"
+    },
+    {
+      "name": "sleeptab_month_1",
+      "value": "Jan"
+    },
+    {
+      "name": "sleeptab_month_2",
+      "value": "Feb"
+    },
+    {
+      "name": "sleeptab_month_3",
+      "value": "Mar"
+    },
+    {
+      "name": "sleeptab_month_4",
+      "value": "Apr"
+    },
+    {
+      "name": "sleeptab_month_5",
+      "value": "May"
+    },
+    {
+      "name": "sleeptab_month_6",
+      "value": "Jun"
+    },
+    {
+      "name": "sleeptab_month_7",
+      "value": "Jul"
+    },
+    {
+      "name": "sleeptab_month_8",
+      "value": "Aug"
+    },
+    {
+      "name": "sleeptab_month_9",
+      "value": "Sep"
+    },
+    {
+      "name": "sleeptab_month_10",
+      "value": "Oct"
+    },
+    {
+      "name": "sleeptab_month_11",
+      "value": "Nov"
+    },
+    {
+      "name": "sleeptab_month_12",
+      "value": "Dec"
+    }
   ]
 }

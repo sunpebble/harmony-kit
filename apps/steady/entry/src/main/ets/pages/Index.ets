@@ -461,6 +461,8 @@ struct Index {
 
   private showPaywall(): void {
     this.paywallOpen = true
+    // paywallPanel 只挂在 Settings 页；从 Trends 触发时必须切过去，否则用户看不到任何反馈
+    this.tab = 'Settings'
   }
 
   private toggleDoctorReport(): void {
@@ -1086,7 +1088,8 @@ struct Index {
       return this.t($r('app.string.steady_doses_ratio_format'), 0, 0, 0)
     }
     const cutoff = Date.now() - this.trendDays() * this.dayMs()
-    const taken = this.meds.reduce((total: number, med: Medication) => {
+    // 只统计在册药物：已删除药物的历史打卡不该计入，否则完成率会超过 100%
+    const taken = this.activeMeds().reduce((total: number, med: Medication) => {
       return total + this.takenLogFor(med).filter((key: string) => {
         const parts = key.split('|')
         const date = parts.length > 0 ? parts[0] : this.todayKey()
@@ -1188,7 +1191,7 @@ struct Index {
     if (expected === 0) {
       return ''
     }
-    const taken = this.meds.reduce((total: number, med: Medication) => {
+    const taken = activeMeds.reduce((total: number, med: Medication) => {
       return total + this.takenLogFor(med).filter((key: string) => {
         const date = key.split('|')[0]
         return date >= start && date <= end
@@ -1617,6 +1620,7 @@ struct Index {
               .backgroundColor(SunColor.white)
               .borderRadius(8)
               .border({ width: 1, color: SunColor.border })
+              .type(InputType.NUMBER_DECIMAL)
               .onChange((value: string) => this.draftPrimary = value)
 
             TextInput({ placeholder: $r('app.string.steady_placeholder_diastolic'), text: this.draftSecondary })
@@ -1627,6 +1631,7 @@ struct Index {
               .backgroundColor(SunColor.white)
               .borderRadius(8)
               .border({ width: 1, color: SunColor.border })
+              .type(InputType.NUMBER_DECIMAL)
               .onChange((value: string) => this.draftSecondary = value)
           }
           .width('100%')
@@ -1639,7 +1644,8 @@ struct Index {
             .backgroundColor(SunColor.white)
             .borderRadius(8)
             .border({ width: 1, color: SunColor.border })
-            .onChange((value: string) => this.draftPrimary = value)
+            .type(InputType.NUMBER_DECIMAL)
+              .onChange((value: string) => this.draftPrimary = value)
         }
 
         if (this.selectedKind === 'Blood glucose') {
@@ -1755,7 +1761,8 @@ struct Index {
           .backgroundColor(SunColor.white)
           .borderRadius(8)
           .border({ width: 1, color: SunColor.border })
-          .onChange((value: string) => this.setTargetLow(kind, value))
+          .type(InputType.NUMBER_DECIMAL)
+              .onChange((value: string) => this.setTargetLow(kind, value))
 
         TextInput({ placeholder: $r('app.string.steady_placeholder_high'), text: this.targetHighForKind(kind) })
           .height(42)
@@ -1765,7 +1772,8 @@ struct Index {
           .backgroundColor(SunColor.white)
           .borderRadius(8)
           .border({ width: 1, color: SunColor.border })
-          .onChange((value: string) => this.setTargetHigh(kind, value))
+          .type(InputType.NUMBER_DECIMAL)
+              .onChange((value: string) => this.setTargetHigh(kind, value))
       }
       .width('100%')
     }
@@ -1775,6 +1783,9 @@ struct Index {
   @Builder
   private timeline() {
     Column({ space: SunSpacing.md }) {
+      this.quickLogCard()
+      this.symptomLogCard()
+
       SunCard() {
         Column({ space: SunSpacing.sm }) {
           if (this.timelineItems().length === 0) {
@@ -2179,6 +2190,7 @@ struct Index {
       Text(text)
         .fontSize(16)
         .fontColor(SunColor.ink)
+        .layoutWeight(1)
     }
     .width('100%')
     .alignItems(VerticalAlign.Center)
@@ -2217,6 +2229,13 @@ struct Index {
           .fontSize(14)
           .fontColor(SunColor.pebble)
           .onClick(() => this.unlockPro())
+
+        Button($r('app.string.steady_paywall_close'))
+          .height(36)
+          .backgroundColor(Color.Transparent)
+          .fontSize(14)
+          .fontColor(SunColor.pebble)
+          .onClick(() => this.paywallOpen = false)
       }
       .width('100%')
       .alignItems(HorizontalAlign.Center)
@@ -2365,7 +2384,7 @@ struct Index {
         Column({ space: SunSpacing.sm }) {
           if (!this.proUnlocked) {
             SunButton({
-              label: 'Steady Pro…',
+              label: $r('app.string.steady_pro_button'),
               role: SunButtonRole.Secondary,
               action: () => this.showPaywall()
             })
@@ -2409,6 +2428,7 @@ struct Index {
     }
     .width('100%')
     .height('100%')
+    .align(Alignment.Top)
     .scrollBar(BarState.Off)
     .edgeEffect(EdgeEffect.Spring)
   }
@@ -2466,7 +2486,8 @@ struct Index {
           .onClick(() => this.quickActionsOpen = !this.quickActionsOpen)
       }
         .alignItems(HorizontalAlign.End)
-        .margin({ right: SunSpacing.xl, bottom: SunSpacing.lg })
+        // ponytail: 56 = SunTabShell barHeight，抬 FAB 到 tab bar 之上，避免遮住 Settings 标签
+        .margin({ right: SunSpacing.xl, bottom: 56 + SunSpacing.lg })
       }
         .width('100%')
         .height('100%')

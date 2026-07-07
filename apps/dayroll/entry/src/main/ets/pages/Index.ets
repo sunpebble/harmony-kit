@@ -34,7 +34,6 @@ PersistentStorage.persistProp('dayroll.entries.v1', '')
 PersistentStorage.persistProp('dayroll.exportOpen.v1', false)
 PersistentStorage.persistProp('dayroll.statsOpen.v1', false)
 PersistentStorage.persistProp('dayroll.exportFormat.v1', 'Plain Text')
-PersistentStorage.persistProp('dayroll.reminderOpen.v1', false)
 PersistentStorage.persistProp('dayroll.reminderEnabled.v1', false)
 PersistentStorage.persistProp('dayroll.reminderHour.v1', 21)
 PersistentStorage.persistProp('dayroll.reminderMinute.v1', 0)
@@ -50,7 +49,7 @@ struct Index {
   @StorageLink('dayroll.exportOpen.v1') private exportOpen: boolean = false
   @StorageLink('dayroll.statsOpen.v1') private statsOpen: boolean = false
   @StorageLink('dayroll.exportFormat.v1') private exportFormat: string = 'Plain Text'
-  @StorageLink('dayroll.reminderOpen.v1') private reminderOpen: boolean = false
+  @State private reminderOpen: boolean = false
   @StorageLink('dayroll.reminderEnabled.v1') private reminderEnabled: boolean = false
   @StorageLink('dayroll.reminderHour.v1') private reminderHour: number = 21
   @StorageLink('dayroll.reminderMinute.v1') private reminderMinute: number = 0
@@ -416,7 +415,7 @@ struct Index {
     this.scheduleDailyReminder()
   }
 
-  private async scheduleDailyReminder(): Promise<void> {
+  private async scheduleDailyReminder(quiet: boolean = false): Promise<void> {
     try {
       if (!await this.requestNotificationAccess()) {
         this.reminderEnabled = false
@@ -437,7 +436,9 @@ struct Index {
       }
       await reminderAgentManager.publishReminder(request)
       this.reminderEnabled = true
-      this.showToast($r('app.string.dayroll_toast_reminder_set', this.reminderTimeLabel()))
+      if (!quiet) {
+        this.showToast($r('app.string.dayroll_toast_reminder_set', this.reminderTimeLabel()))
+      }
     } catch (_error) {
       this.reminderEnabled = false
       this.showToast($r('app.string.dayroll_toast_enable_notifications'))
@@ -499,7 +500,7 @@ struct Index {
     this.reminderHour = Math.max(0, Math.min(23, hour))
     this.reminderMinute = Math.max(0, Math.min(59, minute))
     if (this.reminderEnabled) {
-      this.scheduleDailyReminder()
+      this.scheduleDailyReminder(true)
     }
   }
 
@@ -660,6 +661,16 @@ struct Index {
     .alignItems(HorizontalAlign.Start)
   }
 
+  private toolbarIconActive(label: string): boolean {
+    if (label === '🔔') {
+      return this.reminderOpen
+    }
+    if (label === '📊') {
+      return this.statsOpen || (this.paywallOpen && this.paywallIntent === 'Stats')
+    }
+    return this.exportOpen || (this.paywallOpen && this.paywallIntent === 'Export')
+  }
+
   @Builder
   private toolbarIcon(label: string, action: () => void) {
     Button({ type: ButtonType.Normal }) {
@@ -673,7 +684,7 @@ struct Index {
     .height(40)
     .padding(0)
     .borderRadius(999)
-    .backgroundColor('#F5EBD9')
+    .backgroundColor(this.toolbarIconActive(label) ? SunColor.sun : '#F5EBD9')
     .onClick(action)
   }
 
@@ -834,7 +845,7 @@ struct Index {
 
                 Blank().layoutWeight(1)
 
-                Text($r('app.string.dayroll_month_days_format', this.entriesForMonth(month).length))
+                Text($r('app.plural.dayroll_month_days', this.entriesForMonth(month).length, this.entriesForMonth(month).length))
                   .fontSize(11)
                   .fontWeight(FontWeight.Bold)
                   .fontColor(SunColor.pebble)
@@ -1107,6 +1118,7 @@ struct Index {
       Text(text)
         .fontSize(14)
         .fontColor(SunColor.ink)
+        .layoutWeight(1)
     }
     .width('100%')
     .alignItems(VerticalAlign.Center)
@@ -1156,6 +1168,16 @@ struct Index {
           .fontSize(12)
           .fontColor(SunColor.pebble)
           .onClick(() => this.unlockPro())
+
+        Button($r('app.string.dayroll_paywall_close'))
+          .height(36)
+          .backgroundColor(Color.Transparent)
+          .fontSize(12)
+          .fontColor(SunColor.pebble)
+          .onClick(() => {
+            this.paywallOpen = false
+            this.paywallIntent = ''
+          })
       }
       .width('100%')
       .alignItems(HorizontalAlign.Center)
@@ -1270,6 +1292,7 @@ struct Index {
             }
             .width('100%')
             .layoutWeight(1)
+            .align(Alignment.Top)
             .scrollBar(BarState.Off)
             .edgeEffect(EdgeEffect.Spring)
           }

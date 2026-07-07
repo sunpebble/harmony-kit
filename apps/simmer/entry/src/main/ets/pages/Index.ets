@@ -310,9 +310,10 @@ struct Index {
     if (seconds <= 0) {
       return
     }
-    this.startTimer(this.customLabel(), this.customEmoji, seconds)
-    this.customOpen = false
-    this.customSaveAsPreset = false
+    if (this.startTimer(this.customLabel(), this.customEmoji, seconds)) {
+      this.customOpen = false
+      this.customSaveAsPreset = false
+    }
   }
 
   private startCustomFromPanel(): void {
@@ -537,6 +538,7 @@ struct Index {
       return
     }
 
+    let anyDone = false
     this.timers.forEach((timer: KitchenTimer) => {
       if (!timer.running) {
         return
@@ -555,8 +557,11 @@ struct Index {
       timer.done = true
       timer.completedAt = timer.endAt > 0 ? timer.endAt : now
       timer.endAt = 0
-      this.saveTimersAndSyncReminders()
+      anyDone = true
     })
+    if (anyDone) {
+      this.saveTimersAndSyncReminders()
+    }
   }
 
   private loadTimers(): void {
@@ -572,6 +577,7 @@ struct Index {
     } catch (_error) {
       this.timers = []
       this.saveTimers()
+      this.syncReminders()
     }
   }
 
@@ -642,13 +648,19 @@ struct Index {
     }
   }
 
+  private notifGranted: boolean = false
+
   private async requestNotificationAccess(): Promise<boolean> {
+    if (this.notifGranted) {
+      return true
+    }
     const context = this.getUIContext().getHostContext()
     if (!context) {
       return false
     }
     try {
       await notificationManager.requestEnableNotification(context as common.UIAbilityContext)
+      this.notifGranted = true
       return true
     } catch (_error) {
       return false
@@ -961,6 +973,7 @@ struct Index {
       Text(text)
         .fontSize(14)
         .fontColor(SunColor.ink)
+        .layoutWeight(1)
     }
     .width('100%')
     .alignItems(VerticalAlign.Center)
@@ -1009,6 +1022,13 @@ struct Index {
           .fontSize(12)
           .fontColor(SunColor.pebble)
           .onClick(() => this.unlockPro())
+
+        Button($r('app.string.simmer_paywall_close'))
+          .height(36)
+          .backgroundColor(Color.Transparent)
+          .fontSize(12)
+          .fontColor(SunColor.pebble)
+          .onClick(() => this.paywallOpen = false)
       }
       .width('100%')
       .padding(SunSpacing.lg)

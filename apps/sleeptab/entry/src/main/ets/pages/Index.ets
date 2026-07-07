@@ -412,8 +412,18 @@ struct Index {
   }
 
   private monthDayLabel(date: Date): string {
-    const months: string[] = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    return `${months[date.getMonth()]} ${date.getDate()}`
+    const months: Resource[] = [
+      $r('app.string.sleeptab_month_1'), $r('app.string.sleeptab_month_2'), $r('app.string.sleeptab_month_3'),
+      $r('app.string.sleeptab_month_4'), $r('app.string.sleeptab_month_5'), $r('app.string.sleeptab_month_6'),
+      $r('app.string.sleeptab_month_7'), $r('app.string.sleeptab_month_8'), $r('app.string.sleeptab_month_9'),
+      $r('app.string.sleeptab_month_10'), $r('app.string.sleeptab_month_11'), $r('app.string.sleeptab_month_12')
+    ]
+    return this.resString($r('app.string.sleeptab_month_day_format'), this.resString(months[date.getMonth()]), date.getDate())
+  }
+
+  private resString(res: Resource, ...args: Array<string | number>): string {
+    const context = this.getUIContext().getHostContext()
+    return context ? context.resourceManager.getStringSync(res, ...args) : ''
   }
 
   private clockText(totalMinutes: number): string {
@@ -545,16 +555,17 @@ struct Index {
         }
 
         Stack({ alignContent: Alignment.Bottom }) {
-          Row({ space: SunSpacing.sm }) {
+          // ponytail: 30/90 晚间距 1px 挤同屏当 sparkline 读；再细分需要按周聚合
+          Row({ space: this.rangeNights > 7 ? 1 : SunSpacing.sm }) {
             ForEach(this.shownNights(), (night: SleepNight) => {
               Column({ space: SunSpacing.xs }) {
                 Blank()
                   .width('100%')
                   .height(this.sleepBarHeight(night.hours))
                   .backgroundColor(night.hours >= this.goalHours ? SunColor.sun : '#8C6925') // ponytail: dim goal-miss bar, no SunColor token
-                  .borderRadius(5)
+                  .borderRadius(this.rangeNights > 7 ? 1 : 5)
 
-                Text(this.dayText(night.day))
+                Text(this.rangeNights <= 7 ? this.dayText(night.day) : ' ')
                   .fontSize(9)
                   .fontWeight(FontWeight.Bold)
                   .fontColor(SunColor.darkSecondary)
@@ -737,6 +748,7 @@ struct Index {
       Text(text)
         .fontSize(14)
         .fontColor(SunColor.cream)
+        .layoutWeight(1)
     }
     .width('100%')
     .alignItems(VerticalAlign.Center)
@@ -746,7 +758,7 @@ struct Index {
   private paywallPanel() {
     if (this.paywallOpen && !this.proUnlocked) {
       Column({ space: SunSpacing.lg }) {
-        Text('SLEEPTAB PRO')
+        Text($r('app.string.sleeptab_paywall_title'))
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(4)
@@ -779,6 +791,13 @@ struct Index {
           .fontSize(12)
           .fontColor(SunColor.darkSecondary)
           .onClick(() => this.unlockPro())
+
+        Button($r('app.string.sleeptab_paywall_close'))
+          .height(36)
+          .backgroundColor(Color.Transparent)
+          .fontSize(12)
+          .fontColor(SunColor.darkSecondary)
+          .onClick(() => this.paywallOpen = false)
       }
       .width('100%')
       .alignItems(HorizontalAlign.Center)
@@ -818,6 +837,7 @@ struct Index {
         }
         .width('100%')
         .height('100%')
+        .align(Alignment.Top)
         .scrollBar(BarState.Off)
         .edgeEffect(EdgeEffect.Spring)
       }

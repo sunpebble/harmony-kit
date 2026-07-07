@@ -1,48 +1,200 @@
 {
   "string": [
-    { "name": "dayroll_tagline", "value": "* 每日一句话 *" },
-    { "name": "dayroll_card_label", "value": "就绪" },
-    { "name": "dayroll_header_total_days", "value": "共 %1$d 天" },
-    { "name": "dayroll_header_streak", "value": "连续 %1$d 天" },
-    { "name": "dayroll_composer_placeholder", "value": "今天的一句话…" },
-    { "name": "dayroll_on_this_day", "value": "那年今天" },
-    { "name": "dayroll_memory_age_one", "value": "1 年前" },
-    { "name": "dayroll_memory_age_format", "value": "%1$d 年前" },
-    { "name": "dayroll_delete_confirm", "value": "删除这一天？" },
-    { "name": "dayroll_save", "value": "保存" },
-    { "name": "dayroll_cancel", "value": "取消" },
-    { "name": "dayroll_delete", "value": "删除" },
-    { "name": "dayroll_delete_this_day", "value": "删除这一天" },
-    { "name": "dayroll_empty_tape", "value": "还没有记录\n点按 + 记录今天" },
-    { "name": "dayroll_month_days_format", "value": "%1$d 天" },
-    { "name": "dayroll_export_preview_title", "value": "导出预览" },
-    { "name": "dayroll_format_plain_text", "value": "纯文本" },
-    { "name": "dayroll_share_export", "value": "分享导出" },
-    { "name": "dayroll_stats_title", "value": "你的记录，一目了然" },
-    { "name": "dayroll_stat_total", "value": "总计" },
-    { "name": "dayroll_stat_streak", "value": "连续" },
-    { "name": "dayroll_stat_best", "value": "最佳" },
-    { "name": "dayroll_stats_days_logged", "value": "记录天数 — 近 12 个月" },
-    { "name": "dayroll_stats_mood_trend", "value": "心情趋势 — 近 12 个月" },
-    { "name": "dayroll_stats_mood_mix", "value": "心情分布 — 全部" },
-    { "name": "dayroll_paywall_feature_export", "value": "导出你的日记 — 文本、Markdown 或 CSV" },
-    { "name": "dayroll_paywall_feature_stats", "value": "连续打卡、心情趋势与年度回顾" },
-    { "name": "dayroll_paywall_feature_memories", "value": "那年今天 — 写下今天时回看往年" },
-    { "name": "dayroll_paywall_feature_indie", "value": "支持独立开发者" },
-    { "name": "dayroll_paywall_pitch", "value": "一次买断，永久拥有。\n无订阅，无账号。" },
-    { "name": "dayroll_paywall_unlock", "value": "以 $1.99 解锁" },
-    { "name": "dayroll_restore_purchase", "value": "恢复购买" },
-    { "name": "dayroll_reminder_panel_title", "value": "每日提醒" },
-    { "name": "dayroll_reminder_button", "value": "提醒我记录" },
-    { "name": "dayroll_reminder_at_format", "value": "每天 %1$s 提醒我" },
-    { "name": "dayroll_reminder_paused", "value": "提醒已暂停" },
-    { "name": "dayroll_reminder_content", "value": "今天的一句话？" },
-    { "name": "dayroll_reminder_expired", "value": "错过了 Dayroll 提醒。" },
-    { "name": "dayroll_toast_enable_notifications", "value": "开启通知以使用每日提醒。" },
-    { "name": "dayroll_toast_reminder_set", "value": "每日提醒已设为 %1$s。" },
-    { "name": "dayroll_toast_reminder_off", "value": "已关闭每日提醒。" },
-    { "name": "dayroll_toast_pro_unlocked", "value": "已在此设备解锁 Dayroll Pro。" },
-    { "name": "dayroll_toast_copied_format", "value": "%1$s 已复制。" },
-    { "name": "dayroll_toast_copy_failed", "value": "复制失败。" }
+    {
+      "name": "dayroll_tagline",
+      "value": "* 每日一句话 *"
+    },
+    {
+      "name": "dayroll_card_label",
+      "value": "就绪"
+    },
+    {
+      "name": "dayroll_header_total_days",
+      "value": "共 %1$d 天"
+    },
+    {
+      "name": "dayroll_header_streak",
+      "value": "连续 %1$d 天"
+    },
+    {
+      "name": "dayroll_composer_placeholder",
+      "value": "今天的一句话…"
+    },
+    {
+      "name": "dayroll_on_this_day",
+      "value": "那年今天"
+    },
+    {
+      "name": "dayroll_memory_age_one",
+      "value": "1 年前"
+    },
+    {
+      "name": "dayroll_memory_age_format",
+      "value": "%1$d 年前"
+    },
+    {
+      "name": "dayroll_delete_confirm",
+      "value": "删除这一天？"
+    },
+    {
+      "name": "dayroll_save",
+      "value": "保存"
+    },
+    {
+      "name": "dayroll_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "dayroll_delete",
+      "value": "删除"
+    },
+    {
+      "name": "dayroll_delete_this_day",
+      "value": "删除这一天"
+    },
+    {
+      "name": "dayroll_empty_tape",
+      "value": "还没有记录\n点按 + 记录今天"
+    },
+    {
+      "name": "dayroll_export_preview_title",
+      "value": "导出预览"
+    },
+    {
+      "name": "dayroll_format_plain_text",
+      "value": "纯文本"
+    },
+    {
+      "name": "dayroll_share_export",
+      "value": "分享导出"
+    },
+    {
+      "name": "dayroll_stats_title",
+      "value": "你的记录，一目了然"
+    },
+    {
+      "name": "dayroll_stat_total",
+      "value": "总计"
+    },
+    {
+      "name": "dayroll_stat_streak",
+      "value": "连续"
+    },
+    {
+      "name": "dayroll_stat_best",
+      "value": "最佳"
+    },
+    {
+      "name": "dayroll_stats_days_logged",
+      "value": "记录天数 — 近 12 个月"
+    },
+    {
+      "name": "dayroll_stats_mood_trend",
+      "value": "心情趋势 — 近 12 个月"
+    },
+    {
+      "name": "dayroll_stats_mood_mix",
+      "value": "心情分布 — 全部"
+    },
+    {
+      "name": "dayroll_paywall_feature_export",
+      "value": "导出你的日记 — 文本、Markdown 或 CSV"
+    },
+    {
+      "name": "dayroll_paywall_feature_stats",
+      "value": "连续打卡、心情趋势与年度回顾"
+    },
+    {
+      "name": "dayroll_paywall_feature_memories",
+      "value": "那年今天 — 写下今天时回看往年"
+    },
+    {
+      "name": "dayroll_paywall_feature_indie",
+      "value": "支持独立开发者"
+    },
+    {
+      "name": "dayroll_paywall_pitch",
+      "value": "一次买断，永久拥有。\n无订阅，无账号。"
+    },
+    {
+      "name": "dayroll_paywall_unlock",
+      "value": "以 $1.99 解锁"
+    },
+    {
+      "name": "dayroll_restore_purchase",
+      "value": "恢复购买"
+    },
+    {
+      "name": "dayroll_reminder_panel_title",
+      "value": "每日提醒"
+    },
+    {
+      "name": "dayroll_reminder_button",
+      "value": "提醒我记录"
+    },
+    {
+      "name": "dayroll_reminder_at_format",
+      "value": "每天 %1$s 提醒我"
+    },
+    {
+      "name": "dayroll_reminder_paused",
+      "value": "提醒已暂停"
+    },
+    {
+      "name": "dayroll_reminder_content",
+      "value": "今天的一句话？"
+    },
+    {
+      "name": "dayroll_reminder_expired",
+      "value": "错过了 Dayroll 提醒。"
+    },
+    {
+      "name": "dayroll_toast_enable_notifications",
+      "value": "开启通知以使用每日提醒。"
+    },
+    {
+      "name": "dayroll_toast_reminder_set",
+      "value": "每日提醒已设为 %1$s。"
+    },
+    {
+      "name": "dayroll_toast_reminder_off",
+      "value": "已关闭每日提醒。"
+    },
+    {
+      "name": "dayroll_toast_pro_unlocked",
+      "value": "已在此设备解锁 Dayroll Pro。"
+    },
+    {
+      "name": "dayroll_toast_copied_format",
+      "value": "%1$s 已复制。"
+    },
+    {
+      "name": "dayroll_toast_copy_failed",
+      "value": "复制失败。"
+    },
+    {
+      "name": "dayroll_format_markdown",
+      "value": "Markdown"
+    },
+    {
+      "name": "dayroll_format_csv",
+      "value": "CSV"
+    },
+    {
+      "name": "dayroll_paywall_close",
+      "value": "暂不解锁"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Dayroll"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Dayroll"
+    },
+    {
+      "name": "module_desc",
+      "value": "Dayroll"
+    }
   ]
 }

@@ -1,44 +1,240 @@
 {
   "string": [
-    { "name": "sleeptab_entry_night_label", "value": "夜间" },
-    { "name": "sleeptab_entry_night_date_format", "value": "夜间 · %1$s" },
-    { "name": "sleeptab_entry_saved_night_format", "value": "已保存 · %1$s" },
-    { "name": "sleeptab_confirm_delete", "value": "确认删除" },
-    { "name": "sleeptab_cancel", "value": "取消" },
-    { "name": "sleeptab_delete_night", "value": "删除该晚记录" },
-    { "name": "sleeptab_toast_date_picker_unavailable", "value": "日期选择器不可用。" },
-    { "name": "sleeptab_toast_pro_unlocked", "value": "Sleeptab Pro 已在此设备解锁。" },
-    { "name": "sleeptab_empty_title", "value": "还没有睡眠数据" },
-    { "name": "sleeptab_empty_message", "value": "在下方添加一晚，开始手动记录。" },
-    { "name": "sleeptab_debt_caught_up", "value": "已全部补齐" },
-    { "name": "sleeptab_debt_none_label", "value": "无睡眠负债 · 近 14 晚" },
-    { "name": "sleeptab_debt_label", "value": "睡眠负债 · 近 14 晚" },
-    { "name": "sleeptab_chart_goal_format", "value": "目标 %1$s" },
-    { "name": "sleeptab_week_avg_label", "value": "平均 · 近 7 晚" },
-    { "name": "sleeptab_week_vs_goal_label", "value": "对比目标" },
-    { "name": "sleeptab_insights_title_format", "value": "洞察 · 近 %1$d 晚" },
-    { "name": "sleeptab_insight_weekday_avg", "value": "工作日平均" },
-    { "name": "sleeptab_insight_weekend_avg", "value": "周末平均" },
-    { "name": "sleeptab_insight_best_night", "value": "最佳夜间" },
-    { "name": "sleeptab_insight_roughest", "value": "最差夜间" },
-    { "name": "sleeptab_insight_avg_bedtime", "value": "平均就寝" },
-    { "name": "sleeptab_insight_consistency", "value": "稳定度" },
-    { "name": "sleeptab_insights_locked", "value": "🔒 工作日与周末对比、最佳与最差夜间 — 解锁 Pro 查看" },
-    { "name": "sleeptab_goal_label", "value": "睡眠需求" },
-    { "name": "sleeptab_paywall_feature_history", "value": "完整睡眠历史 — 30 与 90 晚趋势" },
-    { "name": "sleeptab_paywall_feature_insights", "value": "洞察 — 就寝稳定度、工作日与周末对比" },
-    { "name": "sleeptab_paywall_feature_widget", "value": "主屏幕上的睡眠负债小组件" },
-    { "name": "sleeptab_paywall_feature_indie", "value": "支持独立开发者" },
-    { "name": "sleeptab_paywall_promise", "value": "一次付费，永久拥有。\n无订阅，无账号。\n数据永不离开此设备。" },
-    { "name": "sleeptab_paywall_unlock", "value": "$1.99 解锁" },
-    { "name": "sleeptab_paywall_restore", "value": "恢复购买" },
-    { "name": "sleeptab_day_sun", "value": "周日" },
-    { "name": "sleeptab_day_mon", "value": "周一" },
-    { "name": "sleeptab_day_tue", "value": "周二" },
-    { "name": "sleeptab_day_wed", "value": "周三" },
-    { "name": "sleeptab_day_thu", "value": "周四" },
-    { "name": "sleeptab_day_fri", "value": "周五" },
-    { "name": "sleeptab_day_sat", "value": "周六" },
-    { "name": "sleeptab_card_label", "value": "就绪" }
+    {
+      "name": "sleeptab_entry_night_label",
+      "value": "夜间"
+    },
+    {
+      "name": "sleeptab_entry_night_date_format",
+      "value": "夜间 · %1$s"
+    },
+    {
+      "name": "sleeptab_entry_saved_night_format",
+      "value": "已保存 · %1$s"
+    },
+    {
+      "name": "sleeptab_confirm_delete",
+      "value": "确认删除"
+    },
+    {
+      "name": "sleeptab_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "sleeptab_delete_night",
+      "value": "删除该晚记录"
+    },
+    {
+      "name": "sleeptab_toast_date_picker_unavailable",
+      "value": "日期选择器不可用。"
+    },
+    {
+      "name": "sleeptab_toast_pro_unlocked",
+      "value": "Sleeptab Pro 已在此设备解锁。"
+    },
+    {
+      "name": "sleeptab_empty_title",
+      "value": "还没有睡眠数据"
+    },
+    {
+      "name": "sleeptab_empty_message",
+      "value": "在下方添加一晚，开始手动记录。"
+    },
+    {
+      "name": "sleeptab_debt_caught_up",
+      "value": "已全部补齐"
+    },
+    {
+      "name": "sleeptab_debt_none_label",
+      "value": "无睡眠负债 · 近 14 天"
+    },
+    {
+      "name": "sleeptab_debt_label",
+      "value": "睡眠负债 · 近 14 天"
+    },
+    {
+      "name": "sleeptab_chart_goal_format",
+      "value": "目标 %1$s"
+    },
+    {
+      "name": "sleeptab_week_avg_label",
+      "value": "平均 · 近 7 晚"
+    },
+    {
+      "name": "sleeptab_week_vs_goal_label",
+      "value": "对比目标"
+    },
+    {
+      "name": "sleeptab_insights_title_format",
+      "value": "洞察 · 近 %1$d 晚"
+    },
+    {
+      "name": "sleeptab_insight_weekday_avg",
+      "value": "工作日平均"
+    },
+    {
+      "name": "sleeptab_insight_weekend_avg",
+      "value": "周末平均"
+    },
+    {
+      "name": "sleeptab_insight_best_night",
+      "value": "最佳夜间"
+    },
+    {
+      "name": "sleeptab_insight_roughest",
+      "value": "最差夜间"
+    },
+    {
+      "name": "sleeptab_insight_avg_bedtime",
+      "value": "平均就寝"
+    },
+    {
+      "name": "sleeptab_insight_consistency",
+      "value": "稳定度"
+    },
+    {
+      "name": "sleeptab_insights_locked",
+      "value": "🔒 工作日与周末对比、最佳与最差夜间 — 解锁 Pro 查看"
+    },
+    {
+      "name": "sleeptab_goal_label",
+      "value": "睡眠需求"
+    },
+    {
+      "name": "sleeptab_paywall_feature_history",
+      "value": "完整睡眠历史 — 30 与 90 晚趋势"
+    },
+    {
+      "name": "sleeptab_paywall_feature_insights",
+      "value": "洞察 — 就寝稳定度、工作日与周末对比"
+    },
+    {
+      "name": "sleeptab_paywall_feature_widget",
+      "value": "主屏幕上的睡眠负债小组件"
+    },
+    {
+      "name": "sleeptab_paywall_feature_indie",
+      "value": "支持独立开发者"
+    },
+    {
+      "name": "sleeptab_paywall_promise",
+      "value": "一次付费，永久拥有。\n无订阅，无账号。\n数据永不离开此设备。"
+    },
+    {
+      "name": "sleeptab_paywall_unlock",
+      "value": "$1.99 解锁"
+    },
+    {
+      "name": "sleeptab_paywall_restore",
+      "value": "恢复购买"
+    },
+    {
+      "name": "sleeptab_day_sun",
+      "value": "周日"
+    },
+    {
+      "name": "sleeptab_day_mon",
+      "value": "周一"
+    },
+    {
+      "name": "sleeptab_day_tue",
+      "value": "周二"
+    },
+    {
+      "name": "sleeptab_day_wed",
+      "value": "周三"
+    },
+    {
+      "name": "sleeptab_day_thu",
+      "value": "周四"
+    },
+    {
+      "name": "sleeptab_day_fri",
+      "value": "周五"
+    },
+    {
+      "name": "sleeptab_day_sat",
+      "value": "周六"
+    },
+    {
+      "name": "sleeptab_card_label",
+      "value": "就绪"
+    },
+    {
+      "name": "sleeptab_paywall_title",
+      "value": "SLEEPTAB PRO"
+    },
+    {
+      "name": "sleeptab_paywall_close",
+      "value": "暂不解锁"
+    },
+    {
+      "name": "sleeptab_month_day_format",
+      "value": "%1$s%2$d日"
+    },
+    {
+      "name": "sleeptab_card_value",
+      "value": "--"
+    },
+    {
+      "name": "sleeptab_month_1",
+      "value": "1月"
+    },
+    {
+      "name": "sleeptab_month_2",
+      "value": "2月"
+    },
+    {
+      "name": "sleeptab_month_3",
+      "value": "3月"
+    },
+    {
+      "name": "sleeptab_month_4",
+      "value": "4月"
+    },
+    {
+      "name": "sleeptab_month_5",
+      "value": "5月"
+    },
+    {
+      "name": "sleeptab_month_6",
+      "value": "6月"
+    },
+    {
+      "name": "sleeptab_month_7",
+      "value": "7月"
+    },
+    {
+      "name": "sleeptab_month_8",
+      "value": "8月"
+    },
+    {
+      "name": "sleeptab_month_9",
+      "value": "9月"
+    },
+    {
+      "name": "sleeptab_month_10",
+      "value": "10月"
+    },
+    {
+      "name": "sleeptab_month_11",
+      "value": "11月"
+    },
+    {
+      "name": "sleeptab_month_12",
+      "value": "12月"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Sleeptab"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Sleeptab"
+    },
+    {
+      "name": "module_desc",
+      "value": "Sleeptab"
+    }
   ]
 }

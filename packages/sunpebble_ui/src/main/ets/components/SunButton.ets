@@ -43,7 +43,7 @@ export struct SunButton {
 
   build() {
     Button(this.loading ? $r('app.string.sun_button_working') : this.label)
-      .height(48)
+      .height(40)
       .padding({ left: SunSpacing.lg, right: SunSpacing.lg })
       .borderRadius(SunRadius.pill)
       .backgroundColor(this.buttonBackground())

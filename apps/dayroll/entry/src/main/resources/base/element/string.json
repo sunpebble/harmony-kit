@@ -12,51 +12,189 @@
       "name": "EntryAbility_label",
       "value": "Dayroll"
     },
-    { "name": "dayroll_tagline", "value": "* ONE LINE A DAY *" },
-    { "name": "dayroll_card_label", "value": "Ready" },
-    { "name": "dayroll_header_total_days", "value": "Days %1$d" },
-    { "name": "dayroll_header_streak", "value": "Streak %1$d" },
-    { "name": "dayroll_composer_placeholder", "value": "One line about today…" },
-    { "name": "dayroll_on_this_day", "value": "ON THIS DAY" },
-    { "name": "dayroll_memory_age_one", "value": "1 YR AGO" },
-    { "name": "dayroll_memory_age_format", "value": "%1$d YRS AGO" },
-    { "name": "dayroll_delete_confirm", "value": "Delete this day?" },
-    { "name": "dayroll_save", "value": "Save" },
-    { "name": "dayroll_cancel", "value": "Cancel" },
-    { "name": "dayroll_delete", "value": "Delete" },
-    { "name": "dayroll_delete_this_day", "value": "DELETE THIS DAY" },
-    { "name": "dayroll_empty_tape", "value": "NO ENTRIES YET\nTAP + TO LOG TODAY" },
-    { "name": "dayroll_month_days_format", "value": "%1$d DAYS" },
-    { "name": "dayroll_export_preview_title", "value": "EXPORT PREVIEW" },
-    { "name": "dayroll_format_plain_text", "value": "Plain Text" },
-    { "name": "dayroll_format_markdown", "value": "Markdown" },
-    { "name": "dayroll_format_csv", "value": "CSV" },
-    { "name": "dayroll_share_export", "value": "Share Export" },
-    { "name": "dayroll_stats_title", "value": "YOUR TAPE, COUNTED" },
-    { "name": "dayroll_stat_total", "value": "TOTAL" },
-    { "name": "dayroll_stat_streak", "value": "STREAK" },
-    { "name": "dayroll_stat_best", "value": "BEST" },
-    { "name": "dayroll_stats_days_logged", "value": "DAYS LOGGED — LAST 12 MONTHS" },
-    { "name": "dayroll_stats_mood_trend", "value": "MOOD TREND — LAST 12 MONTHS" },
-    { "name": "dayroll_stats_mood_mix", "value": "MOOD MIX — ALL TIME" },
-    { "name": "dayroll_paywall_feature_export", "value": "Export your tape — text, Markdown or CSV" },
-    { "name": "dayroll_paywall_feature_stats", "value": "Streaks, mood trends & yearly review" },
-    { "name": "dayroll_paywall_feature_memories", "value": "On This Day — see past years while you write" },
-    { "name": "dayroll_paywall_feature_indie", "value": "Support an indie developer" },
-    { "name": "dayroll_paywall_pitch", "value": "PAY ONCE. YOURS FOREVER.\nNO SUBSCRIPTION. NO ACCOUNT." },
-    { "name": "dayroll_paywall_unlock", "value": "UNLOCK FOR $1.99" },
-    { "name": "dayroll_restore_purchase", "value": "Restore Purchase" },
-    { "name": "dayroll_reminder_panel_title", "value": "DAILY REMINDER" },
-    { "name": "dayroll_reminder_button", "value": "REMIND ME TO LOG" },
-    { "name": "dayroll_reminder_at_format", "value": "REMIND ME AT %1$s" },
-    { "name": "dayroll_reminder_paused", "value": "REMINDER PAUSED" },
-    { "name": "dayroll_reminder_content", "value": "One line about today?" },
-    { "name": "dayroll_reminder_expired", "value": "Dayroll reminder missed." },
-    { "name": "dayroll_toast_enable_notifications", "value": "Enable notifications to use daily reminders." },
-    { "name": "dayroll_toast_reminder_set", "value": "Daily reminder set for %1$s." },
-    { "name": "dayroll_toast_reminder_off", "value": "Daily reminder off." },
-    { "name": "dayroll_toast_pro_unlocked", "value": "Dayroll Pro unlocked on this device." },
-    { "name": "dayroll_toast_copied_format", "value": "%1$s copied." },
-    { "name": "dayroll_toast_copy_failed", "value": "Copy failed." }
+    {
+      "name": "dayroll_tagline",
+      "value": "* ONE LINE A DAY *"
+    },
+    {
+      "name": "dayroll_card_label",
+      "value": "Ready"
+    },
+    {
+      "name": "dayroll_header_total_days",
+      "value": "Days %1$d"
+    },
+    {
+      "name": "dayroll_header_streak",
+      "value": "Streak %1$d"
+    },
+    {
+      "name": "dayroll_composer_placeholder",
+      "value": "One line about today…"
+    },
+    {
+      "name": "dayroll_on_this_day",
+      "value": "ON THIS DAY"
+    },
+    {
+      "name": "dayroll_memory_age_one",
+      "value": "1 YR AGO"
+    },
+    {
+      "name": "dayroll_memory_age_format",
+      "value": "%1$d YRS AGO"
+    },
+    {
+      "name": "dayroll_delete_confirm",
+      "value": "Delete this day?"
+    },
+    {
+      "name": "dayroll_save",
+      "value": "Save"
+    },
+    {
+      "name": "dayroll_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "dayroll_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "dayroll_delete_this_day",
+      "value": "DELETE THIS DAY"
+    },
+    {
+      "name": "dayroll_empty_tape",
+      "value": "NO ENTRIES YET\nTAP + TO LOG TODAY"
+    },
+    {
+      "name": "dayroll_export_preview_title",
+      "value": "EXPORT PREVIEW"
+    },
+    {
+      "name": "dayroll_format_plain_text",
+      "value": "Plain Text"
+    },
+    {
+      "name": "dayroll_format_markdown",
+      "value": "Markdown"
+    },
+    {
+      "name": "dayroll_format_csv",
+      "value": "CSV"
+    },
+    {
+      "name": "dayroll_share_export",
+      "value": "Share Export"
+    },
+    {
+      "name": "dayroll_stats_title",
+      "value": "YOUR TAPE, COUNTED"
+    },
+    {
+      "name": "dayroll_stat_total",
+      "value": "TOTAL"
+    },
+    {
+      "name": "dayroll_stat_streak",
+      "value": "STREAK"
+    },
+    {
+      "name": "dayroll_stat_best",
+      "value": "BEST"
+    },
+    {
+      "name": "dayroll_stats_days_logged",
+      "value": "DAYS LOGGED — LAST 12 MONTHS"
+    },
+    {
+      "name": "dayroll_stats_mood_trend",
+      "value": "MOOD TREND — LAST 12 MONTHS"
+    },
+    {
+      "name": "dayroll_stats_mood_mix",
+      "value": "MOOD MIX — ALL TIME"
+    },
+    {
+      "name": "dayroll_paywall_feature_export",
+      "value": "Export your tape — text, Markdown or CSV"
+    },
+    {
+      "name": "dayroll_paywall_feature_stats",
+      "value": "Streaks, mood trends & yearly review"
+    },
+    {
+      "name": "dayroll_paywall_feature_memories",
+      "value": "On This Day — see past years while you write"
+    },
+    {
+      "name": "dayroll_paywall_feature_indie",
+      "value": "Support an indie developer"
+    },
+    {
+      "name": "dayroll_paywall_pitch",
+      "value": "PAY ONCE. YOURS FOREVER.\nNO SUBSCRIPTION. NO ACCOUNT."
+    },
+    {
+      "name": "dayroll_paywall_unlock",
+      "value": "UNLOCK FOR $1.99"
+    },
+    {
+      "name": "dayroll_restore_purchase",
+      "value": "Restore Purchase"
+    },
+    {
+      "name": "dayroll_reminder_panel_title",
+      "value": "DAILY REMINDER"
+    },
+    {
+      "name": "dayroll_reminder_button",
+      "value": "REMIND ME TO LOG"
+    },
+    {
+      "name": "dayroll_reminder_at_format",
+      "value": "REMIND ME AT %1$s"
+    },
+    {
+      "name": "dayroll_reminder_paused",
+      "value": "REMINDER PAUSED"
+    },
+    {
+      "name": "dayroll_reminder_content",
+      "value": "One line about today?"
+    },
+    {
+      "name": "dayroll_reminder_expired",
+      "value": "Dayroll reminder missed."
+    },
+    {
+      "name": "dayroll_toast_enable_notifications",
+      "value": "Enable notifications to use daily reminders."
+    },
+    {
+      "name": "dayroll_toast_reminder_set",
+      "value": "Daily reminder set for %1$s."
+    },
+    {
+      "name": "dayroll_toast_reminder_off",
+      "value": "Daily reminder off."
+    },
+    {
+      "name": "dayroll_toast_pro_unlocked",
+      "value": "Dayroll Pro unlocked on this device."
+    },
+    {
+      "name": "dayroll_toast_copied_format",
+      "value": "%1$s copied."
+    },
+    {
+      "name": "dayroll_toast_copy_failed",
+      "value": "Copy failed."
+    },
+    {
+      "name": "dayroll_paywall_close",
+      "value": "Not now"
+    }
   ]
 }

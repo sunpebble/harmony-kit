@@ -184,6 +184,7 @@ struct Index {
     this.nextId += 1
     this.draftTitle = ''
     this.draftArea = ''
+    this.draftCadence = 30
     this.filter = 'All'
     this.confirmingTaskId = -1
     this.saveTasksAndSyncReminders()
@@ -471,22 +472,22 @@ struct Index {
                 caption: $r('app.string.homekeep_task_caption_format', this.areaText(task.area), task.cadence)
               })
 
-              if (this.daysUntil(task) <= 0) {
-                Row({ space: SunSpacing.sm }) {
-                  SunButton({
-                    label: $r('app.string.homekeep_mark_done'),
-                    role: SunButtonRole.Secondary,
-                    action: () => this.completeTask(task.id)
-                  })
+              Row({ space: SunSpacing.sm }) {
+                SunButton({
+                  label: $r('app.string.homekeep_mark_done'),
+                  role: SunButtonRole.Secondary,
+                  action: () => this.completeTask(task.id)
+                })
 
+                if (this.daysUntil(task) <= 0) {
                   SunButton({
                     label: $r('app.string.homekeep_snooze_7d'),
                     role: SunButtonRole.Secondary,
                     action: () => this.snoozeTask(task.id)
                   })
                 }
-                .width('100%')
               }
+              .width('100%')
 
               if (this.confirmingTaskId === task.id) {
                 Row({ space: SunSpacing.sm }) {
@@ -628,6 +629,7 @@ struct Index {
           }
           .width('100%')
           .layoutWeight(1)
+          .align(Alignment.Top)
 
           this.presetBar()
         }

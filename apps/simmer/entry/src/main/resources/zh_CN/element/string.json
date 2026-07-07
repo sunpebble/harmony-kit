@@ -1,47 +1,196 @@
 {
   "string": [
-    { "name": "simmer_label_timer", "value": "计时器" },
-    { "name": "simmer_label_tea", "value": "泡茶" },
-    { "name": "simmer_label_ramen", "value": "拉面" },
-    { "name": "simmer_label_french_press", "value": "法压咖啡" },
-    { "name": "simmer_label_rest_steak", "value": "静置牛排" },
-    { "name": "simmer_label_soft_egg", "value": "溏心蛋" },
-    { "name": "simmer_label_steam_veg", "value": "蒸蔬菜" },
-    { "name": "simmer_label_hard_egg", "value": "全熟蛋" },
-    { "name": "simmer_label_pasta", "value": "意面" },
-    { "name": "simmer_label_dumplings", "value": "饺子" },
-    { "name": "simmer_label_rice", "value": "米饭" },
-    { "name": "simmer_label_potatoes", "value": "土豆" },
-    { "name": "simmer_label_oven", "value": "烤箱" },
-    { "name": "simmer_burner_done", "value": "完成" },
-    { "name": "simmer_burner_over_format", "value": "超时 +%1$s" },
-    { "name": "simmer_burner_paused", "value": "已暂停" },
-    { "name": "simmer_action_add_minute", "value": "+1 分钟" },
-    { "name": "simmer_action_restart", "value": "重新开始" },
-    { "name": "simmer_action_cancel", "value": "取消" },
-    { "name": "simmer_empty_title", "value": "炉子上空空如也" },
-    { "name": "simmer_empty_message", "value": "点按下方预设即可开始计时。\nSimmer 会用系统计时提醒\n持续为你守着炉火。" },
-    { "name": "simmer_custom_title", "value": "自定义计时器" },
-    { "name": "simmer_minute_unit", "value": "分钟" },
-    { "name": "simmer_second_unit", "value": "秒" },
-    { "name": "simmer_label_placeholder", "value": "标签（可选）" },
-    { "name": "simmer_save_as_preset", "value": "存为预设" },
-    { "name": "simmer_start", "value": "开始" },
-    { "name": "simmer_custom_button", "value": "+ 自定义" },
-    { "name": "simmer_remove_preset", "value": "移除预设" },
-    { "name": "simmer_paywall_feature_unlimited", "value": "所有炉灶同时开火 — 计时器不限数量" },
-    { "name": "simmer_paywall_feature_alerts", "value": "每个计时器都有系统计时提醒" },
-    { "name": "simmer_paywall_feature_presets", "value": "把常用计时器存为预设" },
-    { "name": "simmer_paywall_feature_restart", "value": "完成的计时器一键重新开始" },
-    { "name": "simmer_paywall_feature_indie", "value": "支持独立开发者" },
-    { "name": "simmer_paywall_pitch", "value": "一次买断，永久拥有。\n无订阅，无账号。" },
-    { "name": "simmer_paywall_unlock", "value": "以 $1.99 解锁" },
-    { "name": "simmer_restore_purchase", "value": "恢复购买" },
-    { "name": "simmer_toast_pro_required", "value": "Simmer Pro 可解锁保存自定义预设。" },
-    { "name": "simmer_toast_pro_unlocked", "value": "Simmer Pro 已在此设备解锁。" },
-    { "name": "simmer_toast_done_format", "value": "%1$s 好了" },
-    { "name": "simmer_reminder_content", "value": "时间到！" },
-    { "name": "simmer_reminder_expired_format", "value": "%1$s 好了。" },
-    { "name": "simmer_card_ready", "value": "就绪" }
+    {
+      "name": "simmer_label_timer",
+      "value": "计时器"
+    },
+    {
+      "name": "simmer_label_tea",
+      "value": "泡茶"
+    },
+    {
+      "name": "simmer_label_ramen",
+      "value": "拉面"
+    },
+    {
+      "name": "simmer_label_french_press",
+      "value": "法压咖啡"
+    },
+    {
+      "name": "simmer_label_rest_steak",
+      "value": "静置牛排"
+    },
+    {
+      "name": "simmer_label_soft_egg",
+      "value": "溏心蛋"
+    },
+    {
+      "name": "simmer_label_steam_veg",
+      "value": "蒸蔬菜"
+    },
+    {
+      "name": "simmer_label_hard_egg",
+      "value": "全熟蛋"
+    },
+    {
+      "name": "simmer_label_pasta",
+      "value": "意面"
+    },
+    {
+      "name": "simmer_label_dumplings",
+      "value": "饺子"
+    },
+    {
+      "name": "simmer_label_rice",
+      "value": "米饭"
+    },
+    {
+      "name": "simmer_label_potatoes",
+      "value": "土豆"
+    },
+    {
+      "name": "simmer_label_oven",
+      "value": "烤箱"
+    },
+    {
+      "name": "simmer_burner_done",
+      "value": "完成"
+    },
+    {
+      "name": "simmer_burner_over_format",
+      "value": "超时 +%1$s"
+    },
+    {
+      "name": "simmer_burner_paused",
+      "value": "已暂停"
+    },
+    {
+      "name": "simmer_action_add_minute",
+      "value": "+1 分钟"
+    },
+    {
+      "name": "simmer_action_restart",
+      "value": "重新开始"
+    },
+    {
+      "name": "simmer_action_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "simmer_empty_title",
+      "value": "炉子上空空如也"
+    },
+    {
+      "name": "simmer_empty_message",
+      "value": "点按下方预设即可开始计时。\nSimmer 会用系统计时提醒\n持续为你守着炉火。"
+    },
+    {
+      "name": "simmer_custom_title",
+      "value": "自定义计时器"
+    },
+    {
+      "name": "simmer_minute_unit",
+      "value": "分钟"
+    },
+    {
+      "name": "simmer_second_unit",
+      "value": "秒"
+    },
+    {
+      "name": "simmer_label_placeholder",
+      "value": "标签（可选）"
+    },
+    {
+      "name": "simmer_save_as_preset",
+      "value": "存为预设"
+    },
+    {
+      "name": "simmer_start",
+      "value": "开始"
+    },
+    {
+      "name": "simmer_custom_button",
+      "value": "+ 自定义"
+    },
+    {
+      "name": "simmer_remove_preset",
+      "value": "移除预设"
+    },
+    {
+      "name": "simmer_paywall_feature_unlimited",
+      "value": "所有炉灶同时开火 — 计时器不限数量"
+    },
+    {
+      "name": "simmer_paywall_feature_alerts",
+      "value": "每个计时器都有系统计时提醒"
+    },
+    {
+      "name": "simmer_paywall_feature_presets",
+      "value": "把常用计时器存为预设"
+    },
+    {
+      "name": "simmer_paywall_feature_restart",
+      "value": "完成的计时器一键重新开始"
+    },
+    {
+      "name": "simmer_paywall_feature_indie",
+      "value": "支持独立开发者"
+    },
+    {
+      "name": "simmer_paywall_pitch",
+      "value": "一次买断，永久拥有。\n无订阅，无账号。"
+    },
+    {
+      "name": "simmer_paywall_unlock",
+      "value": "以 $1.99 解锁"
+    },
+    {
+      "name": "simmer_restore_purchase",
+      "value": "恢复购买"
+    },
+    {
+      "name": "simmer_toast_pro_required",
+      "value": "Simmer Pro 可解锁保存自定义预设。"
+    },
+    {
+      "name": "simmer_toast_pro_unlocked",
+      "value": "Simmer Pro 已在此设备解锁。"
+    },
+    {
+      "name": "simmer_toast_done_format",
+      "value": "%1$s 好了"
+    },
+    {
+      "name": "simmer_reminder_content",
+      "value": "时间到！"
+    },
+    {
+      "name": "simmer_reminder_expired_format",
+      "value": "%1$s 好了。"
+    },
+    {
+      "name": "simmer_card_ready",
+      "value": "就绪"
+    },
+    {
+      "name": "simmer_pro_title",
+      "value": "SIMMER PRO"
+    },
+    {
+      "name": "simmer_paywall_close",
+      "value": "暂不解锁"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Simmer"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Simmer"
+    },
+    {
+      "name": "module_desc",
+      "value": "Simmer"
+    }
   ]
 }

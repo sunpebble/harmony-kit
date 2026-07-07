@@ -2,8 +2,11 @@ import { SunColor, SunSpacing, SunType } from '../tokens/SunTheme'
 
 @Component
 export struct SunListRow {
+  @Prop
   title: ResourceStr = ''
+  @Prop
   value: ResourceStr = ''
+  @Prop
   caption: ResourceStr = ''
   action: () => void = () => {}
 
@@ -40,7 +43,7 @@ export struct SunListRow {
       }
     }
     .width('100%')
-    .height(56)
+    .constraintSize({ minHeight: 56 })
     .padding({ top: SunSpacing.sm, bottom: SunSpacing.sm })
     .border({ width: { bottom: 1 }, color: SunColor.border })
 

@@ -12,110 +12,433 @@
       "name": "EntryAbility_label",
       "value": "Steady"
     },
-    { "name": "steady_kind_blood_pressure", "value": "Blood pressure" },
-    { "name": "steady_kind_blood_glucose", "value": "Blood glucose" },
-    { "name": "steady_kind_weight", "value": "Weight" },
-    { "name": "steady_kind_heart_rate", "value": "Heart rate" },
-    { "name": "steady_kind_blood_oxygen", "value": "Blood oxygen" },
-    { "name": "steady_tab_timeline", "value": "Timeline" },
-    { "name": "steady_tab_trends", "value": "Trends" },
-    { "name": "steady_tab_meds", "value": "Meds" },
-    { "name": "steady_tab_settings", "value": "Settings" },
-    { "name": "steady_section_quick_log", "value": "QUICK LOG" },
-    { "name": "steady_placeholder_systolic", "value": "Systolic" },
-    { "name": "steady_placeholder_diastolic", "value": "Diastolic" },
-    { "name": "steady_mealtime_fasting", "value": "Fasting" },
-    { "name": "steady_mealtime_after_meal", "value": "After meal" },
-    { "name": "steady_time_button_format", "value": "Time · %1$s" },
-    { "name": "steady_time_now", "value": "Now" },
-    { "name": "steady_placeholder_note_optional", "value": "Note (optional)" },
-    { "name": "steady_save_kind_format", "value": "Save %1$s" },
-    { "name": "steady_section_symptom", "value": "SYMPTOM" },
-    { "name": "steady_placeholder_symptom", "value": "Symptom (e.g. headache)" },
-    { "name": "steady_severity_mild", "value": "Mild" },
-    { "name": "steady_severity_moderate", "value": "Moderate" },
-    { "name": "steady_severity_severe", "value": "Severe" },
-    { "name": "steady_placeholder_note", "value": "Note" },
-    { "name": "steady_save", "value": "Save" },
-    { "name": "steady_placeholder_low", "value": "low" },
-    { "name": "steady_placeholder_high", "value": "high" },
-    { "name": "steady_target_not_set", "value": "Not set" },
-    { "name": "steady_timeline_empty_title", "value": "Nothing yet" },
-    { "name": "steady_timeline_empty_message", "value": "Log your first reading with the + button." },
-    { "name": "steady_confirm_delete", "value": "Confirm Delete" },
-    { "name": "steady_cancel", "value": "Cancel" },
-    { "name": "steady_delete", "value": "Delete" },
-    { "name": "steady_word_symptom", "value": "Symptom" },
-    { "name": "steady_med_taken_format", "value": "%1$s — taken" },
-    { "name": "steady_section_trends", "value": "TRENDS" },
-    { "name": "steady_range_7d", "value": "7D" },
-    { "name": "steady_range_30d", "value": "30D" },
-    { "name": "steady_range_90d", "value": "90D" },
-    { "name": "steady_range_pro_format", "value": "%1$s Pro" },
-    { "name": "steady_trend_average", "value": "Average" },
-    { "name": "steady_trend_range", "value": "Range" },
-    { "name": "steady_trend_in_your_range", "value": "Readings in your range" },
-    { "name": "steady_trend_no_data", "value": "No data in range" },
-    { "name": "steady_trend_logs_format", "value": "%1$d logs" },
-    { "name": "steady_trend_in_range_format", "value": "%1$d of %2$d in patient-set range" },
-    { "name": "steady_ratio_format", "value": "%1$d of %2$d" },
-    { "name": "steady_section_medication", "value": "MEDICATION" },
-    { "name": "steady_no_meds_set_up", "value": "No medications set up." },
-    { "name": "steady_doses_logged", "value": "Doses logged" },
-    { "name": "steady_doses_ratio_format", "value": "%1$d of %2$d (%3$d%%)" },
-    { "name": "steady_no_readings", "value": "No readings" },
-    { "name": "steady_section_today", "value": "TODAY" },
-    { "name": "steady_meds_empty_title", "value": "No medications" },
-    { "name": "steady_meds_empty_message", "value": "Add one to get reminders and a daily checklist." },
-    { "name": "steady_section_edit_medication", "value": "EDIT MEDICATION" },
-    { "name": "steady_section_new_medication", "value": "NEW MEDICATION" },
-    { "name": "steady_placeholder_med_name", "value": "Name" },
-    { "name": "steady_placeholder_med_dose", "value": "Dosage (e.g. 500mg)" },
-    { "name": "steady_add_time", "value": "Add Time" },
-    { "name": "steady_save_medication", "value": "Save Medication" },
-    { "name": "steady_add_medication", "value": "Add Medication" },
-    { "name": "steady_cancel_edit", "value": "Cancel Edit" },
-    { "name": "steady_paywall_feature_reports", "value": "PDF reports for doctor visits" },
-    { "name": "steady_paywall_feature_trends", "value": "Trends beyond the last 7 days" },
-    { "name": "steady_paywall_feature_csv", "value": "CSV export" },
-    { "name": "steady_paywall_feature_widgets", "value": "All widgets" },
-    { "name": "steady_paywall_pitch", "value": "Pay once. Yours forever. No subscription." },
-    { "name": "steady_paywall_unlock", "value": "Unlock for $1.99" },
-    { "name": "steady_paywall_restore", "value": "Restore purchase" },
-    { "name": "steady_pro_unlocked_row", "value": "Steady Pro — unlocked" },
-    { "name": "steady_doctor_report", "value": "Doctor report" },
-    { "name": "steady_hide_doctor_report", "value": "Hide Doctor report" },
-    { "name": "steady_report_from_format", "value": "From %1$s" },
-    { "name": "steady_report_to_format", "value": "To %1$s" },
-    { "name": "steady_share_report", "value": "Share report" },
-    { "name": "steady_generate_report", "value": "Generate report" },
-    { "name": "steady_export_csv", "value": "Export CSV" },
-    { "name": "steady_csv_preview", "value": "CSV Preview" },
-    { "name": "steady_section_target_ranges", "value": "MY TARGET RANGES" },
-    { "name": "steady_target_ranges_note", "value": "Set these with your doctor. Steady only counts readings against ranges you enter — it never judges them." },
-    { "name": "steady_section_measurement_reminder", "value": "MEASUREMENT REMINDER" },
-    { "name": "steady_reminder_on_label", "value": "Daily reminder on" },
-    { "name": "steady_reminder_off_label", "value": "Daily reminder off" },
-    { "name": "steady_measurement_reminder", "value": "Measurement reminder" },
-    { "name": "steady_reminder_caption", "value": "Take a minute to log your readings." },
-    { "name": "steady_disclaimer", "value": "Steady is a record-keeping tool, not a medical device. It does not diagnose, treat, or give medical advice. Target ranges shown are the ones you entered yourself. Always consult your doctor about your readings." },
-    { "name": "steady_paused", "value": "Paused" },
-    { "name": "steady_toast_enter_bp", "value": "Enter systolic and diastolic first." },
-    { "name": "steady_toast_enter_value", "value": "Enter a value first." },
-    { "name": "steady_toast_pro_unlocked", "value": "Steady Pro unlocked on this device." },
-    { "name": "steady_toast_copied_format", "value": "%1$s copied." },
-    { "name": "steady_toast_copy_failed", "value": "Copy failed." },
-    { "name": "steady_toast_enable_notifications", "value": "Enable notifications to use reminders." },
-    { "name": "steady_toast_reminder_set_format", "value": "Daily reminder set for %1$s." },
-    { "name": "steady_toast_reminder_off", "value": "Daily reminder off." },
-    { "name": "steady_toast_time_picker_unavailable", "value": "Time picker unavailable." },
-    { "name": "steady_toast_date_picker_unavailable", "value": "Date picker unavailable." },
-    { "name": "steady_toast_enter_med_name", "value": "Enter medication name first." },
-    { "name": "steady_toast_enter_symptom", "value": "Enter symptom first." },
-    { "name": "steady_reminder_med_content_format", "value": "Time for %1$s." },
-    { "name": "steady_reminder_med_missed_format", "value": "%1$s reminder missed." },
-    { "name": "steady_reminder_measure_content", "value": "Measurement time: take a minute to log your readings." },
-    { "name": "steady_reminder_measure_missed", "value": "Steady reminder missed." },
-    { "name": "steady_card_ready", "value": "Ready" }
+    {
+      "name": "steady_kind_blood_pressure",
+      "value": "Blood pressure"
+    },
+    {
+      "name": "steady_kind_blood_glucose",
+      "value": "Blood glucose"
+    },
+    {
+      "name": "steady_kind_weight",
+      "value": "Weight"
+    },
+    {
+      "name": "steady_kind_heart_rate",
+      "value": "Heart rate"
+    },
+    {
+      "name": "steady_kind_blood_oxygen",
+      "value": "Blood oxygen"
+    },
+    {
+      "name": "steady_tab_timeline",
+      "value": "Timeline"
+    },
+    {
+      "name": "steady_tab_trends",
+      "value": "Trends"
+    },
+    {
+      "name": "steady_tab_meds",
+      "value": "Meds"
+    },
+    {
+      "name": "steady_tab_settings",
+      "value": "Settings"
+    },
+    {
+      "name": "steady_section_quick_log",
+      "value": "QUICK LOG"
+    },
+    {
+      "name": "steady_placeholder_systolic",
+      "value": "Systolic"
+    },
+    {
+      "name": "steady_placeholder_diastolic",
+      "value": "Diastolic"
+    },
+    {
+      "name": "steady_mealtime_fasting",
+      "value": "Fasting"
+    },
+    {
+      "name": "steady_mealtime_after_meal",
+      "value": "After meal"
+    },
+    {
+      "name": "steady_time_button_format",
+      "value": "Time · %1$s"
+    },
+    {
+      "name": "steady_time_now",
+      "value": "Now"
+    },
+    {
+      "name": "steady_placeholder_note_optional",
+      "value": "Note (optional)"
+    },
+    {
+      "name": "steady_save_kind_format",
+      "value": "Save %1$s"
+    },
+    {
+      "name": "steady_section_symptom",
+      "value": "SYMPTOM"
+    },
+    {
+      "name": "steady_placeholder_symptom",
+      "value": "Symptom (e.g. headache)"
+    },
+    {
+      "name": "steady_severity_mild",
+      "value": "Mild"
+    },
+    {
+      "name": "steady_severity_moderate",
+      "value": "Moderate"
+    },
+    {
+      "name": "steady_severity_severe",
+      "value": "Severe"
+    },
+    {
+      "name": "steady_placeholder_note",
+      "value": "Note"
+    },
+    {
+      "name": "steady_save",
+      "value": "Save"
+    },
+    {
+      "name": "steady_placeholder_low",
+      "value": "low"
+    },
+    {
+      "name": "steady_placeholder_high",
+      "value": "high"
+    },
+    {
+      "name": "steady_target_not_set",
+      "value": "Not set"
+    },
+    {
+      "name": "steady_timeline_empty_title",
+      "value": "Nothing yet"
+    },
+    {
+      "name": "steady_timeline_empty_message",
+      "value": "Log your first reading with the + button."
+    },
+    {
+      "name": "steady_confirm_delete",
+      "value": "Confirm Delete"
+    },
+    {
+      "name": "steady_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "steady_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "steady_word_symptom",
+      "value": "Symptom"
+    },
+    {
+      "name": "steady_med_taken_format",
+      "value": "%1$s — taken"
+    },
+    {
+      "name": "steady_section_trends",
+      "value": "TRENDS"
+    },
+    {
+      "name": "steady_range_7d",
+      "value": "7D"
+    },
+    {
+      "name": "steady_range_30d",
+      "value": "30D"
+    },
+    {
+      "name": "steady_range_90d",
+      "value": "90D"
+    },
+    {
+      "name": "steady_range_pro_format",
+      "value": "%1$s Pro"
+    },
+    {
+      "name": "steady_trend_average",
+      "value": "Average"
+    },
+    {
+      "name": "steady_trend_range",
+      "value": "Range"
+    },
+    {
+      "name": "steady_trend_in_your_range",
+      "value": "Readings in your range"
+    },
+    {
+      "name": "steady_trend_no_data",
+      "value": "No data in range"
+    },
+    {
+      "name": "steady_trend_logs_format",
+      "value": "%1$d logs"
+    },
+    {
+      "name": "steady_trend_in_range_format",
+      "value": "%1$d of %2$d in patient-set range"
+    },
+    {
+      "name": "steady_ratio_format",
+      "value": "%1$d of %2$d"
+    },
+    {
+      "name": "steady_section_medication",
+      "value": "MEDICATION"
+    },
+    {
+      "name": "steady_no_meds_set_up",
+      "value": "No medications set up."
+    },
+    {
+      "name": "steady_doses_logged",
+      "value": "Doses logged"
+    },
+    {
+      "name": "steady_doses_ratio_format",
+      "value": "%1$d of %2$d (%3$d%%)"
+    },
+    {
+      "name": "steady_no_readings",
+      "value": "No readings"
+    },
+    {
+      "name": "steady_section_today",
+      "value": "TODAY"
+    },
+    {
+      "name": "steady_meds_empty_title",
+      "value": "No medications"
+    },
+    {
+      "name": "steady_meds_empty_message",
+      "value": "Add one to get reminders and a daily checklist."
+    },
+    {
+      "name": "steady_section_edit_medication",
+      "value": "EDIT MEDICATION"
+    },
+    {
+      "name": "steady_section_new_medication",
+      "value": "NEW MEDICATION"
+    },
+    {
+      "name": "steady_placeholder_med_name",
+      "value": "Name"
+    },
+    {
+      "name": "steady_placeholder_med_dose",
+      "value": "Dosage (e.g. 500mg)"
+    },
+    {
+      "name": "steady_add_time",
+      "value": "Add Time"
+    },
+    {
+      "name": "steady_save_medication",
+      "value": "Save Medication"
+    },
+    {
+      "name": "steady_add_medication",
+      "value": "Add Medication"
+    },
+    {
+      "name": "steady_cancel_edit",
+      "value": "Cancel Edit"
+    },
+    {
+      "name": "steady_paywall_feature_reports",
+      "value": "PDF reports for doctor visits"
+    },
+    {
+      "name": "steady_paywall_feature_trends",
+      "value": "Trends beyond the last 7 days"
+    },
+    {
+      "name": "steady_paywall_feature_csv",
+      "value": "CSV export"
+    },
+    {
+      "name": "steady_paywall_feature_widgets",
+      "value": "All widgets"
+    },
+    {
+      "name": "steady_paywall_pitch",
+      "value": "Pay once. Yours forever. No subscription."
+    },
+    {
+      "name": "steady_paywall_unlock",
+      "value": "Unlock for $1.99"
+    },
+    {
+      "name": "steady_paywall_restore",
+      "value": "Restore purchase"
+    },
+    {
+      "name": "steady_pro_unlocked_row",
+      "value": "Steady Pro — unlocked"
+    },
+    {
+      "name": "steady_doctor_report",
+      "value": "Doctor report"
+    },
+    {
+      "name": "steady_hide_doctor_report",
+      "value": "Hide Doctor report"
+    },
+    {
+      "name": "steady_report_from_format",
+      "value": "From %1$s"
+    },
+    {
+      "name": "steady_report_to_format",
+      "value": "To %1$s"
+    },
+    {
+      "name": "steady_share_report",
+      "value": "Share report"
+    },
+    {
+      "name": "steady_generate_report",
+      "value": "Generate report"
+    },
+    {
+      "name": "steady_export_csv",
+      "value": "Export CSV"
+    },
+    {
+      "name": "steady_csv_preview",
+      "value": "CSV Preview"
+    },
+    {
+      "name": "steady_section_target_ranges",
+      "value": "MY TARGET RANGES"
+    },
+    {
+      "name": "steady_target_ranges_note",
+      "value": "Set these with your doctor. Steady only counts readings against ranges you enter — it never judges them."
+    },
+    {
+      "name": "steady_section_measurement_reminder",
+      "value": "MEASUREMENT REMINDER"
+    },
+    {
+      "name": "steady_reminder_on_label",
+      "value": "Daily reminder on"
+    },
+    {
+      "name": "steady_reminder_off_label",
+      "value": "Daily reminder off"
+    },
+    {
+      "name": "steady_measurement_reminder",
+      "value": "Measurement reminder"
+    },
+    {
+      "name": "steady_reminder_caption",
+      "value": "Take a minute to log your readings."
+    },
+    {
+      "name": "steady_disclaimer",
+      "value": "Steady is a record-keeping tool, not a medical device. It does not diagnose, treat, or give medical advice. Target ranges shown are the ones you entered yourself. Always consult your doctor about your readings."
+    },
+    {
+      "name": "steady_paused",
+      "value": "Paused"
+    },
+    {
+      "name": "steady_toast_enter_bp",
+      "value": "Enter systolic and diastolic first."
+    },
+    {
+      "name": "steady_toast_enter_value",
+      "value": "Enter a value first."
+    },
+    {
+      "name": "steady_toast_pro_unlocked",
+      "value": "Steady Pro unlocked on this device."
+    },
+    {
+      "name": "steady_toast_copied_format",
+      "value": "%1$s copied."
+    },
+    {
+      "name": "steady_toast_copy_failed",
+      "value": "Copy failed."
+    },
+    {
+      "name": "steady_toast_enable_notifications",
+      "value": "Enable notifications to use reminders."
+    },
+    {
+      "name": "steady_toast_reminder_set_format",
+      "value": "Daily reminder set for %1$s."
+    },
+    {
+      "name": "steady_toast_reminder_off",
+      "value": "Daily reminder off."
+    },
+    {
+      "name": "steady_toast_time_picker_unavailable",
+      "value": "Time picker unavailable."
+    },
+    {
+      "name": "steady_toast_date_picker_unavailable",
+      "value": "Date picker unavailable."
+    },
+    {
+      "name": "steady_toast_enter_med_name",
+      "value": "Enter medication name first."
+    },
+    {
+      "name": "steady_toast_enter_symptom",
+      "value": "Enter symptom first."
+    },
+    {
+      "name": "steady_reminder_med_content_format",
+      "value": "Time for %1$s."
+    },
+    {
+      "name": "steady_reminder_med_missed_format",
+      "value": "%1$s reminder missed."
+    },
+    {
+      "name": "steady_reminder_measure_content",
+      "value": "Measurement time: take a minute to log your readings."
+    },
+    {
+      "name": "steady_reminder_measure_missed",
+      "value": "Steady reminder missed."
+    },
+    {
+      "name": "steady_card_ready",
+      "value": "Ready"
+    },
+    {
+      "name": "steady_paywall_close",
+      "value": "Not now"
+    },
+    {
+      "name": "steady_pro_button",
+      "value": "Steady Pro…"
+    }
   ]
 }

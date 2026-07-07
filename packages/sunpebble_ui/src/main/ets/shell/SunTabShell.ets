@@ -48,7 +48,7 @@ export struct SunTabShell {
             .width('100%')
             .height('100%')
           }
-          .tabBar(this.tabBarLabel(tab.label))
+          .tabBar(this.tabBarLabel(tab))
         }, (tab: SunTabItem) => tab.id)
       }
       .width('100%')
@@ -68,10 +68,13 @@ export struct SunTabShell {
   }
 
   @Builder
-  private tabBarLabel(label: ResourceStr) {
-    Text(label)
+  private tabBarLabel(tab: SunTabItem) {
+    Text(tab.label)
       .fontSize(11)
-      .fontWeight(FontWeight.Medium)
+      .fontWeight(this.activeTab === tab.id ? FontWeight.Bold : FontWeight.Medium)
+      .fontColor(this.activeTab === tab.id
+        ? (this.manifest.mode === SunMode.Dark ? SunColor.cream : SunColor.ink)
+        : (this.manifest.mode === SunMode.Dark ? SunColor.darkSecondary : SunColor.pebble))
       .maxLines(1)
       .textOverflow({ overflow: TextOverflow.Ellipsis })
   }

@@ -1,0 +1,13 @@
+{
+  "plural": [
+    {
+      "name": "dayroll_month_days",
+      "value": [
+        {
+          "quantity": "other",
+          "value": "%d 天"
+        }
+      ]
+    }
+  ]
+}
