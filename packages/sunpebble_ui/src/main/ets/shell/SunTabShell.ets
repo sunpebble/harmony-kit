@@ -1,4 +1,4 @@
-import { SunAppManifest, SunColor, SunMode, SunSpacing } from '../tokens/SunTheme'
+import { SunAppManifest, SunColor, SunMode } from '../tokens/SunTheme'
 import { SunAppHeader } from './SunAppHeader'
 
 @Builder

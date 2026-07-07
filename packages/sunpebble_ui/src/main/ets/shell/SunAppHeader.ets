@@ -23,10 +23,6 @@ export struct SunAppHeader {
     return this.manifest.mode === SunMode.Dark ? SunColor.darkSecondary : SunColor.pebble
   }
 
-  private accent(): ResourceColor {
-    return this.manifest.accent
-  }
-
   build() {
     Row() {
       Column({ space: SunSpacing.xs }) {
@@ -50,12 +46,13 @@ export struct SunAppHeader {
       .layoutWeight(1)
 
       if (this.showPro) {
-        Button('PRO')
+        Button($r('app.string.sun_header_pro'))
           .height(36)
+          .responseRegion({ x: 0, y: -4, width: '100%', height: 44 })
           .padding({ left: SunSpacing.md, right: SunSpacing.md })
           .borderRadius(999)
           .backgroundColor(Color.Transparent)
-          .fontColor(this.accent())
+          .fontColor(this.foreground())
           .fontSize(13)
           .fontWeight(FontWeight.Bold)
           .onClick(() => this.onPro())

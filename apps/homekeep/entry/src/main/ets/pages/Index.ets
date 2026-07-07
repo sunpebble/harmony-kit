@@ -51,6 +51,7 @@ struct Index {
   @State private draftCadence: number = 30
   @State private tasks: KeepTask[] = []
   @State private confirmingTaskId: number = -1
+  private scroller: Scroller = new Scroller()
 
   aboutToAppear(): void {
     this.loadTasks()
@@ -129,25 +130,7 @@ struct Index {
   }
 
   private daysUntil(task: KeepTask): number {
-    return Math.ceil((this.dueAt(task) - this.todayStart()) / this.dayMs())
-  }
-
-  private addTask(): void {
-    const preset = this.presets[this.tasks.length % this.presets.length]
-    this.tasks = [
-      ...this.tasks,
-      {
-        id: this.nextId,
-        title: preset.title,
-        area: preset.area,
-        dueAt: this.dueAtFromToday(preset.cadence),
-        cadence: preset.cadence
-      }
-    ]
-    this.nextId += 1
-    this.filter = 'All'
-    this.confirmingTaskId = -1
-    this.saveTasksAndSyncReminders()
+    return Math.round((this.dueAt(task) - this.todayStart()) / this.dayMs())
   }
 
   private addPreset(preset: PresetTask): void {
@@ -249,7 +232,9 @@ struct Index {
         const due = new Date(this.dueAt(task))
         due.setHours(9, 0, 0, 0)
         if (due.getTime() <= now) {
-          due.setTime(now + 60 * 1000)
+          due.setTime(now)
+          due.setDate(due.getDate() + 1)
+          due.setHours(9, 0, 0, 0)
         }
         const request: reminderAgentManager.ReminderRequestCalendar = {
           reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_CALENDAR,
@@ -261,7 +246,7 @@ struct Index {
             minute: due.getMinutes(),
             second: 0
           },
-          title: 'Homekeep',
+          title: this.resolveText($r('app.string.EntryAbility_label'), 'Homekeep'),
           content: `${this.titleText(task.title)} · ${this.areaText(task.area)}`,
           expiredContent: this.formatText($r('app.string.homekeep_reminder_expired_format'), this.titleText(task.title), `${task.title} is due.`),
           notificationId: 300000 + task.id,
@@ -397,7 +382,7 @@ struct Index {
       .height(36)
       .padding({ left: 14, right: 14 })
       .borderRadius(999)
-      .backgroundColor(this.filter === id ? '#4F8A6D' : SunColor.white) // ponytail: app accent, no SunColor token
+      .backgroundColor(this.filter === id ? appProfile.accent : SunColor.white)
       .fontColor(this.filter === id ? SunColor.white : SunColor.ink)
       .fontSize(12)
       .fontWeight(FontWeight.Bold)
@@ -411,7 +396,7 @@ struct Index {
       .height(34)
       .padding({ left: 12, right: 12 })
       .borderRadius(999)
-      .backgroundColor(this.draftCadence === days ? '#4F8A6D' : SunColor.white) // ponytail: app accent, no SunColor token
+      .backgroundColor(this.draftCadence === days ? appProfile.accent : SunColor.white)
       .fontColor(this.draftCadence === days ? SunColor.white : SunColor.ink)
       .fontSize(12)
       .fontWeight(FontWeight.Bold)
@@ -427,7 +412,7 @@ struct Index {
           Text(this.dueCount().toString())
             .fontSize(46)
             .fontWeight(FontWeight.Bold)
-            .fontColor(this.dueCount() > 0 ? SunColor.danger : '#4F8A6D') // ponytail: app accent, no SunColor token
+            .fontColor(this.dueCount() > 0 ? SunColor.danger : appProfile.accent)
           Text($r('app.string.homekeep_due_now'))
             .fontSize(11)
             .fontWeight(FontWeight.Bold)
@@ -513,7 +498,7 @@ struct Index {
               }
             }
             .width('100%')
-          }, (task: KeepTask) => task.id.toString())
+          }, (task: KeepTask) => `${task.id}-${task.dueAt}`)
         }
       }
       .width('100%')
@@ -531,6 +516,7 @@ struct Index {
           .fontColor(SunColor.pebble)
 
         TextInput({ placeholder: $r('app.string.homekeep_task_name_placeholder'), text: this.draftTitle })
+          .id('draftTitle')
           .height(46)
           .width('100%')
           .fontSize(14)
@@ -600,7 +586,16 @@ struct Index {
       SunSafeRoot({ mode: SunMode.Light }) {
       SunToolShell({
         manifest: appProfile,
-        onPrimaryAction: () => this.addTask(),
+        onPrimaryAction: () => {
+          if (this.tasks.length > 0) {
+            this.scroller.scrollEdge(Edge.Bottom)
+          }
+          try {
+            this.getUIContext().getFocusController().requestFocus('draftTitle')
+          } catch (_e) {
+            // ponytail: focus is best-effort; the form is already on screen.
+          }
+        },
         showPro: false,
         onPro: () => {}
       }) {
@@ -614,7 +609,7 @@ struct Index {
           }
           .width('100%')
 
-          Scroll() {
+          Scroll(this.scroller) {
             Column({ space: SunSpacing.md }) {
               if (this.tasks.length === 0) {
                 this.customTaskCard()

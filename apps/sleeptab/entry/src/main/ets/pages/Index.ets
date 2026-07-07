@@ -16,6 +16,28 @@ interface SleepNight {
   bedtime?: string
 }
 
+@Component
+struct InsightRow {
+  label: ResourceStr = ''
+  @Prop value: string = ''
+
+  build() {
+    Row() {
+      Text(this.label)
+        .fontSize(11)
+        .fontWeight(FontWeight.Bold)
+        .letterSpacing(1)
+        .fontColor(SunColor.darkSecondary)
+      Blank().layoutWeight(1)
+      Text(this.value)
+        .fontSize(15)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(SunColor.cream)
+    }
+    .width('100%')
+  }
+}
+
 PersistentStorage.persistProp('sleeptab.goalHours.v1', 8)
 PersistentStorage.persistProp('sleeptab.rangeNights.v1', 7)
 PersistentStorage.persistProp('sleeptab.draftHours.v1', 7.5)
@@ -37,6 +59,7 @@ struct Index {
   @State private nights: SleepNight[] = []
   @State private confirmingDeleteNightDate: string = ''
   @State private paywallOpen: boolean = false
+  private scroller: Scroller = new Scroller()
 
   aboutToAppear(): void {
     this.loadNights()
@@ -189,7 +212,7 @@ struct Index {
           .layoutWeight(1)
           .alignItems(HorizontalAlign.Start)
 
-          Button('-15m')
+          Button($r('app.string.sleeptab_minus_15m'))
             .height(38)
             .padding({ left: 12, right: 12 })
             .borderRadius(999)
@@ -198,7 +221,7 @@ struct Index {
             .fontSize(12)
             .onClick(() => this.adjustDraftHours(-0.25))
 
-          Button('+15m')
+          Button($r('app.string.sleeptab_plus_15m'))
             .height(38)
             .padding({ left: 12, right: 12 })
             .borderRadius(999)
@@ -209,7 +232,7 @@ struct Index {
         }
         .width('100%')
 
-        Button($r('app.string.sleeptab_entry_night_date_format', this.draftDateKey()))
+        Button($r('app.string.sleeptab_entry_night_date_format', this.monthDayLabel(this.dateFromKey(this.draftDateKey()))))
           .height(38)
           .padding({ left: 14, right: 14 })
           .borderRadius(999)
@@ -225,6 +248,11 @@ struct Index {
           .selectedTextStyle({ color: SunColor.cream, font: { size: 22, weight: FontWeight.Bold } })
           .textStyle({ color: SunColor.darkSecondary, font: { size: 18, weight: FontWeight.Medium } })
           .onChange((value: TimePickerResult) => this.setDraftBedtime(value.hour, value.minute))
+
+        SunButton({
+          label: $r('app.string.sleeptab_save_night'),
+          action: () => this.addNight()
+        })
 
         if (this.hasDraftNight()) {
           Column({ space: SunSpacing.sm }) {
@@ -434,7 +462,7 @@ struct Index {
 
   private hoursText(hours: number): string {
     const total = Math.max(0, Math.round(hours * 60))
-    return `${Math.floor(total / 60)}h ${this.pad(total % 60)}m`
+    return this.resString($r('app.string.sleeptab_hours_format'), Math.floor(total / 60), this.pad(total % 60))
   }
 
   private sleepBarHeight(hours: number): number {
@@ -549,9 +577,9 @@ struct Index {
     Column() {
       Column({ space: SunSpacing.lg }) {
         Row({ space: SunSpacing.sm }) {
-          this.rangeButton('7N', 7)
-          this.rangeButton('30N', 30)
-          this.rangeButton('90N', 90)
+          this.rangeButton(this.resString($r('app.string.sleeptab_range_nights'), 7), 7)
+          this.rangeButton(this.resString($r('app.string.sleeptab_range_nights'), 30), 30)
+          this.rangeButton(this.resString($r('app.string.sleeptab_range_nights'), 90), 90)
         }
 
         Stack({ alignContent: Alignment.Bottom }) {
@@ -653,16 +681,16 @@ struct Index {
 
         if (this.proUnlocked) {
           if (this.hasNightsForDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])) {
-            this.insightRow($r('app.string.sleeptab_insight_weekday_avg'), this.hoursText(this.averageForDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])))
+            InsightRow({ label: $r('app.string.sleeptab_insight_weekday_avg'), value: this.hoursText(this.averageForDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])) })
           }
           if (this.hasNightsForDays(['SAT', 'SUN'])) {
-            this.insightRow($r('app.string.sleeptab_insight_weekend_avg'), this.hoursText(this.averageForDays(['SAT', 'SUN'])))
+            InsightRow({ label: $r('app.string.sleeptab_insight_weekend_avg'), value: this.hoursText(this.averageForDays(['SAT', 'SUN'])) })
           }
-          this.insightRow($r('app.string.sleeptab_insight_best_night'), this.bestNightText())
-          this.insightRow($r('app.string.sleeptab_insight_roughest'), this.roughestNightText())
+          InsightRow({ label: $r('app.string.sleeptab_insight_best_night'), value: this.bestNightText() })
+          InsightRow({ label: $r('app.string.sleeptab_insight_roughest'), value: this.roughestNightText() })
           if (this.bedtimeValues().length >= 2) {
-            this.insightRow($r('app.string.sleeptab_insight_avg_bedtime'), this.clockText(this.averageBedtimeMinutes()))
-            this.insightRow($r('app.string.sleeptab_insight_consistency'), `± ${this.hoursText(this.consistencyMinutes() / 60)}`)
+            InsightRow({ label: $r('app.string.sleeptab_insight_avg_bedtime'), value: this.clockText(this.averageBedtimeMinutes()) })
+            InsightRow({ label: $r('app.string.sleeptab_insight_consistency'), value: `± ${this.hoursText(this.consistencyMinutes() / 60)}` })
           }
         } else {
           Text($r('app.string.sleeptab_insights_locked'))
@@ -679,23 +707,6 @@ struct Index {
     .padding(SunSpacing.lg)
     .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
     .borderRadius(20)
-  }
-
-  @Builder
-  private insightRow(label: ResourceStr, value: string) {
-    Row() {
-      Text(label)
-        .fontSize(11)
-        .fontWeight(FontWeight.Bold)
-        .letterSpacing(1)
-        .fontColor(SunColor.darkSecondary)
-      Blank().layoutWeight(1)
-      Text(value)
-        .fontSize(15)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(SunColor.cream)
-    }
-    .width('100%')
   }
 
   @Builder
@@ -767,7 +778,6 @@ struct Index {
         Column({ space: 14 }) {
           this.paywallFeature('▥', $r('app.string.sleeptab_paywall_feature_history'))
           this.paywallFeature('◌', $r('app.string.sleeptab_paywall_feature_insights'))
-          this.paywallFeature('▦', $r('app.string.sleeptab_paywall_feature_widget'))
           this.paywallFeature('♥', $r('app.string.sleeptab_paywall_feature_indie'))
         }
         .width('100%')
@@ -804,6 +814,7 @@ struct Index {
       .padding(SunSpacing.lg)
       .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
       .borderRadius(20)
+      .onAppear(() => this.scroller.scrollEdge(Edge.Bottom))
     }
   }
 
@@ -815,7 +826,7 @@ struct Index {
         showPro: !this.proUnlocked,
         onPro: () => this.showPaywall()
       }) {
-        Scroll() {
+        Scroll(this.scroller) {
           Column({ space: SunSpacing.lg }) {
             if (this.nights.length === 0) {
               this.emptyState()
@@ -833,7 +844,7 @@ struct Index {
             this.paywallPanel()
           }
           .width('100%')
-          .padding({ left: SunSpacing.xl, right: SunSpacing.xl, bottom: SunSpacing.xl })
+          .padding({ bottom: SunSpacing.xl })
         }
         .width('100%')
         .height('100%')

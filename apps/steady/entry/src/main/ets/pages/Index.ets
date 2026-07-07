@@ -37,6 +37,7 @@ interface Medication {
   takenSlots?: string[]
   takenLog?: string[]
   archived?: boolean
+  createdAt?: string
 }
 
 interface MedicationTimelineLog {
@@ -253,7 +254,8 @@ struct Index {
         dose: med.dose,
         times,
         takenLog: this.takenLogFor(med),
-        archived: med.archived === true
+        archived: med.archived === true,
+        createdAt: med.createdAt
       }
       return normalized
     })
@@ -380,10 +382,10 @@ struct Index {
 
   private unitForKind(kind: string): string {
     if (kind === 'Blood glucose') {
-      return 'mg/dL'
+      return this.t($r('app.string.steady_unit_glucose'))
     }
     if (kind === 'Weight') {
-      return 'lb'
+      return this.t($r('app.string.steady_unit_weight'))
     }
     if (kind === 'Heart rate') {
       return 'bpm'
@@ -412,6 +414,18 @@ struct Index {
         return context.resourceManager.getStringSync(resource)
       }
       return context.resourceManager.getStringSync(resource.id, ...args)
+    } catch (_error) {
+      return ''
+    }
+  }
+
+  private tp(resource: Resource, count: number): string {
+    try {
+      const context = this.getUIContext().getHostContext()
+      if (!context) {
+        return ''
+      }
+      return context.resourceManager.getPluralStringValueSync(resource.id, count)
     } catch (_error) {
       return ''
     }
@@ -682,7 +696,7 @@ struct Index {
   }
 
   private toggleMedSlot(targetKey: string, time: string): void {
-    const index = this.meds.findIndex((med: Medication) => this.medKey(med) === targetKey)
+    const index = this.meds.findIndex((med: Medication) => med.archived !== true && this.medKey(med) === targetKey)
     if (index < 0) {
       return
     }
@@ -694,7 +708,7 @@ struct Index {
     const updatedTaken = takenLog.includes(logKey)
       ? takenLog.filter((takenSlot: string) => takenSlot !== logKey)
       : [...takenLog, logKey].sort((a: string, b: string) => a.localeCompare(b))
-    const updated: Medication = { name: med.name, dose: med.dose, times, takenLog: updatedTaken, archived: med.archived === true }
+    const updated: Medication = { name: med.name, dose: med.dose, times, takenLog: updatedTaken, archived: med.archived === true, createdAt: med.createdAt }
     const next = [...this.meds]
     next[index] = updated
     this.meds = next
@@ -729,10 +743,11 @@ struct Index {
       name,
       dose: this.medDose.trim(),
       times,
-      takenLog: []
+      takenLog: [],
+      createdAt: this.todayKey()
     }
     if (this.editingMedKey.length > 0) {
-      const index = this.meds.findIndex((med: Medication) => this.medKey(med) === this.editingMedKey)
+      const index = this.meds.findIndex((med: Medication) => med.archived !== true && this.medKey(med) === this.editingMedKey)
       if (index >= 0) {
         const existing = this.meds[index]
         const next = [...this.meds]
@@ -741,7 +756,8 @@ struct Index {
           dose: nextMed.dose,
           times,
           takenLog: this.takenLogFor(existing),
-          archived: existing.archived === true
+          archived: existing.archived === true,
+          createdAt: existing.createdAt
         }
         this.meds = next
       } else {
@@ -766,7 +782,8 @@ struct Index {
       dose: med.dose,
       times: this.medTimesFor(med),
       takenLog: this.takenLogFor(med),
-      archived: true
+      archived: true,
+      createdAt: med.createdAt
     } : med)
     if (this.editingMedKey === targetKey) {
       this.resetMedicationForm()
@@ -901,10 +918,6 @@ struct Index {
     return `${this.dateLabel(time)} ${this.pad(date.getHours())}:${this.pad(date.getMinutes())}`
   }
 
-  private reportSymptomDateLabel(time: number): string {
-    return new Date(time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  }
-
   private readingDate(): Date {
     return this.draftReadingAt > 0 ? new Date(this.draftReadingAt) : new Date()
   }
@@ -965,7 +978,7 @@ struct Index {
       return this.t($r('app.string.steady_trend_no_data'))
     }
     if (!this.hasTargetRange(kind)) {
-      return this.t($r('app.string.steady_trend_logs_format'), readings.length)
+      return this.tp($r('app.plural.steady_trend_logs'), readings.length)
     }
     const low = Number(this.targetLowForKind(kind))
     const high = Number(this.targetHighForKind(kind))
@@ -1081,9 +1094,27 @@ struct Index {
     return this.t($r('app.string.steady_ratio_format'), inRange, readings.length)
   }
 
+  // 依从率分母：createdAt 之前的天数不该计入，否则新加的药会立刻把完成率拉低
+  private medExpectedDays(med: Medication, windowStartDay: number, windowEndDay: number): number {
+    const fullDays = Math.max(1, Math.floor((windowEndDay - windowStartDay) / this.dayMs()) + 1)
+    if (!med.createdAt) {
+      return fullDays
+    }
+    const created = new Date(`${med.createdAt}T00:00:00`).getTime()
+    if (Number.isNaN(created) || created <= windowStartDay) {
+      return fullDays
+    }
+    if (created > windowEndDay) {
+      return 0
+    }
+    return Math.floor((windowEndDay - created) / this.dayMs()) + 1
+  }
+
   private trendMedicationValue(): string {
     const activeMeds = this.activeMeds()
-    const expected = activeMeds.reduce((total: number, med: Medication) => total + this.medTimesFor(med).length * this.trendDays(), 0)
+    const trendEndDay = this.startOfDay(Date.now())
+    const trendStartDay = trendEndDay - (this.trendDays() - 1) * this.dayMs()
+    const expected = activeMeds.reduce((total: number, med: Medication) => total + this.medTimesFor(med).length * this.medExpectedDays(med, trendStartDay, trendEndDay), 0)
     if (expected === 0) {
       return this.t($r('app.string.steady_doses_ratio_format'), 0, 0, 0)
     }
@@ -1139,7 +1170,7 @@ struct Index {
       const value = this.readingNumber(reading)
       return value >= low && value <= high
     }).length
-    return `${inRange} of ${readings.length} in patient-set range`
+    return this.t($r('app.string.steady_trend_in_range_format'), inRange, readings.length)
   }
 
   private validMealtime(mealtime?: string): string {
@@ -1165,9 +1196,9 @@ struct Index {
       return ''
     }
     const lines: string[] = [
-      kind,
-      `Average ${this.averageForReadings(kind, readings)}`,
-      `Range ${this.rangeForReadings(readings)}`
+      this.kindText(kind),
+      `${this.t($r('app.string.steady_trend_average'))} ${this.averageForReadings(kind, readings)}`,
+      `${this.t($r('app.string.steady_trend_range'))} ${this.rangeForReadings(readings)}`
     ]
     if (this.hasTargetRange(kind)) {
       lines.push(this.targetSummaryForReadings(kind, readings))
@@ -1175,7 +1206,7 @@ struct Index {
     readings.forEach((reading: Reading) => {
       const note = this.readingNote(reading)
       const mealtime = this.validMealtime(reading.mealtime)
-      lines.push(`${this.dateTimeLabel(this.dateTime(reading.date))}  ${reading.value} ${reading.unit}${mealtime.length > 0 ? ` (${mealtime})` : ''}${note.length > 0 ? ` - ${note}` : ''}`)
+      lines.push(`${this.dateTimeLabel(this.dateTime(reading.date))}  ${reading.value} ${reading.unit}${mealtime.length > 0 ? ` (${this.t(this.mealtimeLabel(mealtime))})` : ''}${note.length > 0 ? ` - ${note}` : ''}`)
     })
     return lines.join('\n')
   }
@@ -1187,7 +1218,7 @@ struct Index {
     }
     const start = this.dateLabel(this.reportStartTime())
     const end = this.dateLabel(this.reportEndTime())
-    const expected = activeMeds.reduce((total: number, med: Medication) => total + this.medTimesFor(med).length * this.reportDays(), 0)
+    const expected = activeMeds.reduce((total: number, med: Medication) => total + this.medTimesFor(med).length * this.medExpectedDays(med, this.reportStartTime(), this.reportEndTime()), 0)
     if (expected === 0) {
       return ''
     }
@@ -1197,7 +1228,7 @@ struct Index {
         return date >= start && date <= end
       }).length
     }, 0)
-    return `${taken} of ${expected} scheduled doses logged (${Math.round(taken / expected * 100)}%)`
+    return this.t($r('app.string.steady_report_doses_format'), taken, expected, Math.round(taken / expected * 100))
   }
 
   private symptomReportLines(): string {
@@ -1209,7 +1240,7 @@ struct Index {
     }
     return symptoms.map((symptom: Symptom) => {
       const note = symptom.context.trim()
-      return `${this.reportSymptomDateLabel(this.dateTime(symptom.date))} - ${symptom.name} (${symptom.severity}/3)${note.length > 0 ? `: ${note}` : ''}`
+      return `${this.dateLabel(this.dateTime(symptom.date))} - ${symptom.name} (${symptom.severity}/3)${note.length > 0 ? `: ${note}` : ''}`
     }).join('\n')
   }
 
@@ -1219,17 +1250,17 @@ struct Index {
     const medication = this.medicationReportLine()
     const symptoms = this.symptomReportLines()
     const report = [
-      'Steady - Health record',
+      this.t($r('app.string.steady_report_title')),
       this.reportDateRangeLabel(),
       ...sections
     ]
     if (medication.length > 0) {
-      report.push('Medication', medication)
+      report.push(this.t($r('app.string.steady_section_medication')), medication)
     }
     if (symptoms.length > 0) {
-      report.push('Symptoms', symptoms)
+      report.push(this.t($r('app.string.steady_word_symptom')), symptoms)
     }
-    report.push('Steady is a record-keeping tool, not a medical device. It does not diagnose, treat, or give medical advice. Target ranges shown are the ones you entered yourself. Always consult your doctor about your readings.')
+    report.push(this.t($r('app.string.steady_disclaimer')))
     return report.join('\n\n')
   }
 
@@ -1420,23 +1451,6 @@ struct Index {
           return
         }
         this.trendRange = label
-      })
-  }
-
-  @Builder
-  private tabButton(label: string) {
-    Button(label)
-      .height(36)
-      .padding({ left: 12, right: 12 })
-      .borderRadius(999)
-      .backgroundColor(this.tab === label ? SunColor.sun : SunColor.white)
-      .fontColor(SunColor.ink)
-      .fontSize(12)
-      .fontWeight(FontWeight.Bold)
-      .border({ width: 1, color: SunColor.border })
-      .onClick(() => {
-        this.tab = label
-        this.quickActionsOpen = false
       })
   }
 
@@ -2048,7 +2062,7 @@ struct Index {
             Column({ space: SunSpacing.sm }) {
               SunListRow({
                 title: med.name,
-                caption: `${med.dose} · ${this.timesLabel(med)}`,
+                caption: `${med.dose.length > 0 ? `${med.dose} · ` : ''}${this.timesLabel(med)}`,
                 action: () => this.editMedication(med)
               })
 
@@ -2058,32 +2072,25 @@ struct Index {
 
               if (this.confirmingDeleteMedKey === this.medKey(med)) {
                 Row({ space: SunSpacing.sm }) {
-                  Button($r('app.string.steady_confirm_delete'))
-                    .height(34)
-                    .padding({ left: 12, right: 12 })
-                    .borderRadius(999)
-                    .backgroundColor(SunColor.danger)
-                    .fontColor(SunColor.white)
-                    .onClick(() => this.deleteMedication(med))
+                  SunButton({
+                    label: $r('app.string.steady_confirm_delete'),
+                    role: SunButtonRole.Danger,
+                    action: () => this.deleteMedication(med)
+                  })
 
-                  Button($r('app.string.steady_cancel'))
-                    .height(34)
-                    .padding({ left: 12, right: 12 })
-                    .borderRadius(999)
-                    .backgroundColor(SunColor.white)
-                    .fontColor(SunColor.ink)
-                    .border({ width: 1, color: SunColor.border })
-                    .onClick(() => this.confirmingDeleteMedKey = '')
+                  SunButton({
+                    label: $r('app.string.steady_cancel'),
+                    role: SunButtonRole.Secondary,
+                    action: () => this.confirmingDeleteMedKey = ''
+                  })
                 }
+                .width('100%')
               } else {
-                Button($r('app.string.steady_delete'))
-                  .height(34)
-                  .padding({ left: 12, right: 12 })
-                  .borderRadius(999)
-                  .backgroundColor(SunColor.white)
-                  .fontColor(SunColor.danger)
-                  .border({ width: 1, color: SunColor.border })
-                  .onClick(() => this.startDeleteMedication(med))
+                SunButton({
+                  label: $r('app.string.steady_delete'),
+                  role: SunButtonRole.Danger,
+                  action: () => this.startDeleteMedication(med)
+                })
               }
             }
             .width('100%')
@@ -2209,7 +2216,6 @@ struct Index {
           this.paywallFeature('▣', $r('app.string.steady_paywall_feature_reports'))
           this.paywallFeature('⌁', $r('app.string.steady_paywall_feature_trends'))
           this.paywallFeature('▦', $r('app.string.steady_paywall_feature_csv'))
-          this.paywallFeature('▥', $r('app.string.steady_paywall_feature_widgets'))
         }
         .width('100%')
         .alignItems(HorizontalAlign.Start)
@@ -2248,6 +2254,8 @@ struct Index {
   @Builder
   private settings() {
     Column({ space: SunSpacing.md }) {
+      this.paywallPanel()
+
       SunCard() {
         Column({ space: SunSpacing.sm }) {
           SunButton({
@@ -2393,7 +2401,6 @@ struct Index {
               title: $r('app.string.steady_pro_unlocked_row')
             })
           }
-          this.paywallPanel()
         }
         .width('100%')
       }

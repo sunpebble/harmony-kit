@@ -3,8 +3,11 @@ import { SunButton, SunButtonRole } from './SunButton'
 
 @Component
 export struct SunEmptyState {
+  @Prop
   title: ResourceStr = ''
+  @Prop
   message: ResourceStr = ''
+  @Prop
   actionLabel: ResourceStr = ''
   onAction: () => void = () => {}
 

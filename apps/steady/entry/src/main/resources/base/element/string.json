@@ -189,10 +189,6 @@
       "value": "No data in range"
     },
     {
-      "name": "steady_trend_logs_format",
-      "value": "%1$d logs"
-    },
-    {
       "name": "steady_trend_in_range_format",
       "value": "%1$d of %2$d in patient-set range"
     },
@@ -266,7 +262,7 @@
     },
     {
       "name": "steady_paywall_feature_reports",
-      "value": "PDF reports for doctor visits"
+      "value": "Shareable doctor visit report"
     },
     {
       "name": "steady_paywall_feature_trends",
@@ -275,10 +271,6 @@
     {
       "name": "steady_paywall_feature_csv",
       "value": "CSV export"
-    },
-    {
-      "name": "steady_paywall_feature_widgets",
-      "value": "All widgets"
     },
     {
       "name": "steady_paywall_pitch",
@@ -439,6 +431,22 @@
     {
       "name": "steady_pro_button",
       "value": "Steady Pro…"
+    },
+    {
+      "name": "steady_report_title",
+      "value": "Steady - Health record"
+    },
+    {
+      "name": "steady_report_doses_format",
+      "value": "%1$d of %2$d scheduled doses logged (%3$d%%)"
+    },
+    {
+      "name": "steady_unit_glucose",
+      "value": "mg/dL"
+    },
+    {
+      "name": "steady_unit_weight",
+      "value": "lb"
     }
   ]
 }

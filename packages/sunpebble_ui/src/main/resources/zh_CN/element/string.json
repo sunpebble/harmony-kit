@@ -1,5 +1,6 @@
 {
   "string": [
-    { "name": "sun_button_working", "value": "处理中…" }
+    { "name": "sun_button_working", "value": "处理中…" },
+    { "name": "sun_header_pro", "value": "PRO" }
   ]
 }

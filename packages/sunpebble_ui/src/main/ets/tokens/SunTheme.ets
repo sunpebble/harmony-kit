@@ -40,7 +40,7 @@ export class SunType {
 }
 
 export interface SunAppManifest {
-  name: string
+  name: ResourceStr
   tagline: ResourceStr
   primaryAction: ResourceStr
   // ponytail: accent is app-identity data; intentionally NOT consumed by SunToolShell

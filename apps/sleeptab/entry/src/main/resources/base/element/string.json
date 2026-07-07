@@ -121,10 +121,6 @@
       "value": "Insights — bedtime consistency, weekday vs weekend"
     },
     {
-      "name": "sleeptab_paywall_feature_widget",
-      "value": "Sleep debt widget on your Home Screen"
-    },
-    {
       "name": "sleeptab_paywall_feature_indie",
       "value": "Support an indie developer"
     },
@@ -235,6 +231,26 @@
     {
       "name": "sleeptab_month_12",
       "value": "Dec"
+    },
+    {
+      "name": "sleeptab_save_night",
+      "value": "Save night"
+    },
+    {
+      "name": "sleeptab_hours_format",
+      "value": "%1$dh %2$sm"
+    },
+    {
+      "name": "sleeptab_range_nights",
+      "value": "%dN"
+    },
+    {
+      "name": "sleeptab_minus_15m",
+      "value": "-15m"
+    },
+    {
+      "name": "sleeptab_plus_15m",
+      "value": "+15m"
     }
   ]
 }

@@ -1,4 +1,5 @@
 import {
+  SunButton,
   SunColor,
   SunRadius,
   SunSpacing,
@@ -169,7 +170,7 @@ struct Burner {
             Text($r('app.string.simmer_burner_done'))
               .fontSize(15)
               .fontWeight(FontWeight.Bold)
-              .fontColor(SunColor.sun)
+              .fontColor(SunColor.ink)
 
             Text($r('app.string.simmer_burner_over_format', this.timerText(this.overdue())))
               .fontSize(9)
@@ -450,6 +451,8 @@ struct Index {
 
   private showPaywall(): void {
     this.paywallOpen = true
+    this.customOpen = false
+    this.customSaveAsPreset = false
   }
 
   private toggleTimer(id: number): void {
@@ -840,6 +843,8 @@ struct Index {
           .fontColor(SunColor.cream)
           .fontSize(15)
           .fontWeight(FontWeight.Bold)
+          .enabled(this.customSecondsTotal() > 0)
+          .opacity(this.customSecondsTotal() > 0 ? 1 : 0.5)
           .onClick(() => this.startCustomFromPanel())
 
         Button($r('app.string.simmer_action_cancel'))
@@ -1006,15 +1011,7 @@ struct Index {
           .lineHeight(17)
           .textAlign(TextAlign.Center)
 
-        Button($r('app.string.simmer_paywall_unlock'))
-          .height(48)
-          .width('100%')
-          .borderRadius(SunRadius.md)
-          .backgroundColor(SunColor.ink)
-          .fontColor(SunColor.cream)
-          .fontSize(15)
-          .fontWeight(FontWeight.Bold)
-          .onClick(() => this.unlockPro())
+        SunButton({ label: $r('app.string.simmer_paywall_unlock'), action: () => this.unlockPro() })
 
         Button($r('app.string.simmer_restore_purchase'))
           .height(36)

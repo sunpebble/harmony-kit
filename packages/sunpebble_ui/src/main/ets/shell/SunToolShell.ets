@@ -65,11 +65,12 @@ export struct SunToolShell {
       }
       .width('100%')
       .layoutWeight(1)
+      .padding({ left: SunSpacing.xl, right: SunSpacing.xl })
     }
     .width('100%')
     .height('100%')
     .alignItems(HorizontalAlign.Start)
-    .padding({ left: SunSpacing.xl, right: SunSpacing.xl, bottom: SunSpacing.md })
+    .padding({ bottom: SunSpacing.md })
     .backgroundColor(this.shellBackground())
   }
 }

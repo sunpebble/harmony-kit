@@ -8,6 +8,7 @@ import {
   SunSpacing
 } from 'sunpebble_ui'
 import { uniformTypeDescriptor as utd } from '@kit.ArkData'
+import { intl } from '@kit.LocalizationKit'
 import { pasteboard } from '@kit.BasicServicesKit'
 import { common } from '@kit.AbilityKit'
 import { reminderAgentManager } from '@kit.BackgroundTasksKit'
@@ -44,6 +45,10 @@ PersistentStorage.persistProp('dayroll.proUnlocked.v1', false)
 struct Index {
   private moods: string[] = ['😄', '🙂', '😐', '😞', '😣']
   private tapeScroller: Scroller = new Scroller()
+  private dayFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), { month: 'short', day: '2-digit' } as intl.DateTimeOptions)
+  private monthFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), { month: 'long', year: 'numeric' } as intl.DateTimeOptions)
+  private composeFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), { weekday: 'long', month: 'short', day: 'numeric' } as intl.DateTimeOptions)
+  private narrowMonthFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), { month: 'narrow' } as intl.DateTimeOptions)
   @StorageLink('dayroll.mood.v1') private mood: string = '😐'
   @StorageLink('dayroll.entries.v1') private entriesJson: string = ''
   @StorageLink('dayroll.exportOpen.v1') private exportOpen: boolean = false
@@ -139,7 +144,7 @@ struct Index {
       this.editEntry(entry)
       return
     }
-    this.editingDate = ''
+    this.editingDate = today
     this.mood = '😐'
     this.draftLine = ''
     this.confirmingDelete = false
@@ -237,8 +242,7 @@ struct Index {
   }
 
   private monthShortLabel(date: Date): string {
-    const months: string[] = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
-    return months[date.getMonth()]
+    return this.narrowMonthFormat.format(date).toUpperCase()
   }
 
   private monthlyStats(): MonthStat[] {
@@ -315,20 +319,27 @@ struct Index {
   private months(): string[] {
     const months: string[] = []
     this.entries.forEach((entry: RollEntry) => {
-      if (!months.includes(entry.month)) {
-        months.push(entry.month)
+      const key = entry.date.slice(0, 7)
+      if (!months.includes(key)) {
+        months.push(key)
       }
     })
     return months
   }
 
+  private monthTitle(key: string): string {
+    return this.monthLabel(this.dateFromKey(`${key}-01`))
+  }
+
   private monthOffset(month: string): number {
-    let offset = this.composerOpen ? 380 : 128
+    // content padding top + perforation height + column gap
+    let offset = SunSpacing.sm + 1 + SunSpacing.lg
     for (const item of this.months()) {
       if (item === month) {
         return offset
       }
-      offset += 28 + SunSpacing.sm + this.entriesForMonth(item).length * (32 + SunSpacing.sm) + SunSpacing.md
+      // month header 28, then per entry 32 + sm gap, then md gap between months
+      offset += 28 + this.entriesForMonth(item).length * (32 + SunSpacing.sm) + SunSpacing.md
     }
     return 0
   }
@@ -339,11 +350,11 @@ struct Index {
   }
 
   private monthIndexLabel(month: string): string {
-    return month.startsWith('JANUARY ') ? month.slice(month.length - 2) : month.slice(0, 1)
+    return month.endsWith('-01') ? month.slice(2, 4) : this.monthShortLabel(this.dateFromKey(`${month}-01`))
   }
 
   private entriesForMonth(month: string): RollEntry[] {
-    return this.entries.filter((entry: RollEntry) => entry.month === month)
+    return this.entries.filter((entry: RollEntry) => entry.date.startsWith(month))
   }
 
   private memories(): RollEntry[] {
@@ -385,19 +396,15 @@ struct Index {
   }
 
   private dayLabel(date: Date): string {
-    const months: string[] = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
-    return `${months[date.getMonth()]} ${this.pad(date.getDate())}`
+    return this.dayFormat.format(date).toUpperCase()
   }
 
   private monthLabel(date: Date): string {
-    const months: string[] = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']
-    return `${months[date.getMonth()]} ${date.getFullYear()}`
+    return this.monthFormat.format(date).toUpperCase()
   }
 
   private composeDateTitle(date: Date): string {
-    const weekdays: string[] = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
-    const months: string[] = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
-    return `${weekdays[date.getDay()]} ${months[date.getMonth()]} ${date.getDate()}`
+    return this.composeFormat.format(date).toUpperCase()
   }
 
   private csvValue(value: string): string {
@@ -819,74 +826,68 @@ struct Index {
     }
     .width('100%')
     .alignItems(HorizontalAlign.Start)
+    .onAppear(() => this.tapeScroller.scrollEdge(Edge.Top))
   }
 
   @Builder
   private rollList() {
-    Row({ space: SunSpacing.xs }) {
-      Column({ space: SunSpacing.md }) {
-        if (this.entries.length === 0) {
-          Text($r('app.string.dayroll_empty_tape'))
-            .fontSize(13)
-            .fontColor(SunColor.pebble)
-            .textAlign(TextAlign.Center)
-            .lineHeight(22)
-            .width('100%')
-            .padding({ top: 30, bottom: 30 })
-        } else {
-          ForEach(this.months(), (month: string) => {
-            Column({ space: SunSpacing.sm }) {
-              Row() {
-                Text(month)
-                  .fontSize(11)
-                  .fontWeight(FontWeight.Bold)
-                  .letterSpacing(1.5)
-                  .fontColor(SunColor.pebble)
+    Column({ space: SunSpacing.md }) {
+      if (this.entries.length === 0) {
+        Text($r('app.string.dayroll_empty_tape'))
+          .fontSize(13)
+          .fontColor(SunColor.pebble)
+          .textAlign(TextAlign.Center)
+          .lineHeight(22)
+          .width('100%')
+          .padding({ top: 30, bottom: 30 })
+      } else {
+        ForEach(this.months(), (month: string) => {
+          Column({ space: SunSpacing.sm }) {
+            Row() {
+              Text(this.monthTitle(month))
+                .fontSize(11)
+                .fontWeight(FontWeight.Bold)
+                .letterSpacing(1.5)
+                .fontColor(SunColor.pebble)
 
-                Blank().layoutWeight(1)
+              Blank().layoutWeight(1)
 
-                Text($r('app.plural.dayroll_month_days', this.entriesForMonth(month).length, this.entriesForMonth(month).length))
-                  .fontSize(11)
-                  .fontWeight(FontWeight.Bold)
-                  .fontColor(SunColor.pebble)
-              }
-                .width('100%')
-                .height(28)
-
-              ForEach(this.entriesForMonth(month), (entry: RollEntry) => {
-                Row({ space: 10 }) {
-                  Text(entry.day)
-                    .fontSize(12)
-                    .fontWeight(FontWeight.Bold)
-                    .fontColor(SunColor.pebble)
-                    .width(68)
-                  Text(this.moodMark(entry.mood))
-                    .fontSize(20)
-                    .lineHeight(24)
-                    .width(32)
-                    .textAlign(TextAlign.Center)
-                  Text(entry.line.length === 0 ? '—' : entry.line)
-                    .fontSize(13)
-                    .fontColor(SunColor.ink)
-                    .layoutWeight(1)
-                    .maxLines(1)
-                    .textOverflow({ overflow: TextOverflow.Ellipsis })
-                }
-                .width('100%')
-                .height(32)
-                .padding({ top: SunSpacing.xs, bottom: SunSpacing.xs })
-                .onClick(() => this.editEntry(entry))
-              }, (entry: RollEntry) => entry.date)
+              Text($r('app.plural.dayroll_month_days', this.entriesForMonth(month).length, this.entriesForMonth(month).length))
+                .fontSize(11)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(SunColor.pebble)
             }
-            .width('100%')
-            .alignItems(HorizontalAlign.Start)
-          }, (month: string) => month)
-        }
-      }
-      .layoutWeight(1)
+              .width('100%')
+              .height(28)
 
-      if (this.months().length > 1) {
-        this.monthIndexStrip()
+            ForEach(this.entriesForMonth(month), (entry: RollEntry) => {
+              Row({ space: 10 }) {
+                Text(entry.day)
+                  .fontSize(12)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor(SunColor.pebble)
+                  .width(68)
+                Text(this.moodMark(entry.mood))
+                  .fontSize(20)
+                  .lineHeight(24)
+                  .width(32)
+                  .textAlign(TextAlign.Center)
+                Text(entry.line.length === 0 ? '—' : entry.line)
+                  .fontSize(13)
+                  .fontColor(SunColor.ink)
+                  .layoutWeight(1)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+              }
+              .width('100%')
+              .height(32)
+              .padding({ top: SunSpacing.xs, bottom: SunSpacing.xs })
+              .onClick(() => this.editEntry(entry))
+            }, (entry: RollEntry) => entry.date)
+          }
+          .width('100%')
+          .alignItems(HorizontalAlign.Start)
+        }, (month: string) => month)
       }
     }
     .width('100%')
@@ -901,9 +902,9 @@ struct Index {
           .height(18)
           .borderRadius(6)
           .backgroundColor(this.selectedMonth === month ? SunColor.ink : SunColor.cream)
-          .fontColor(this.selectedMonth === month ? SunColor.cream : (month.startsWith('JANUARY ') ? SunColor.ink : SunColor.pebble))
+          .fontColor(this.selectedMonth === month ? SunColor.cream : (month.endsWith('-01') ? SunColor.ink : SunColor.pebble))
           .fontSize(9)
-          .fontWeight(month.startsWith('JANUARY ') ? FontWeight.Bold : FontWeight.Medium)
+          .fontWeight(month.endsWith('-01') ? FontWeight.Bold : FontWeight.Medium)
           .onClick(() => this.scrollToMonth(month))
       }, (month: string) => month)
     }
@@ -945,6 +946,7 @@ struct Index {
       .padding(SunSpacing.md)
       .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
       .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
+      .onAppear(() => this.tapeScroller.scrollEdge(Edge.Bottom))
     }
   }
 
@@ -1060,6 +1062,7 @@ struct Index {
       .padding(SunSpacing.md)
       .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
       .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
+      .onAppear(() => this.tapeScroller.scrollEdge(Edge.Bottom))
     }
   }
 
@@ -1184,6 +1187,7 @@ struct Index {
       .padding(SunSpacing.lg)
       .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
       .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
+      .onAppear(() => this.tapeScroller.scrollEdge(Edge.Bottom))
     }
   }
 
@@ -1241,6 +1245,7 @@ struct Index {
       .padding(SunSpacing.md)
       .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
       .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
+      .onAppear(() => this.tapeScroller.scrollEdge(Edge.Bottom))
     }
   }
 
@@ -1272,29 +1277,38 @@ struct Index {
           Column() {
             this.topChrome()
 
-            Scroll(this.tapeScroller) {
-              Column({ space: SunSpacing.lg }) {
-              this.perforation()
-              if (this.composerOpen) {
-                this.composer()
-                this.perforation()
-              }
-              this.rollList()
+            Row() {
+              Scroll(this.tapeScroller) {
+                Column({ space: SunSpacing.lg }) {
+                  this.perforation()
+                  if (this.composerOpen) {
+                    this.composer()
+                    this.perforation()
+                  }
+                  this.rollList()
 
-              this.reminderPanel()
-              this.paywallPanel()
-              this.statsPreview()
-              this.exportPreview()
-            }
-            .width('100%')
-            .padding({ left: 20, right: 20, top: SunSpacing.sm, bottom: 120 })
-            .backgroundColor('#FFFDF7')
+                  this.reminderPanel()
+                  this.paywallPanel()
+                  this.statsPreview()
+                  this.exportPreview()
+                }
+                .width('100%')
+                .padding({ left: 20, right: 20, top: SunSpacing.sm, bottom: 120 })
+                .backgroundColor('#FFFDF7')
+              }
+              .layoutWeight(1)
+              .height('100%')
+              .align(Alignment.Top)
+              .scrollBar(BarState.Off)
+              .edgeEffect(EdgeEffect.Spring)
+
+              if (this.months().length > 1 && !this.composerOpen) {
+                this.monthIndexStrip()
+              }
             }
             .width('100%')
             .layoutWeight(1)
-            .align(Alignment.Top)
-            .scrollBar(BarState.Off)
-            .edgeEffect(EdgeEffect.Spring)
+            .backgroundColor('#FFFDF7') // ponytail: tape paper white behind the index strip
           }
           .width('100%')
           .height('100%')

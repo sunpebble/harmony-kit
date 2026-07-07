@@ -173,10 +173,6 @@
       "value": "该范围内暂无数据"
     },
     {
-      "name": "steady_trend_logs_format",
-      "value": "%1$d 条记录"
-    },
-    {
       "name": "steady_trend_in_range_format",
       "value": "%1$d/%2$d 在自设范围内"
     },
@@ -250,7 +246,7 @@
     },
     {
       "name": "steady_paywall_feature_reports",
-      "value": "就诊用 PDF 报告"
+      "value": "就诊报告（可分享文本）"
     },
     {
       "name": "steady_paywall_feature_trends",
@@ -259,10 +255,6 @@
     {
       "name": "steady_paywall_feature_csv",
       "value": "CSV 导出"
-    },
-    {
-      "name": "steady_paywall_feature_widgets",
-      "value": "全部小组件"
     },
     {
       "name": "steady_paywall_pitch",
@@ -439,6 +431,22 @@
     {
       "name": "module_desc",
       "value": "Steady"
+    },
+    {
+      "name": "steady_report_title",
+      "value": "Steady · 健康记录"
+    },
+    {
+      "name": "steady_report_doses_format",
+      "value": "已记录 %1$d/%2$d 次计划用药（%3$d%%）"
+    },
+    {
+      "name": "steady_unit_glucose",
+      "value": "mmol/L"
+    },
+    {
+      "name": "steady_unit_weight",
+      "value": "kg"
     }
   ]
 }

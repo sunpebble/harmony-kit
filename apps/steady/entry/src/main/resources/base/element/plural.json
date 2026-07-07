@@ -1,0 +1,17 @@
+{
+  "plural": [
+    {
+      "name": "steady_trend_logs",
+      "value": [
+        {
+          "quantity": "one",
+          "value": "%d log"
+        },
+        {
+          "quantity": "other",
+          "value": "%d logs"
+        }
+      ]
+    }
+  ]
+}

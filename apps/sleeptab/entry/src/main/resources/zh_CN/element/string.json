@@ -109,10 +109,6 @@
       "value": "洞察 — 就寝稳定度、工作日与周末对比"
     },
     {
-      "name": "sleeptab_paywall_feature_widget",
-      "value": "主屏幕上的睡眠负债小组件"
-    },
-    {
       "name": "sleeptab_paywall_feature_indie",
       "value": "支持独立开发者"
     },
@@ -235,6 +231,26 @@
     {
       "name": "module_desc",
       "value": "Sleeptab"
+    },
+    {
+      "name": "sleeptab_save_night",
+      "value": "保存这晚"
+    },
+    {
+      "name": "sleeptab_hours_format",
+      "value": "%1$d小时%2$s分"
+    },
+    {
+      "name": "sleeptab_range_nights",
+      "value": "%d 晚"
+    },
+    {
+      "name": "sleeptab_minus_15m",
+      "value": "−15 分"
+    },
+    {
+      "name": "sleeptab_plus_15m",
+      "value": "+15 分"
     }
   ]
 }

@@ -7,7 +7,7 @@ const DOMAIN = 0xC0DE
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
-    this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET)
+    this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_DARK)
     hilog.info(DOMAIN, 'Sleeptab', 'Ability onCreate')
   }
 

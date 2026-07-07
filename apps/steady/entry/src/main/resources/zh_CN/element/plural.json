@@ -1,0 +1,13 @@
+{
+  "plural": [
+    {
+      "name": "steady_trend_logs",
+      "value": [
+        {
+          "quantity": "other",
+          "value": "%d 条记录"
+        }
+      ]
+    }
+  ]
+}
