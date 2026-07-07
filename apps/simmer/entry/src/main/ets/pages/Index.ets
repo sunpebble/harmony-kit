@@ -44,7 +44,7 @@ class KitchenTimer {
   id: number
   label: string
   emoji: string
-  seconds: number
+  @Trace seconds: number
   @Trace remaining: number
   @Trace running: boolean
   @Trace done: boolean
@@ -254,7 +254,6 @@ struct Index {
   @Local private timers: KitchenTimer[] = []
   @Local private savedPresets: SavedPresetTimer[] = []
   @Local private nowMs: number = Date.now()
-  @Local private confirmingPresetId: number = -1
   @Local private customSaveAsPreset: boolean = false
   @Local private paywallOpen: boolean = false
   @Local private containerWidth: number = 0
@@ -293,12 +292,10 @@ struct Index {
   }
 
   private startSavedPreset(preset: SavedPresetTimer): void {
-    this.confirmingPresetId = -1
     this.startTimer(preset.label, preset.emoji, preset.seconds)
   }
 
   private startCustom(): void {
-    this.confirmingPresetId = -1
     const nextOpen = !this.customOpen
     this.customOpen = nextOpen
     if (nextOpen) {
@@ -346,7 +343,6 @@ struct Index {
     this.savedPresets = [...this.savedPresets, { id: this.nextPresetId, emoji: this.customEmoji, label, seconds }]
     this.nextPresetId += 1
     AppStorage.setOrCreate('simmer.nextPresetId.v1', this.nextPresetId)
-    this.confirmingPresetId = -1
     this.saveSavedPresets()
     if (this.startTimer(label, this.customEmoji, seconds)) {
       this.customOpen = false
@@ -356,7 +352,6 @@ struct Index {
 
   private removeSavedPreset(id: number): void {
     this.savedPresets = this.savedPresets.filter((preset: SavedPresetTimer) => preset.id !== id)
-    this.confirmingPresetId = -1
     this.saveSavedPresets()
   }
 

@@ -121,10 +121,6 @@
       "value": "+ 自定义"
     },
     {
-      "name": "simmer_remove_preset",
-      "value": "移除预设"
-    },
-    {
       "name": "simmer_paywall_feature_unlimited",
       "value": "所有炉灶同时开火 — 计时器不限数量"
     },
