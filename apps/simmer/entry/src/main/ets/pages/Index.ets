@@ -12,6 +12,7 @@ import { common } from '@kit.AbilityKit'
 import { reminderAgentManager } from '@kit.BackgroundTasksKit'
 import { notificationManager } from '@kit.NotificationKit'
 import { appProfile } from '../AppProfile'
+import { TimerDoneFeedback } from '../runtime/TimerDoneFeedback'
 
 interface PresetTimer {
   emoji: string
@@ -565,6 +566,7 @@ struct Index {
       }
 
       this.showDone(timer.label)
+      TimerDoneFeedback.fire()
       timer.remaining = 0
       timer.running = false
       timer.done = true
