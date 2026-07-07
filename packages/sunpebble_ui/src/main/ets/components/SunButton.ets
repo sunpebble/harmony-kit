@@ -9,7 +9,7 @@ export enum SunButtonRole {
 @Component
 export struct SunButton {
   @Prop
-  label: string = ''
+  label: ResourceStr = ''
   @Prop
   role: SunButtonRole = SunButtonRole.Primary
   @Prop
@@ -20,7 +20,7 @@ export struct SunButton {
 
   private buttonBackground(): ResourceColor {
     if (this.disabled || this.loading) {
-      return '#E9DDCA'
+      return SunColor.disabledBg
     }
     if (this.role === SunButtonRole.Secondary) {
       return SunColor.white
@@ -42,7 +42,7 @@ export struct SunButton {
   }
 
   build() {
-    Button(this.loading ? 'Working...' : this.label)
+    Button(this.loading ? $r('app.string.sun_button_working') : this.label)
       .height(48)
       .padding({ left: SunSpacing.lg, right: SunSpacing.lg })
       .borderRadius(SunRadius.pill)

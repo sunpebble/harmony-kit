@@ -1,16 +1,15 @@
 {
   "string": [
-    {
-      "name": "module_desc",
-      "value": "{{APP_NAME}}"
-    },
-    {
-      "name": "EntryAbility_desc",
-      "value": "{{APP_NAME}}"
-    },
-    {
-      "name": "EntryAbility_label",
-      "value": "{{APP_NAME}}"
-    }
+    { "name": "module_desc", "value": "{{APP_NAME}}" },
+    { "name": "EntryAbility_desc", "value": "{{APP_NAME}}" },
+    { "name": "EntryAbility_label", "value": "{{APP_NAME}}" },
+    { "name": "{{APP_SLUG}}_tagline", "value": "{{APP_TAGLINE}}" },
+    { "name": "{{APP_SLUG}}_primary_action", "value": "Add" },
+    { "name": "{{APP_SLUG}}_empty_title", "value": "Nothing here yet" },
+    { "name": "{{APP_SLUG}}_empty_message", "value": "Start with one useful record. The shell stays the same across apps." },
+    { "name": "{{APP_SLUG}}_row_caption", "value": "Replace this row with the app workflow." },
+    { "name": "{{APP_SLUG}}_item_format", "value": "Item %1$d" },
+    { "name": "{{APP_SLUG}}_card_value", "value": "--" },
+    { "name": "{{APP_SLUG}}_card_label", "value": "Ready" }
   ]
 }

@@ -4,10 +4,10 @@ import { appProfile } from '../AppProfile'
 @Entry
 @Component
 struct Index {
-  @State private items: string[] = []
+  @State private items: number[] = []
 
   private addSample(): void {
-    this.items = [...this.items, `Item ${this.items.length + 1}`]
+    this.items = [...this.items, this.items.length + 1]
   }
 
   build() {
@@ -18,19 +18,19 @@ struct Index {
       }) {
         if (this.items.length === 0) {
           SunEmptyState({
-            title: 'Nothing here yet',
-            message: 'Start with one useful record. The shell stays the same across apps.',
+            title: $r('app.string.{{APP_SLUG}}_empty_title'),
+            message: $r('app.string.{{APP_SLUG}}_empty_message'),
             actionLabel: appProfile.primaryAction,
             onAction: () => this.addSample()
           })
         } else {
           SunCard() {
-            ForEach(this.items, (item: string) => {
+            ForEach(this.items, (item: number) => {
               SunListRow({
-                title: item,
-                caption: 'Replace this row with the app workflow.'
+                title: $r('app.string.{{APP_SLUG}}_item_format', item),
+                caption: $r('app.string.{{APP_SLUG}}_row_caption')
               })
-            }, (item: string) => item)
+            }, (item: number) => `${item}`)
           }
         }
       }

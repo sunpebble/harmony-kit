@@ -4,6 +4,8 @@ import {
   SunCard,
   SunColor,
   SunListRow,
+  SunMode,
+  SunSafeRoot,
   SunSpacing,
   SunToolShell,
   SunType
@@ -168,7 +170,7 @@ struct Index {
   private addCustomTask(): void {
     const title = this.draftTitle.trim()
     if (title.length === 0) {
-      this.showToast('Enter a task name first.')
+      this.showToast($r('app.string.homekeep_toast_enter_name'))
       return
     }
     const task: KeepTask = {
@@ -187,7 +189,7 @@ struct Index {
     this.saveTasksAndSyncReminders()
   }
 
-  private showToast(message: string): void {
+  private showToast(message: ResourceStr): void {
     try {
       this.getUIContext().getPromptAction().showToast({ message, duration: 1800 })
     } catch (_error) {
@@ -259,8 +261,8 @@ struct Index {
             second: 0
           },
           title: 'Homekeep',
-          content: `${task.title} · ${task.area}`,
-          expiredContent: `${task.title} is due.`,
+          content: `${this.titleText(task.title)} · ${this.areaText(task.area)}`,
+          expiredContent: this.formatText($r('app.string.homekeep_reminder_expired_format'), this.titleText(task.title), `${task.title} is due.`),
           notificationId: 300000 + task.id,
           tapDismissed: true
         }
@@ -294,15 +296,93 @@ struct Index {
     return this.tasks.filter((task: KeepTask) => this.daysUntil(task) <= 0)
   }
 
-  private dueLabel(task: KeepTask): string {
+  private dueLabel(task: KeepTask): ResourceStr {
     const days = this.daysUntil(task)
     if (days < 0) {
-      return `${Math.abs(days)}d overdue`
+      return $r('app.string.homekeep_due_overdue_format', Math.abs(days))
     }
     if (days === 0) {
-      return 'Due today'
+      return $r('app.string.homekeep_due_today')
     }
-    return `Due in ${days}d`
+    return $r('app.string.homekeep_due_in_format', days)
+  }
+
+  // Display mapping only: stored task titles/areas stay English (they are persisted data).
+  private titleResource(title: string): Resource | undefined {
+    if (title === 'Replace HVAC filter') {
+      return $r('app.string.homekeep_preset_hvac')
+    }
+    if (title === 'Test smoke alarms') {
+      return $r('app.string.homekeep_preset_smoke')
+    }
+    if (title === 'Clean dishwasher filter') {
+      return $r('app.string.homekeep_preset_dishwasher')
+    }
+    if (title === 'Flush water heater') {
+      return $r('app.string.homekeep_preset_water_heater')
+    }
+    if (title === 'Home task') {
+      return $r('app.string.homekeep_task_fallback')
+    }
+    return undefined
+  }
+
+  private areaResource(area: string): Resource | undefined {
+    if (area === 'Air') {
+      return $r('app.string.homekeep_area_air')
+    }
+    if (area === 'Safety') {
+      return $r('app.string.homekeep_area_safety')
+    }
+    if (area === 'Kitchen') {
+      return $r('app.string.homekeep_area_kitchen')
+    }
+    if (area === 'Utility') {
+      return $r('app.string.homekeep_area_utility')
+    }
+    if (area === 'Home') {
+      return $r('app.string.homekeep_area_home')
+    }
+    return undefined
+  }
+
+  private titleLabel(title: string): ResourceStr {
+    const res = this.titleResource(title)
+    return res !== undefined ? res : title
+  }
+
+  private resolveText(res: Resource, fallback: string): string {
+    const context = this.getUIContext().getHostContext()
+    if (!context) {
+      return fallback
+    }
+    try {
+      return context.resourceManager.getStringSync(res.id)
+    } catch (_error) {
+      return fallback
+    }
+  }
+
+  private formatText(res: Resource, arg: string, fallback: string): string {
+    const context = this.getUIContext().getHostContext()
+    if (!context) {
+      return fallback
+    }
+    try {
+      return context.resourceManager.getStringSync(res.id, arg)
+    } catch (_error) {
+      return fallback
+    }
+  }
+
+  private titleText(title: string): string {
+    const res = this.titleResource(title)
+    return res !== undefined ? this.resolveText(res, title) : title
+  }
+
+  private areaText(area: string): string {
+    const res = this.areaResource(area)
+    return res !== undefined ? this.resolveText(res, area) : area
   }
 
   private dueCount(): number {
@@ -310,26 +390,27 @@ struct Index {
   }
 
   @Builder
-  private filterButton(label: string) {
+  private filterButton(id: string, label: Resource) {
+    // id is the stored filter key ('Due'/'Soon'/'All'); label is display-only.
     Button(label)
       .height(36)
       .padding({ left: 14, right: 14 })
       .borderRadius(999)
-      .backgroundColor(this.filter === label ? '#4F8A6D' : SunColor.white)
-      .fontColor(this.filter === label ? SunColor.white : SunColor.ink)
+      .backgroundColor(this.filter === id ? '#4F8A6D' : SunColor.white) // ponytail: app accent, no SunColor token
+      .fontColor(this.filter === id ? SunColor.white : SunColor.ink)
       .fontSize(12)
       .fontWeight(FontWeight.Bold)
       .border({ width: 1, color: SunColor.border })
-      .onClick(() => this.filter = label)
+      .onClick(() => this.filter = id)
   }
 
   @Builder
   private cadenceButton(days: number) {
-    Button(`${days}d`)
+    Button($r('app.string.homekeep_days_format', days))
       .height(34)
       .padding({ left: 12, right: 12 })
       .borderRadius(999)
-      .backgroundColor(this.draftCadence === days ? '#4F8A6D' : SunColor.white)
+      .backgroundColor(this.draftCadence === days ? '#4F8A6D' : SunColor.white) // ponytail: app accent, no SunColor token
       .fontColor(this.draftCadence === days ? SunColor.white : SunColor.ink)
       .fontSize(12)
       .fontWeight(FontWeight.Bold)
@@ -345,8 +426,8 @@ struct Index {
           Text(this.dueCount().toString())
             .fontSize(46)
             .fontWeight(FontWeight.Bold)
-            .fontColor(this.dueCount() > 0 ? SunColor.danger : '#4F8A6D')
-          Text('DUE NOW')
+            .fontColor(this.dueCount() > 0 ? SunColor.danger : '#4F8A6D') // ponytail: app accent, no SunColor token
+          Text($r('app.string.homekeep_due_now'))
             .fontSize(11)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1.5)
@@ -360,7 +441,7 @@ struct Index {
             .fontSize(30)
             .fontWeight(FontWeight.Bold)
             .fontColor(SunColor.ink)
-          Text('TASKS')
+          Text($r('app.string.homekeep_tasks'))
             .fontSize(11)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1.5)
@@ -377,7 +458,7 @@ struct Index {
     SunCard() {
       Column({ space: SunSpacing.sm }) {
         if (this.visibleTasks().length === 0) {
-          Text('Nothing due in this view.')
+          Text($r('app.string.homekeep_empty_list'))
             .fontSize(SunType.body)
             .fontColor(SunColor.pebble)
             .padding({ top: SunSpacing.lg, bottom: SunSpacing.lg })
@@ -385,21 +466,21 @@ struct Index {
           ForEach(this.visibleTasks(), (task: KeepTask) => {
             Column({ space: SunSpacing.sm }) {
               SunListRow({
-                title: task.title,
+                title: this.titleLabel(task.title),
                 value: this.dueLabel(task),
-                caption: `${task.area} · every ${task.cadence}d`
+                caption: $r('app.string.homekeep_task_caption_format', this.areaText(task.area), task.cadence)
               })
 
               if (this.daysUntil(task) <= 0) {
                 Row({ space: SunSpacing.sm }) {
                   SunButton({
-                    label: 'Mark Done',
+                    label: $r('app.string.homekeep_mark_done'),
                     role: SunButtonRole.Secondary,
                     action: () => this.completeTask(task.id)
                   })
 
                   SunButton({
-                    label: 'Snooze 7d',
+                    label: $r('app.string.homekeep_snooze_7d'),
                     role: SunButtonRole.Secondary,
                     action: () => this.snoozeTask(task.id)
                   })
@@ -410,13 +491,13 @@ struct Index {
               if (this.confirmingTaskId === task.id) {
                 Row({ space: SunSpacing.sm }) {
                   SunButton({
-                    label: 'Confirm Delete',
+                    label: $r('app.string.homekeep_confirm_delete'),
                     role: SunButtonRole.Danger,
                     action: () => this.deleteTask(task.id)
                   })
 
                   SunButton({
-                    label: 'Cancel',
+                    label: $r('app.string.homekeep_cancel'),
                     role: SunButtonRole.Secondary,
                     action: () => this.confirmingTaskId = -1
                   })
@@ -424,7 +505,7 @@ struct Index {
                 .width('100%')
               } else {
                 SunButton({
-                  label: 'Delete',
+                  label: $r('app.string.homekeep_delete'),
                   role: SunButtonRole.Danger,
                   action: () => this.confirmingTaskId = task.id
                 })
@@ -442,13 +523,13 @@ struct Index {
   private customTaskCard() {
     SunCard() {
       Column({ space: SunSpacing.md }) {
-        Text('CUSTOM TASK')
+        Text($r('app.string.homekeep_custom_task'))
           .fontSize(10)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.4)
           .fontColor(SunColor.pebble)
 
-        TextInput({ placeholder: 'Task name', text: this.draftTitle })
+        TextInput({ placeholder: $r('app.string.homekeep_task_name_placeholder'), text: this.draftTitle })
           .height(46)
           .width('100%')
           .fontSize(14)
@@ -458,7 +539,7 @@ struct Index {
           .border({ width: 1, color: SunColor.border })
           .onChange((value: string) => this.draftTitle = value)
 
-        TextInput({ placeholder: 'Area (optional)', text: this.draftArea })
+        TextInput({ placeholder: $r('app.string.homekeep_area_placeholder'), text: this.draftArea })
           .height(46)
           .width('100%')
           .fontSize(14)
@@ -477,7 +558,7 @@ struct Index {
         .width('100%')
 
         SunButton({
-          label: 'Add Custom Task',
+          label: $r('app.string.homekeep_add_custom_task'),
           action: () => this.addCustomTask()
         })
       }
@@ -491,13 +572,18 @@ struct Index {
     Scroll() {
       Row({ space: SunSpacing.sm }) {
         ForEach(this.presets, (preset: PresetTask) => {
-          Button(`+ ${preset.title}`)
+          Button({ type: ButtonType.Normal }) {
+            Text($r('app.string.homekeep_preset_add_format', this.titleText(preset.title)))
+              .fontSize(12)
+              .fontColor(SunColor.ink)
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+              .constraintSize({ maxWidth: 200 })
+          }
             .height(42)
             .padding({ left: 14, right: 14 })
             .borderRadius(999)
             .backgroundColor('#EDF4EF')
-            .fontColor(SunColor.ink)
-            .fontSize(12)
             .onClick(() => this.addPreset(preset))
         }, (preset: PresetTask) => preset.title)
       }
@@ -510,17 +596,20 @@ struct Index {
 
   build() {
     Column() {
+      SunSafeRoot({ mode: SunMode.Light }) {
       SunToolShell({
         manifest: appProfile,
-        onPrimaryAction: () => this.addTask()
+        onPrimaryAction: () => this.addTask(),
+        showPro: false,
+        onPro: () => {}
       }) {
         Column({ space: SunSpacing.md }) {
           this.summary()
 
           Row({ space: SunSpacing.sm }) {
-            this.filterButton('Due')
-            this.filterButton('Soon')
-            this.filterButton('All')
+            this.filterButton('Due', $r('app.string.homekeep_filter_due'))
+            this.filterButton('Soon', $r('app.string.homekeep_filter_soon'))
+            this.filterButton('All', $r('app.string.homekeep_filter_all'))
           }
           .width('100%')
 
@@ -544,6 +633,7 @@ struct Index {
         }
         .width('100%')
         .height('100%')
+      }
       }
     }
     .width('100%')

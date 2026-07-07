@@ -3,8 +3,8 @@ import { appProfile } from '../AppProfile'
 
 @Component
 export struct ToolCard {
-  value: string = '--'
-  label: string = 'Ready'
+  value: ResourceStr = $r('app.string.{{APP_SLUG}}_card_value')
+  label: ResourceStr = $r('app.string.{{APP_SLUG}}_card_label')
 
   build() {
     Column({ space: SunSpacing.xs }) {

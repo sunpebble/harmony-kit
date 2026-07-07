@@ -1,0 +1,12 @@
+{
+  "string": [
+    { "name": "{{APP_SLUG}}_tagline", "value": "{{APP_TAGLINE}}" },
+    { "name": "{{APP_SLUG}}_primary_action", "value": "添加" },
+    { "name": "{{APP_SLUG}}_empty_title", "value": "还没有内容" },
+    { "name": "{{APP_SLUG}}_empty_message", "value": "从一条有用的记录开始。各应用共享同一外壳。" },
+    { "name": "{{APP_SLUG}}_row_caption", "value": "用应用的实际流程替换该行。" },
+    { "name": "{{APP_SLUG}}_item_format", "value": "项目 %1$d" },
+    { "name": "{{APP_SLUG}}_card_value", "value": "--" },
+    { "name": "{{APP_SLUG}}_card_label", "value": "就绪" }
+  ]
+}

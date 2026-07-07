@@ -2,6 +2,9 @@ import {
   SunButton,
   SunButtonRole,
   SunColor,
+  SunFitText,
+  SunMode,
+  SunSafeRoot,
   SunSpacing
 } from 'sunpebble_ui'
 import { uniformTypeDescriptor as utd } from '@kit.ArkData'
@@ -359,9 +362,9 @@ struct Index {
     }).sort((a: RollEntry, b: RollEntry) => b.date.localeCompare(a.date))
   }
 
-  private memoryAge(entry: RollEntry): string {
+  private memoryAge(entry: RollEntry): Resource {
     const years = Math.max(1, this.dateFromKey(this.activeDate()).getFullYear() - this.dateFromKey(entry.date).getFullYear())
-    return years === 1 ? '1 YR AGO' : `${years} YRS AGO`
+    return years === 1 ? $r('app.string.dayroll_memory_age_one') : $r('app.string.dayroll_memory_age_format', years)
   }
 
   private dateKey(date: Date): string {
@@ -417,7 +420,7 @@ struct Index {
     try {
       if (!await this.requestNotificationAccess()) {
         this.reminderEnabled = false
-        this.showToast('Enable notifications to use daily reminders.')
+        this.showToast($r('app.string.dayroll_toast_enable_notifications'))
         return
       }
       await reminderAgentManager.cancelAllReminders()
@@ -427,17 +430,17 @@ struct Index {
         minute: this.reminderMinute,
         daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
         title: 'Dayroll',
-        content: 'One line about today?',
-        expiredContent: 'Dayroll reminder missed.',
+        content: this.resString($r('app.string.dayroll_reminder_content')),
+        expiredContent: this.resString($r('app.string.dayroll_reminder_expired')),
         notificationId: 1001,
         tapDismissed: true
       }
       await reminderAgentManager.publishReminder(request)
       this.reminderEnabled = true
-      this.showToast(`Daily reminder set for ${this.reminderTimeLabel()}.`)
+      this.showToast($r('app.string.dayroll_toast_reminder_set', this.reminderTimeLabel()))
     } catch (_error) {
       this.reminderEnabled = false
-      this.showToast('Enable notifications to use daily reminders.')
+      this.showToast($r('app.string.dayroll_toast_enable_notifications'))
     }
   }
 
@@ -452,7 +455,7 @@ struct Index {
       // ponytail: stale reminder ids should not block the visible off state.
     }
     this.reminderEnabled = false
-    this.showToast('Daily reminder off.')
+    this.showToast($r('app.string.dayroll_toast_reminder_off'))
   }
 
   private async requestNotificationAccess(): Promise<boolean> {
@@ -468,7 +471,12 @@ struct Index {
     }
   }
 
-  private showToast(message: string): void {
+  private resString(res: Resource): string {
+    const context = this.getUIContext().getHostContext()
+    return context ? context.resourceManager.getStringSync(res) : ''
+  }
+
+  private showToast(message: ResourceStr): void {
     try {
       this.getUIContext().getPromptAction().showToast({
         message,
@@ -504,7 +512,7 @@ struct Index {
       this.exportOpen = true
     }
     this.paywallIntent = ''
-    this.showToast('Dayroll Pro unlocked on this device.')
+    this.showToast($r('app.string.dayroll_toast_pro_unlocked'))
   }
 
   private showPaywall(): void {
@@ -531,13 +539,23 @@ struct Index {
     this.exportOpen = !this.exportOpen
   }
 
+  private formatDisplay(format: string): Resource {
+    if (format === 'Markdown') {
+      return $r('app.string.dayroll_format_markdown')
+    }
+    if (format === 'CSV') {
+      return $r('app.string.dayroll_format_csv')
+    }
+    return $r('app.string.dayroll_format_plain_text')
+  }
+
   private async copyExportText(): Promise<void> {
     try {
       const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, this.exportText())
       await pasteboard.getSystemPasteboard().setData(data)
-      this.showToast(`${this.exportFormat} copied.`)
+      this.showToast($r('app.string.dayroll_toast_copied_format', this.resString(this.formatDisplay(this.exportFormat))))
     } catch (_error) {
-      this.showToast('Copy failed.')
+      this.showToast($r('app.string.dayroll_toast_copy_failed'))
     }
   }
 
@@ -569,7 +587,7 @@ struct Index {
         Blank()
           .width(10)
           .height(1)
-          .backgroundColor('#C8BDAA')
+          .backgroundColor('#C8BDAA') // ponytail: paper perforation tint, no Sun token
       }, (item: number) => item.toString())
     }
     .width('100%')
@@ -577,34 +595,97 @@ struct Index {
   }
 
   @Builder
-  private header() {
-    Column({ space: SunSpacing.sm }) {
+  private headerTitleRow() {
+    Row() {
       Text('DAYROLL')
-        .fontSize(22)
+        .fontSize(18)
         .fontWeight(FontWeight.Bold)
-        .letterSpacing(6)
+        .letterSpacing(2)
         .fontColor(SunColor.ink)
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .layoutWeight(1)
 
-      Text('* ONE LINE A DAY *')
-        .fontSize(11)
-        .letterSpacing(1.5)
-        .fontColor(SunColor.pebble)
-
-      Row() {
-        Text(`TOTAL DAYS: ${this.entries.length}`)
-          .fontSize(11)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(SunColor.pebble)
-        Blank().layoutWeight(1)
-        Text(`STREAK: ${this.streak()}`)
-          .fontSize(11)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(SunColor.pebble)
+      Row({ space: 6 }) {
+        this.toolbarIcon('🔔', () => {
+          this.reminderOpen = !this.reminderOpen
+        })
+        this.toolbarIcon('📊', () => {
+          this.toggleStats()
+        })
+        this.toolbarIcon('↗', () => {
+          this.toggleExport()
+        })
       }
-      .width('100%')
-      .padding({ top: SunSpacing.sm })
+      .flexShrink(0)
     }
     .width('100%')
+    .alignItems(VerticalAlign.Center)
+  }
+
+  @Builder
+  private headerMeta() {
+    Column({ space: 4 }) {
+      SunFitText({
+        text: $r('app.string.dayroll_tagline'),
+        maxFontSize: 11,
+        minFontSize: 8,
+        fontColor: SunColor.pebble,
+        letterSpacing: 0
+      })
+
+      Row({ space: SunSpacing.sm }) {
+        SunFitText({
+          text: $r('app.string.dayroll_header_total_days', this.entries.length),
+          maxFontSize: 11,
+          minFontSize: 8,
+          fontColor: SunColor.pebble,
+          fontWeight: FontWeight.Bold
+        })
+          .layoutWeight(1)
+
+        SunFitText({
+          text: $r('app.string.dayroll_header_streak', this.streak()),
+          maxFontSize: 11,
+          minFontSize: 8,
+          fontColor: SunColor.pebble,
+          fontWeight: FontWeight.Bold,
+          textAlign: TextAlign.End
+        })
+          .layoutWeight(1)
+      }
+      .width('100%')
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  private toolbarIcon(label: string, action: () => void) {
+    Button({ type: ButtonType.Normal }) {
+      Text(label)
+        .fontSize(20)
+        .lineHeight(24)
+        .textAlign(TextAlign.Center)
+        .width('100%')
+    }
+    .width(40)
+    .height(40)
+    .padding(0)
+    .borderRadius(999)
+    .backgroundColor('#F5EBD9')
+    .onClick(action)
+  }
+
+  @Builder
+  private topChrome() {
+    Column({ space: SunSpacing.xs }) {
+      this.headerTitleRow()
+      this.headerMeta()
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: SunSpacing.sm, bottom: SunSpacing.sm })
+    .backgroundColor('#FFFDF7')
   }
 
   @Builder
@@ -615,32 +696,41 @@ struct Index {
         .fontWeight(FontWeight.Bold)
         .fontColor(SunColor.pebble)
 
-      Row({ space: SunSpacing.md }) {
+      Row({ space: SunSpacing.sm }) {
         ForEach(this.moods, (candidate: string) => {
-          Button(candidate)
-            .width(46)
-            .height(46)
-            .borderRadius(999)
-            .backgroundColor(this.mood === candidate ? SunColor.ink : '#F5EBD9')
-            .fontColor(this.mood === candidate ? SunColor.cream : SunColor.ink)
-            .fontSize(22)
-            .onClick(() => this.mood = candidate)
+          Button({ type: ButtonType.Normal }) {
+            Text(candidate)
+              .fontSize(30)
+              .lineHeight(36)
+              .textAlign(TextAlign.Center)
+              .width('100%')
+          }
+          .width(52)
+          .height(52)
+          .padding(0)
+          .borderRadius(999)
+          .backgroundColor(this.mood === candidate ? SunColor.ink : '#F5EBD9')
+          .opacity(this.mood === candidate ? 1 : 0.85)
+          .scale({ x: this.mood === candidate ? 1.08 : 1, y: this.mood === candidate ? 1.08 : 1 })
+          .onClick(() => this.mood = candidate)
         }, (candidate: string) => candidate)
       }
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
 
-      TextArea({ placeholder: 'One line about today…', text: this.draftLine })
+      TextArea({ placeholder: $r('app.string.dayroll_composer_placeholder'), text: this.draftLine })
         .height(96)
         .fontSize(15)
         .fontColor(SunColor.ink)
         .placeholderColor(SunColor.pebble)
-        .backgroundColor('#FFFDF7')
+        .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
         .borderRadius(8)
-        .border({ width: 1, color: '#C8BDAA' })
+        .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
         .onChange((value: string) => this.draftLine = value)
 
       if (this.memories().length > 0) {
         Column({ space: SunSpacing.sm }) {
-          Text('ON THIS DAY')
+          Text($r('app.string.dayroll_on_this_day'))
             .fontSize(10)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1.5)
@@ -655,7 +745,10 @@ struct Index {
                 .width(72)
 
               Text(this.moodMark(memory.mood))
-                .fontSize(13)
+                .fontSize(18)
+                .lineHeight(22)
+                .width(28)
+                .textAlign(TextAlign.Center)
 
               Text(memory.line.length === 0 ? '—' : memory.line)
                 .fontSize(12)
@@ -672,20 +765,20 @@ struct Index {
       }
 
       if (this.confirmingDelete) {
-        Text('Delete this day?')
+        Text($r('app.string.dayroll_delete_confirm'))
           .fontSize(12)
           .fontWeight(FontWeight.Bold)
           .fontColor(SunColor.pebble)
 
         Row({ space: SunSpacing.md }) {
           SunButton({
-            label: 'Delete',
+            label: $r('app.string.dayroll_delete'),
             role: SunButtonRole.Danger,
             action: () => this.deleteToday()
           })
 
           SunButton({
-            label: 'Cancel',
+            label: $r('app.string.dayroll_cancel'),
             role: SunButtonRole.Secondary,
             action: () => this.confirmingDelete = false
           })
@@ -693,12 +786,12 @@ struct Index {
       } else {
         Row({ space: SunSpacing.md }) {
           SunButton({
-            label: 'Save',
+            label: $r('app.string.dayroll_save'),
             action: () => this.saveToday()
           })
 
           SunButton({
-            label: 'Cancel',
+            label: $r('app.string.dayroll_cancel'),
             role: SunButtonRole.Secondary,
             action: () => this.cancelComposer()
           })
@@ -706,7 +799,7 @@ struct Index {
 
         if (this.hasActiveEntry()) {
           SunButton({
-            label: 'DELETE THIS DAY',
+            label: $r('app.string.dayroll_delete_this_day'),
             role: SunButtonRole.Danger,
             action: () => this.confirmingDelete = true
           })
@@ -722,7 +815,7 @@ struct Index {
     Row({ space: SunSpacing.xs }) {
       Column({ space: SunSpacing.md }) {
         if (this.entries.length === 0) {
-          Text('NO ENTRIES YET\nTAP + TO LOG TODAY')
+          Text($r('app.string.dayroll_empty_tape'))
             .fontSize(13)
             .fontColor(SunColor.pebble)
             .textAlign(TextAlign.Center)
@@ -741,7 +834,7 @@ struct Index {
 
                 Blank().layoutWeight(1)
 
-                Text(`${this.entriesForMonth(month).length} DAYS`)
+                Text($r('app.string.dayroll_month_days_format', this.entriesForMonth(month).length))
                   .fontSize(11)
                   .fontWeight(FontWeight.Bold)
                   .fontColor(SunColor.pebble)
@@ -757,7 +850,10 @@ struct Index {
                     .fontColor(SunColor.pebble)
                     .width(68)
                   Text(this.moodMark(entry.mood))
-                    .fontSize(14)
+                    .fontSize(20)
+                    .lineHeight(24)
+                    .width(32)
+                    .textAlign(TextAlign.Center)
                   Text(entry.line.length === 0 ? '—' : entry.line)
                     .fontSize(13)
                     .fontColor(SunColor.ink)
@@ -807,7 +903,7 @@ struct Index {
   private exportPreview() {
     if (this.exportOpen && this.proUnlocked) {
       Column({ space: SunSpacing.sm }) {
-        Text('EXPORT PREVIEW')
+        Text($r('app.string.dayroll_export_preview_title'))
           .fontSize(10)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.5)
@@ -826,7 +922,7 @@ struct Index {
           .width('100%')
 
         SunButton({
-          label: 'Share Export',
+          label: $r('app.string.dayroll_share_export'),
           role: SunButtonRole.Secondary,
           action: () => {
             this.shareExportText()
@@ -836,18 +932,18 @@ struct Index {
       .width('100%')
       .alignItems(HorizontalAlign.Start)
       .padding(SunSpacing.md)
-      .backgroundColor('#FFFDF7')
-      .border({ width: 1, color: '#C8BDAA' })
+      .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
+      .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
     }
   }
 
   @Builder
   private formatButton(label: string) {
-    Button(label)
+    Button(this.formatDisplay(label))
       .height(34)
       .padding({ left: 12, right: 12 })
       .borderRadius(999)
-      .backgroundColor(this.exportFormat === label ? SunColor.ink : '#F5EBD9')
+      .backgroundColor(this.exportFormat === label ? SunColor.ink : '#F5EBD9') // ponytail: pill idle tint, no Sun token
       .fontColor(this.exportFormat === label ? SunColor.cream : SunColor.ink)
       .fontSize(11)
       .fontWeight(FontWeight.Bold)
@@ -858,24 +954,24 @@ struct Index {
   private statsPreview() {
     if (this.statsOpen && this.proUnlocked) {
       Column({ space: SunSpacing.md }) {
-        Text('YOUR TAPE, COUNTED')
+        Text($r('app.string.dayroll_stats_title'))
           .fontSize(14)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(3)
           .fontColor(SunColor.ink)
 
         Row() {
-          this.statPill('TOTAL', this.entries.length.toString())
+          this.statPill($r('app.string.dayroll_stat_total'), this.entries.length.toString())
           Blank().layoutWeight(1)
-          this.statPill('STREAK', this.streak().toString())
+          this.statPill($r('app.string.dayroll_stat_streak'), this.streak().toString())
           Blank().layoutWeight(1)
-          this.statPill('BEST', this.longestStreak().toString())
+          this.statPill($r('app.string.dayroll_stat_best'), this.longestStreak().toString())
         }
         .width('100%')
 
         this.perforation()
 
-        Text('DAYS LOGGED — LAST 12 MONTHS')
+        Text($r('app.string.dayroll_stats_days_logged'))
           .fontSize(10)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.5)
@@ -892,7 +988,7 @@ struct Index {
             Blank()
               .height(8)
               .layoutWeight(Math.max(1, stat.logged))
-              .backgroundColor(stat.logged > 0 ? SunColor.ink : '#D8CCBA')
+              .backgroundColor(stat.logged > 0 ? SunColor.ink : '#D8CCBA') // ponytail: empty bar tint, no Sun token
             Blank()
               .height(8)
               .layoutWeight(Math.max(1, this.maxMonthlyLogged() - stat.logged + 1))
@@ -907,7 +1003,7 @@ struct Index {
 
         this.perforation()
 
-        Text('MOOD TREND — LAST 12 MONTHS')
+        Text($r('app.string.dayroll_stats_mood_trend'))
           .fontSize(10)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.5)
@@ -918,7 +1014,7 @@ struct Index {
 
         this.perforation()
 
-        Text('MOOD MIX — ALL TIME')
+        Text($r('app.string.dayroll_stats_mood_mix'))
           .fontSize(10)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.5)
@@ -928,8 +1024,10 @@ struct Index {
         ForEach(this.moods, (candidate: string) => {
           Row({ space: SunSpacing.sm }) {
             Text(candidate)
-              .fontSize(18)
-              .width(34)
+              .fontSize(22)
+              .lineHeight(28)
+              .width(40)
+              .textAlign(TextAlign.Center)
             Text(this.moodCount(candidate).toString())
               .fontSize(13)
               .fontWeight(FontWeight.Bold)
@@ -949,8 +1047,8 @@ struct Index {
       .width('100%')
       .alignItems(HorizontalAlign.Start)
       .padding(SunSpacing.md)
-      .backgroundColor('#FFFDF7')
-      .border({ width: 1, color: '#C8BDAA' })
+      .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
+      .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
     }
   }
 
@@ -962,7 +1060,7 @@ struct Index {
           Blank()
             .width('100%')
             .height(this.moodTrendHeight(stat.avgMood))
-            .backgroundColor(stat.avgMood > 0 ? SunColor.ink : '#D8CCBA')
+            .backgroundColor(stat.avgMood > 0 ? SunColor.ink : '#D8CCBA') // ponytail: empty bar tint, no Sun token
             .borderRadius(4)
 
           Text(this.moodForScore(stat.avgMood))
@@ -985,7 +1083,7 @@ struct Index {
   }
 
   @Builder
-  private statPill(label: string, value: string) {
+  private statPill(label: ResourceStr, value: string) {
     Column({ space: 2 }) {
       Text(value)
         .fontSize(20)
@@ -1000,7 +1098,7 @@ struct Index {
   }
 
   @Builder
-  private paywallFeature(icon: string, text: string) {
+  private paywallFeature(icon: string, text: ResourceStr) {
     Row({ space: SunSpacing.md }) {
       Text(icon)
         .fontSize(18)
@@ -1029,17 +1127,17 @@ struct Index {
         this.perforation()
 
         Column({ space: 14 }) {
-          this.paywallFeature('↗', 'Export your tape — text, Markdown or CSV')
-          this.paywallFeature('▥', 'Streaks, mood trends & yearly review')
-          this.paywallFeature('↺', 'On This Day — see past years while you write')
-          this.paywallFeature('♥', 'Support an indie developer')
+          this.paywallFeature('↗', $r('app.string.dayroll_paywall_feature_export'))
+          this.paywallFeature('▥', $r('app.string.dayroll_paywall_feature_stats'))
+          this.paywallFeature('↺', $r('app.string.dayroll_paywall_feature_memories'))
+          this.paywallFeature('♥', $r('app.string.dayroll_paywall_feature_indie'))
         }
         .width('100%')
         .alignItems(HorizontalAlign.Start)
 
         this.perforation()
 
-        Text('PAY ONCE. YOURS FOREVER.\nNO SUBSCRIPTION. NO ACCOUNT.')
+        Text($r('app.string.dayroll_paywall_pitch'))
           .fontSize(11)
           .fontWeight(FontWeight.Bold)
           .fontColor(SunColor.pebble)
@@ -1048,11 +1146,11 @@ struct Index {
           .textAlign(TextAlign.Center)
 
         SunButton({
-          label: 'UNLOCK FOR $1.99',
+          label: $r('app.string.dayroll_paywall_unlock'),
           action: () => this.unlockPro()
         })
 
-        Button('Restore Purchase')
+        Button($r('app.string.dayroll_restore_purchase'))
           .height(36)
           .backgroundColor(Color.Transparent)
           .fontSize(12)
@@ -1062,8 +1160,8 @@ struct Index {
       .width('100%')
       .alignItems(HorizontalAlign.Center)
       .padding(SunSpacing.lg)
-      .backgroundColor('#FFFDF7')
-      .border({ width: 1, color: '#C8BDAA' })
+      .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
+      .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
     }
   }
 
@@ -1071,17 +1169,17 @@ struct Index {
   private reminderPanel() {
     if (this.reminderOpen) {
       Column({ space: SunSpacing.md }) {
-        Text('DAILY REMINDER')
+        Text($r('app.string.dayroll_reminder_panel_title'))
           .fontSize(12)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(2)
           .fontColor(SunColor.pebble)
 
-        Button('REMIND ME TO LOG')
+        Button($r('app.string.dayroll_reminder_button'))
           .height(42)
           .width('100%')
           .borderRadius(999)
-          .backgroundColor(this.reminderEnabled ? SunColor.ink : '#F5EBD9')
+          .backgroundColor(this.reminderEnabled ? SunColor.ink : '#F5EBD9') // ponytail: pill idle tint, no Sun token
           .fontColor(this.reminderEnabled ? SunColor.cream : SunColor.ink)
           .fontSize(13)
           .fontWeight(FontWeight.Bold)
@@ -1107,7 +1205,7 @@ struct Index {
           .textStyle({ color: SunColor.pebble, font: { size: 18, weight: FontWeight.Medium } })
           .onChange((value: TimePickerResult) => this.setReminderTime(value.hour, value.minute))
 
-        Text(this.reminderEnabled ? `REMIND ME AT ${this.reminderTimeLabel()}` : 'REMINDER PAUSED')
+        Text(this.reminderEnabled ? $r('app.string.dayroll_reminder_at_format', this.reminderTimeLabel()) : $r('app.string.dayroll_reminder_paused'))
           .fontSize(11)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.2)
@@ -1119,67 +1217,72 @@ struct Index {
       .width('100%')
       .alignItems(HorizontalAlign.Start)
       .padding(SunSpacing.md)
-      .backgroundColor('#FFFDF7')
-      .border({ width: 1, color: '#C8BDAA' })
+      .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
+      .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
     }
+  }
+
+  @Builder
+  private logBar() {
+    Column({ space: SunSpacing.sm }) {
+      this.perforation()
+
+      Button('+')
+        .width(52)
+        .height(52)
+        .borderRadius(999)
+        .backgroundColor(SunColor.ink)
+        .fontColor('#FFFDF7')
+        .fontSize(28)
+        .fontWeight(FontWeight.Bold)
+        .onClick(() => this.composeToday())
+    }
+    .width('100%')
+    .padding({ top: 10, bottom: 10 })
+    .backgroundColor('#FFFDF7')
+    .alignItems(HorizontalAlign.Center)
   }
 
   build() {
     Column() {
-      Scroll(this.tapeScroller) {
-        Column({ space: SunSpacing.lg }) {
-          this.header()
-          this.perforation()
-          if (this.composerOpen) {
-            this.composer()
-            this.perforation()
+      SunSafeRoot({ mode: SunMode.Light }) {
+        Stack({ alignContent: Alignment.Bottom }) {
+          Column() {
+            this.topChrome()
+
+            Scroll(this.tapeScroller) {
+              Column({ space: SunSpacing.lg }) {
+              this.perforation()
+              if (this.composerOpen) {
+                this.composer()
+                this.perforation()
+              }
+              this.rollList()
+
+              this.reminderPanel()
+              this.paywallPanel()
+              this.statsPreview()
+              this.exportPreview()
+            }
+            .width('100%')
+            .padding({ left: 20, right: 20, top: SunSpacing.sm, bottom: 120 })
+            .backgroundColor('#FFFDF7')
+            }
+            .width('100%')
+            .layoutWeight(1)
+            .scrollBar(BarState.Off)
+            .edgeEffect(EdgeEffect.Spring)
           }
-          this.rollList()
-          this.perforation()
+          .width('100%')
+          .height('100%')
 
-          Button('+')
-            .width(52)
-            .height(52)
-            .borderRadius(999)
-            .backgroundColor(SunColor.ink)
-            .fontColor('#FFFDF7')
-            .fontSize(28)
-            .fontWeight(FontWeight.Bold)
-            .alignSelf(ItemAlign.Center)
-            .onClick(() => this.composeToday())
-
-          SunButton({
-            label: this.reminderOpen ? 'Hide Reminder' : 'Reminder',
-            role: SunButtonRole.Secondary,
-            action: () => this.reminderOpen = !this.reminderOpen
-          })
-          this.reminderPanel()
-
-          this.paywallPanel()
-
-          SunButton({
-            label: this.statsOpen ? 'Hide Stats' : 'Stats',
-            role: SunButtonRole.Secondary,
-            action: () => this.toggleStats()
-          })
-          this.statsPreview()
-
-          SunButton({
-            label: this.exportOpen ? 'Hide Export' : 'Export',
-            role: SunButtonRole.Secondary,
-            action: () => this.toggleExport()
-          })
-          this.exportPreview()
+          this.logBar()
         }
         .width('100%')
-        .padding(20)
-        .backgroundColor('#FFFDF7')
+        .height('100%')
       }
-      .width('100%')
-      .height('100%')
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(SunColor.cream)
   }
 }

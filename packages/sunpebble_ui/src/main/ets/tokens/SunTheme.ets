@@ -12,6 +12,8 @@ export class SunColor {
   static readonly white: string = '#FFFFFF'
   static readonly border: string = '#E6DCCB'
   static readonly danger: string = '#B82118'
+  static readonly disabledBg: string = '#E9DDCA'
+  static readonly darkSecondary: string = '#BFB8AA'
 }
 
 export class SunSpacing {
@@ -39,8 +41,10 @@ export class SunType {
 
 export interface SunAppManifest {
   name: string
-  tagline: string
-  primaryAction: string
+  tagline: ResourceStr
+  primaryAction: ResourceStr
+  // ponytail: accent is app-identity data; intentionally NOT consumed by SunToolShell
+  // button color, to prevent per-app styling drift (PRODUCT.md). Surfaced for widgets/future use.
   accent: ResourceColor
   mode: SunMode
 }

@@ -1,4 +1,5 @@
-import { SunAppManifest, SunColor, SunMode, SunSpacing, SunType } from '../tokens/SunTheme'
+import { SunAppManifest, SunColor, SunMode, SunSpacing } from '../tokens/SunTheme'
+import { SunAppHeader } from './SunAppHeader'
 import { SunButton } from '../components/SunButton'
 
 @Builder
@@ -8,14 +9,19 @@ function emptyBody() {}
 export struct SunToolShell {
   manifest: SunAppManifest = {
     name: 'Sunpebble',
-    tagline: 'Small, polished tools.',
-    primaryAction: 'Add',
+    tagline: '',
+    primaryAction: '',
     accent: SunColor.sun,
     mode: SunMode.Light
   }
 
   @BuilderParam body: () => void = emptyBody
   onPrimaryAction: () => void = () => {}
+
+  @Prop
+  showPro: boolean = false
+
+  onPro: () => void = () => {}
 
   private shellBackground(): ResourceColor {
     return this.manifest.mode === SunMode.Dark ? SunColor.night : SunColor.cream
@@ -26,37 +32,33 @@ export struct SunToolShell {
   }
 
   private secondary(): ResourceColor {
-    return this.manifest.mode === SunMode.Dark ? '#BFB8AA' : SunColor.pebble
+    return this.manifest.mode === SunMode.Dark ? SunColor.darkSecondary : SunColor.pebble
   }
 
   build() {
     Column() {
-      Row({ space: SunSpacing.lg }) {
-        Column({ space: SunSpacing.xs }) {
-          Text(this.manifest.name)
-            .fontSize(SunType.title)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.foreground())
-            .letterSpacing(4)
+      SunAppHeader({
+        manifest: this.manifest,
+        showPro: this.showPro,
+        onPro: this.onPro
+      })
 
-          if (this.manifest.tagline.length > 0) {
-            Text(this.manifest.tagline)
-              .fontSize(SunType.body)
-              .fontColor(this.secondary())
-          }
-        }
-        .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
-
-        if (this.manifest.primaryAction.length > 0) {
+      if (this.manifest.primaryAction) {
+        Row() {
+          Blank().layoutWeight(1)
           SunButton({
             label: this.manifest.primaryAction,
             action: this.onPrimaryAction
           })
         }
+        .width('100%')
+        .padding({
+          left: SunSpacing.xl,
+          right: SunSpacing.xl,
+          top: SunSpacing.sm,
+          bottom: SunSpacing.sm
+        })
       }
-      .width('100%')
-      .padding({ bottom: SunSpacing.xl })
 
       Column() {
         this.body()
@@ -67,7 +69,7 @@ export struct SunToolShell {
     .width('100%')
     .height('100%')
     .alignItems(HorizontalAlign.Start)
-    .padding(SunSpacing.xl)
+    .padding({ left: SunSpacing.xl, right: SunSpacing.xl, bottom: SunSpacing.md })
     .backgroundColor(this.shellBackground())
   }
 }

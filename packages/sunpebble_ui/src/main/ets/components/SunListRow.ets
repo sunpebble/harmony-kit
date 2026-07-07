@@ -2,9 +2,9 @@ import { SunColor, SunSpacing, SunType } from '../tokens/SunTheme'
 
 @Component
 export struct SunListRow {
-  title: string = ''
-  value: string = ''
-  caption: string = ''
+  title: ResourceStr = ''
+  value: ResourceStr = ''
+  caption: ResourceStr = ''
   action: () => void = () => {}
 
   build() {
@@ -14,27 +14,36 @@ export struct SunListRow {
           .fontSize(SunType.body)
           .fontWeight(FontWeight.Medium)
           .fontColor(SunColor.ink)
+          .maxLines(2)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-        if (this.caption.length > 0) {
+        if (this.caption) {
           Text(this.caption)
             .fontSize(SunType.caption)
             .fontColor(SunColor.pebble)
             .lineHeight(18)
+            .maxLines(2)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
         }
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
 
-      if (this.value.length > 0) {
+      if (this.value) {
         Text(this.value)
           .fontSize(SunType.body)
           .fontColor(SunColor.pebble)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .flexShrink(0)
+          .constraintSize({ maxWidth: '40%' })
       }
     }
     .width('100%')
     .height(56)
     .padding({ top: SunSpacing.sm, bottom: SunSpacing.sm })
     .border({ width: { bottom: 1 }, color: SunColor.border })
+
     .onClick(() => this.action())
   }
 }

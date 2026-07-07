@@ -3,9 +3,9 @@ import { SunButton, SunButtonRole } from './SunButton'
 
 @Component
 export struct SunEmptyState {
-  title: string = ''
-  message: string = ''
-  actionLabel: string = ''
+  title: ResourceStr = ''
+  message: ResourceStr = ''
+  actionLabel: ResourceStr = ''
   onAction: () => void = () => {}
 
   build() {
@@ -22,7 +22,7 @@ export struct SunEmptyState {
         .textAlign(TextAlign.Center)
         .lineHeight(22)
 
-      if (this.actionLabel.length > 0) {
+      if (this.actionLabel) {
         SunButton({
           label: this.actionLabel,
           role: SunButtonRole.Primary,

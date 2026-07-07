@@ -5,7 +5,9 @@ import {
   SunColor,
   SunListRow,
   SunSpacing,
-  SunToolShell,
+  SunSafeRoot,
+  SunTabItem,
+  SunTabShell,
   SunType
 } from 'sunpebble_ui'
 import { uniformTypeDescriptor as utd } from '@kit.ArkData'
@@ -306,11 +308,11 @@ struct Index {
     const secondary = Number(this.draftSecondary)
     if (this.selectedKind === 'Blood pressure') {
       if (!(primary > 0) || !(secondary > 0)) {
-        this.showToast('Enter systolic and diastolic first.')
+        this.showToast(this.t($r('app.string.steady_toast_enter_bp')))
         return
       }
     } else if (!(primary > 0)) {
-      this.showToast('Enter a value first.')
+      this.showToast(this.t($r('app.string.steady_toast_enter_value')))
       return
     }
 
@@ -400,10 +402,61 @@ struct Index {
     }
   }
 
+  private t(resource: Resource, ...args: Array<string | number>): string {
+    try {
+      const context = this.getUIContext().getHostContext()
+      if (!context) {
+        return ''
+      }
+      if (args.length === 0) {
+        return context.resourceManager.getStringSync(resource)
+      }
+      return context.resourceManager.getStringSync(resource.id, ...args)
+    } catch (_error) {
+      return ''
+    }
+  }
+
+  private kindLabel(kind: string): Resource {
+    if (kind === 'Blood glucose') {
+      return $r('app.string.steady_kind_blood_glucose')
+    }
+    if (kind === 'Weight') {
+      return $r('app.string.steady_kind_weight')
+    }
+    if (kind === 'Heart rate') {
+      return $r('app.string.steady_kind_heart_rate')
+    }
+    if (kind === 'Blood oxygen') {
+      return $r('app.string.steady_kind_blood_oxygen')
+    }
+    return $r('app.string.steady_kind_blood_pressure')
+  }
+
+  private kindText(kind: string): string {
+    return this.t(this.kindLabel(kind))
+  }
+
+  private mealtimeLabel(mealtime: string): Resource {
+    return mealtime === 'After meal'
+      ? $r('app.string.steady_mealtime_after_meal')
+      : $r('app.string.steady_mealtime_fasting')
+  }
+
+  private trendRangeLabel(label: string): Resource {
+    if (label === '90D') {
+      return $r('app.string.steady_range_90d')
+    }
+    if (label === '30D') {
+      return $r('app.string.steady_range_30d')
+    }
+    return $r('app.string.steady_range_7d')
+  }
+
   private unlockPro(): void {
     this.proUnlocked = true
     this.paywallOpen = false
-    this.showToast('Steady Pro unlocked on this device.')
+    this.showToast(this.t($r('app.string.steady_toast_pro_unlocked')))
   }
 
   private showPaywall(): void {
@@ -423,16 +476,16 @@ struct Index {
   }
 
   private shareDoctorReport(): void {
-    this.shareText('Doctor report', this.doctorReportText())
+    this.shareText(this.t($r('app.string.steady_doctor_report')), this.doctorReportText())
   }
 
   private async copyText(label: string, text: string): Promise<void> {
     try {
       const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, text)
       await pasteboard.getSystemPasteboard().setData(data)
-      this.showToast(`${label} copied.`)
+      this.showToast(this.t($r('app.string.steady_toast_copied_format'), label))
     } catch (_error) {
-      this.showToast('Copy failed.')
+      this.showToast(this.t($r('app.string.steady_toast_copy_failed')))
     }
   }
 
@@ -517,7 +570,7 @@ struct Index {
         logs.push({
           key: `${this.medKey(med)}|${key}`,
           time: timestamp,
-          title: `${med.name} — taken`,
+          title: this.t($r('app.string.steady_med_taken_format'), med.name),
           caption: `${date} ${time}${med.dose.length > 0 ? ` · ${med.dose}` : ''}`
         })
       })
@@ -551,7 +604,7 @@ struct Index {
         kind: 'Symptom',
         time,
         title: `${symptom.name} · ${String('•').repeat(symptom.severity)}`,
-        caption: this.timelineCaption(time, 'Symptom'),
+        caption: this.timelineCaption(time, this.t($r('app.string.steady_word_symptom'))),
         readingId: -1,
         symptomId: symptom.id
       })
@@ -666,7 +719,7 @@ struct Index {
   private addMedication(): void {
     const name = this.medName.trim()
     if (name.length === 0) {
-      this.showToast('Enter medication name first.')
+      this.showToast(this.t($r('app.string.steady_toast_enter_med_name')))
       return
     }
     const times = [...this.medTimes]
@@ -724,7 +777,7 @@ struct Index {
   private logSymptom(): void {
     const name = this.symptomName.trim()
     if (name.length === 0) {
-      this.showToast('Enter symptom first.')
+      this.showToast(this.t($r('app.string.steady_toast_enter_symptom')))
       return
     }
     this.symptoms = [
@@ -855,7 +908,7 @@ struct Index {
   }
 
   private readingTimeLabel(): string {
-    return this.draftReadingAt > 0 ? this.dateTimeLabel(this.draftReadingAt) : 'Now'
+    return this.draftReadingAt > 0 ? this.dateTimeLabel(this.draftReadingAt) : this.t($r('app.string.steady_time_now'))
   }
 
   private startOfDay(time: number): number {
@@ -899,7 +952,7 @@ struct Index {
 
   private targetRangeLabel(kind: string): string {
     if (!this.hasTargetRange(kind)) {
-      return 'Not set'
+      return this.t($r('app.string.steady_target_not_set'))
     }
     return `${this.targetLowForKind(kind)}-${this.targetHighForKind(kind)} ${this.unitForKind(kind)}`
   }
@@ -907,10 +960,10 @@ struct Index {
   private trendSummary(kind: string): string {
     const readings = this.trendReadings(kind)
     if (readings.length === 0) {
-      return 'No data in range'
+      return this.t($r('app.string.steady_trend_no_data'))
     }
     if (!this.hasTargetRange(kind)) {
-      return `${readings.length} logs`
+      return this.t($r('app.string.steady_trend_logs_format'), readings.length)
     }
     const low = Number(this.targetLowForKind(kind))
     const high = Number(this.targetHighForKind(kind))
@@ -918,7 +971,7 @@ struct Index {
       const value = this.readingNumber(reading)
       return value >= low && value <= high
     }).length
-    return `${inRange} of ${readings.length} in patient-set range`
+    return this.t($r('app.string.steady_trend_in_range_format'), inRange, readings.length)
   }
 
   private trendReadings(kind: string): Reading[] {
@@ -1023,14 +1076,14 @@ struct Index {
       const value = this.readingNumber(reading)
       return value >= low && value <= high
     }).length
-    return `${inRange} of ${readings.length}`
+    return this.t($r('app.string.steady_ratio_format'), inRange, readings.length)
   }
 
   private trendMedicationValue(): string {
     const activeMeds = this.activeMeds()
     const expected = activeMeds.reduce((total: number, med: Medication) => total + this.medTimesFor(med).length * this.trendDays(), 0)
     if (expected === 0) {
-      return '0 of 0 (0%)'
+      return this.t($r('app.string.steady_doses_ratio_format'), 0, 0, 0)
     }
     const cutoff = Date.now() - this.trendDays() * this.dayMs()
     const taken = this.meds.reduce((total: number, med: Medication) => {
@@ -1040,13 +1093,13 @@ struct Index {
         return this.medicationLogTimestamp(date, this.medLogTime(key)) >= cutoff
       }).length
     }, 0)
-    return `${taken} of ${expected} (${Math.round(taken / expected * 100)}%)`
+    return this.t($r('app.string.steady_doses_ratio_format'), taken, expected, Math.round(taken / expected * 100))
   }
 
   private averageForKind(kind: string): string {
     const readings = this.readingsForKind(kind)
     if (readings.length === 0) {
-      return 'No readings'
+      return this.t($r('app.string.steady_no_readings'))
     }
     const total = readings.reduce((sum: number, reading: Reading) => sum + this.readingNumber(reading), 0)
     return `${this.cleanNumber(total / readings.length)} ${this.unitForKind(kind)}`
@@ -1055,14 +1108,14 @@ struct Index {
   private rangeForKind(kind: string): string {
     const values = this.readingsForKind(kind).map((reading: Reading) => this.readingNumber(reading))
     if (values.length === 0) {
-      return 'No readings'
+      return this.t($r('app.string.steady_no_readings'))
     }
     return `${this.cleanNumber(Math.min(...values))}-${this.cleanNumber(Math.max(...values))}`
   }
 
   private averageForReadings(kind: string, readings: Reading[]): string {
     if (readings.length === 0) {
-      return 'No readings'
+      return this.t($r('app.string.steady_no_readings'))
     }
     const total = readings.reduce((sum: number, reading: Reading) => sum + this.readingNumber(reading), 0)
     return `${this.cleanNumber(total / readings.length)} ${this.unitForKind(kind)}`
@@ -1070,7 +1123,7 @@ struct Index {
 
   private rangeForReadings(readings: Reading[]): string {
     if (readings.length === 0) {
-      return 'No readings'
+      return this.t($r('app.string.steady_no_readings'))
     }
     const values = readings.map((reading: Reading) => this.readingNumber(reading))
     return `${this.cleanNumber(Math.min(...values))}-${this.cleanNumber(Math.max(...values))}`
@@ -1215,8 +1268,9 @@ struct Index {
   private readingTimelineCaption(reading: Reading): string {
     const mealtime = this.validMealtime(reading.mealtime)
     const note = this.readingNote(reading)
-    const detail = mealtime.length > 0 ? mealtime : note
-    return detail.length > 0 ? `${reading.kind} · ${detail}` : reading.kind
+    const detail = mealtime.length > 0 ? this.t(this.mealtimeLabel(mealtime)) : note
+    const kindText = this.kindText(reading.kind)
+    return detail.length > 0 ? `${kindText} · ${detail}` : kindText
   }
 
   private csvPreview(): string {
@@ -1246,7 +1300,7 @@ struct Index {
 
   private reminderLabel(): string {
     if (!this.reminderEnabled) {
-      return 'Paused'
+      return this.t($r('app.string.steady_paused'))
     }
     return `${this.pad(this.reminderHour)}:${this.pad(this.reminderMinute)}`
   }
@@ -1269,7 +1323,7 @@ struct Index {
       }
       if (!await this.requestNotificationAccess()) {
         this.reminderEnabled = false
-        this.showToast('Enable notifications to use reminders.')
+        this.showToast(this.t($r('app.string.steady_toast_enable_notifications')))
         return
       }
       let notificationId = 210000
@@ -1284,8 +1338,8 @@ struct Index {
             minute,
             daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
             title: med.name,
-            content: `Time for ${med.dose.length > 0 ? med.dose : med.name}.`,
-            expiredContent: `${med.name} reminder missed.`,
+            content: this.t($r('app.string.steady_reminder_med_content_format'), med.dose.length > 0 ? med.dose : med.name),
+            expiredContent: this.t($r('app.string.steady_reminder_med_missed_format'), med.name),
             notificationId,
             tapDismissed: true
           }
@@ -1300,19 +1354,19 @@ struct Index {
           minute: this.reminderMinute,
           daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
           title: 'Steady',
-          content: 'Measurement time: take a minute to log your readings.',
-          expiredContent: 'Steady reminder missed.',
+          content: this.t($r('app.string.steady_reminder_measure_content')),
+          expiredContent: this.t($r('app.string.steady_reminder_measure_missed')),
           notificationId: 2001,
           tapDismissed: true
         }
         await reminderAgentManager.publishReminder(request)
       }
       if (showMeasurementToast) {
-        this.showToast(`Daily reminder set for ${this.reminderLabel()}.`)
+        this.showToast(this.t($r('app.string.steady_toast_reminder_set_format'), this.reminderLabel()))
       }
     } catch (_error) {
       this.reminderEnabled = false
-      this.showToast('Enable notifications to use reminders.')
+      this.showToast(this.t($r('app.string.steady_toast_enable_notifications')))
     }
   }
 
@@ -1328,7 +1382,7 @@ struct Index {
     } catch (_error) {
       // ponytail: stale reminder ids should not block the visible off state.
     }
-    this.showToast('Daily reminder off.')
+    this.showToast(this.t($r('app.string.steady_toast_reminder_off')))
   }
 
   private async requestNotificationAccess(): Promise<boolean> {
@@ -1346,7 +1400,9 @@ struct Index {
 
   @Builder
   private trendRangeButton(label: string) {
-    Button(label !== '7D' && !this.proUnlocked ? `${label} Pro` : label)
+    Button(label !== '7D' && !this.proUnlocked
+      ? $r('app.string.steady_range_pro_format', this.t(this.trendRangeLabel(label)))
+      : this.trendRangeLabel(label))
       .height(36)
       .padding({ left: 12, right: 12 })
       .borderRadius(999)
@@ -1383,13 +1439,18 @@ struct Index {
 
   @Builder
   private kindButton(kind: string) {
-    Button(kind)
+    Button({ type: ButtonType.Normal }) {
+      Text(this.kindLabel(kind))
+        .fontSize(12)
+        .fontColor(this.selectedKind === kind ? SunColor.cream : SunColor.ink)
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .constraintSize({ maxWidth: 140 })
+    }
       .height(36)
       .padding({ left: 12, right: 12 })
       .borderRadius(999)
       .backgroundColor(this.selectedKind === kind ? SunColor.ink : SunColor.white)
-      .fontColor(this.selectedKind === kind ? SunColor.cream : SunColor.ink)
-      .fontSize(12)
       .border({ width: 1, color: SunColor.border })
       .onClick(() => {
         this.selectedKind = kind
@@ -1401,7 +1462,7 @@ struct Index {
   }
 
   @Builder
-  private mealtimeButton(label: string, value: string) {
+  private mealtimeButton(label: ResourceStr, value: string) {
     Button(label)
       .height(34)
       .padding({ left: 12, right: 12 })
@@ -1428,7 +1489,7 @@ struct Index {
         }
       })
     } catch (_error) {
-      this.showToast('Time picker unavailable.')
+      this.showToast(this.t($r('app.string.steady_toast_time_picker_unavailable')))
     }
   }
 
@@ -1459,7 +1520,7 @@ struct Index {
         }
       })
     } catch (_error) {
-      this.showToast('Time picker unavailable.')
+      this.showToast(this.t($r('app.string.steady_toast_time_picker_unavailable')))
     }
   }
 
@@ -1480,7 +1541,7 @@ struct Index {
         }
       })
     } catch (_error) {
-      this.showToast('Date picker unavailable.')
+      this.showToast(this.t($r('app.string.steady_toast_date_picker_unavailable')))
     }
   }
 
@@ -1499,7 +1560,7 @@ struct Index {
   }
 
   @Builder
-  private symptomSeverityButton(label: string, severity: number) {
+  private symptomSeverityButton(label: ResourceStr, severity: number) {
     Button(label)
       .height(34)
       .padding({ left: 12, right: 12 })
@@ -1528,7 +1589,7 @@ struct Index {
   private quickLogCard() {
     SunCard() {
       Column({ space: SunSpacing.md }) {
-        Text('QUICK LOG')
+        Text($r('app.string.steady_section_quick_log'))
           .fontSize(10)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.4)
@@ -1548,7 +1609,7 @@ struct Index {
 
         if (this.selectedKind === 'Blood pressure') {
           Row({ space: SunSpacing.sm }) {
-            TextInput({ placeholder: 'Systolic', text: this.draftPrimary })
+            TextInput({ placeholder: $r('app.string.steady_placeholder_systolic'), text: this.draftPrimary })
               .height(46)
               .layoutWeight(1)
               .fontSize(14)
@@ -1558,7 +1619,7 @@ struct Index {
               .border({ width: 1, color: SunColor.border })
               .onChange((value: string) => this.draftPrimary = value)
 
-            TextInput({ placeholder: 'Diastolic', text: this.draftSecondary })
+            TextInput({ placeholder: $r('app.string.steady_placeholder_diastolic'), text: this.draftSecondary })
               .height(46)
               .layoutWeight(1)
               .fontSize(14)
@@ -1584,13 +1645,13 @@ struct Index {
         if (this.selectedKind === 'Blood glucose') {
           Row({ space: SunSpacing.sm }) {
             this.mealtimeButton('-', '')
-            this.mealtimeButton('Fasting', 'Fasting')
-            this.mealtimeButton('After meal', 'After meal')
+            this.mealtimeButton($r('app.string.steady_mealtime_fasting'), 'Fasting')
+            this.mealtimeButton($r('app.string.steady_mealtime_after_meal'), 'After meal')
           }
           .width('100%')
         }
 
-        Button(`Time · ${this.readingTimeLabel()}`)
+        Button($r('app.string.steady_time_button_format', this.readingTimeLabel()))
           .height(40)
           .width('100%')
           .borderRadius(999)
@@ -1601,7 +1662,7 @@ struct Index {
           .border({ width: 1, color: SunColor.border })
           .onClick(() => this.pickReadingTime())
 
-        TextInput({ placeholder: 'Note (optional)', text: this.draftNote })
+        TextInput({ placeholder: $r('app.string.steady_placeholder_note_optional'), text: this.draftNote })
           .height(46)
           .width('100%')
           .fontSize(14)
@@ -1612,7 +1673,7 @@ struct Index {
           .onChange((value: string) => this.draftNote = value)
 
         SunButton({
-          label: `Save ${this.selectedKind}`,
+          label: $r('app.string.steady_save_kind_format', this.kindText(this.selectedKind)),
           action: () => this.logReading()
         })
       }
@@ -1625,13 +1686,13 @@ struct Index {
   private symptomLogCard() {
     SunCard() {
       Column({ space: SunSpacing.md }) {
-        Text('SYMPTOM')
+        Text($r('app.string.steady_section_symptom'))
           .fontSize(10)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.4)
           .fontColor(SunColor.pebble)
 
-        TextInput({ placeholder: 'Symptom (e.g. headache)', text: this.symptomName })
+        TextInput({ placeholder: $r('app.string.steady_placeholder_symptom'), text: this.symptomName })
           .height(46)
           .width('100%')
           .fontSize(14)
@@ -1642,13 +1703,13 @@ struct Index {
           .onChange((value: string) => this.symptomName = value)
 
         Row({ space: SunSpacing.sm }) {
-          this.symptomSeverityButton('Mild', 1)
-          this.symptomSeverityButton('Moderate', 2)
-          this.symptomSeverityButton('Severe', 3)
+          this.symptomSeverityButton($r('app.string.steady_severity_mild'), 1)
+          this.symptomSeverityButton($r('app.string.steady_severity_moderate'), 2)
+          this.symptomSeverityButton($r('app.string.steady_severity_severe'), 3)
         }
         .width('100%')
 
-        TextInput({ placeholder: 'Note', text: this.symptomNote })
+        TextInput({ placeholder: $r('app.string.steady_placeholder_note'), text: this.symptomNote })
           .height(46)
           .width('100%')
           .fontSize(14)
@@ -1659,7 +1720,7 @@ struct Index {
           .onChange((value: string) => this.symptomNote = value)
 
         SunButton({
-          label: 'Save',
+          label: $r('app.string.steady_save'),
           role: SunButtonRole.Secondary,
           action: () => this.logSymptom()
         })
@@ -1673,7 +1734,7 @@ struct Index {
   private targetRangeEditor(kind: string) {
     Column({ space: SunSpacing.sm }) {
       Row({ space: SunSpacing.md }) {
-        Text(kind)
+        Text(this.kindLabel(kind))
           .fontSize(SunType.body)
           .fontWeight(FontWeight.Medium)
           .fontColor(SunColor.ink)
@@ -1686,7 +1747,7 @@ struct Index {
       .width('100%')
 
       Row({ space: SunSpacing.sm }) {
-        TextInput({ placeholder: 'low', text: this.targetLowForKind(kind) })
+        TextInput({ placeholder: $r('app.string.steady_placeholder_low'), text: this.targetLowForKind(kind) })
           .height(42)
           .layoutWeight(1)
           .fontSize(14)
@@ -1696,7 +1757,7 @@ struct Index {
           .border({ width: 1, color: SunColor.border })
           .onChange((value: string) => this.setTargetLow(kind, value))
 
-        TextInput({ placeholder: 'high', text: this.targetHighForKind(kind) })
+        TextInput({ placeholder: $r('app.string.steady_placeholder_high'), text: this.targetHighForKind(kind) })
           .height(42)
           .layoutWeight(1)
           .fontSize(14)
@@ -1714,19 +1775,16 @@ struct Index {
   @Builder
   private timeline() {
     Column({ space: SunSpacing.md }) {
-      this.quickLogCard()
-      this.symptomLogCard()
-
       SunCard() {
         Column({ space: SunSpacing.sm }) {
           if (this.timelineItems().length === 0) {
             Column({ space: SunSpacing.xs }) {
-              Text('Nothing yet')
+              Text($r('app.string.steady_timeline_empty_title'))
                 .fontSize(SunType.body)
                 .fontWeight(FontWeight.Bold)
                 .fontColor(SunColor.ink)
 
-              Text('Log your first reading with the + button.')
+              Text($r('app.string.steady_timeline_empty_message'))
                 .fontSize(SunType.caption)
                 .fontColor(SunColor.pebble)
             }
@@ -1744,13 +1802,13 @@ struct Index {
                   if (this.confirmingTimelineDeleteKey === item.key) {
                     Row({ space: SunSpacing.sm }) {
                       SunButton({
-                        label: 'Confirm Delete',
+                        label: $r('app.string.steady_confirm_delete'),
                         role: SunButtonRole.Danger,
                         action: () => this.deleteReading(item.readingId)
                       })
 
                       SunButton({
-                        label: 'Cancel',
+                        label: $r('app.string.steady_cancel'),
                         role: SunButtonRole.Secondary,
                         action: () => this.confirmingTimelineDeleteKey = ''
                       })
@@ -1758,7 +1816,7 @@ struct Index {
                     .width('100%')
                   } else {
                     SunButton({
-                      label: 'Delete',
+                      label: $r('app.string.steady_delete'),
                       role: SunButtonRole.Danger,
                       action: () => this.confirmingTimelineDeleteKey = item.key
                     })
@@ -1767,13 +1825,13 @@ struct Index {
                   if (this.confirmingTimelineDeleteKey === item.key) {
                     Row({ space: SunSpacing.sm }) {
                       SunButton({
-                        label: 'Confirm Delete',
+                        label: $r('app.string.steady_confirm_delete'),
                         role: SunButtonRole.Danger,
                         action: () => this.deleteSymptom(item.symptomId)
                       })
 
                       SunButton({
-                        label: 'Cancel',
+                        label: $r('app.string.steady_cancel'),
                         role: SunButtonRole.Secondary,
                         action: () => this.confirmingTimelineDeleteKey = ''
                       })
@@ -1781,7 +1839,7 @@ struct Index {
                     .width('100%')
                   } else {
                     SunButton({
-                      label: 'Delete',
+                      label: $r('app.string.steady_delete'),
                       role: SunButtonRole.Danger,
                       action: () => this.confirmingTimelineDeleteKey = item.key
                     })
@@ -1799,7 +1857,7 @@ struct Index {
 
   @Builder
   private trendKindButton(kind: string) {
-    Button(kind)
+    Button(this.kindLabel(kind))
       .height(36)
       .padding({ left: 12, right: 12 })
       .borderRadius(999)
@@ -1811,7 +1869,7 @@ struct Index {
   }
 
   @Builder
-  private trendFactRow(label: string, value: string) {
+  private trendFactRow(label: ResourceStr, value: string) {
     Row({ space: SunSpacing.md }) {
       Text(label)
         .fontSize(SunType.body)
@@ -1831,7 +1889,7 @@ struct Index {
     Column({ space: SunSpacing.md }) {
       SunCard() {
         Column({ space: SunSpacing.md }) {
-          Text('TRENDS')
+          Text($r('app.string.steady_section_trends'))
             .fontSize(10)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1.4)
@@ -1858,20 +1916,20 @@ struct Index {
 
           if (this.hasSelectedTrendReadings()) {
             this.trendChart()
-            this.trendFactRow('Average', this.averageForReadings(this.trendKind, this.selectedTrendReadings()))
-            this.trendFactRow('Range', this.rangeForReadings(this.selectedTrendReadings()))
+            this.trendFactRow($r('app.string.steady_trend_average'), this.averageForReadings(this.trendKind, this.selectedTrendReadings()))
+            this.trendFactRow($r('app.string.steady_trend_range'), this.rangeForReadings(this.selectedTrendReadings()))
             if (this.selectedTrendTargetValue().length > 0) {
-              this.trendFactRow('Readings in your range', this.selectedTrendTargetValue())
+              this.trendFactRow($r('app.string.steady_trend_in_your_range'), this.selectedTrendTargetValue())
             }
           } else {
-            Text('No data in range')
+            Text($r('app.string.steady_trend_no_data'))
               .fontSize(SunType.body)
               .fontColor(SunColor.pebble)
           }
 
           ForEach(this.kinds, (kind: string) => {
             Row({ space: SunSpacing.md }) {
-              Text(kind)
+              Text(this.kindLabel(kind))
                 .fontSize(SunType.body)
                 .fontWeight(FontWeight.Medium)
                 .fontColor(SunColor.ink)
@@ -1884,7 +1942,7 @@ struct Index {
             .height(42)
           }, (kind: string) => kind)
 
-          Text('MEDICATION')
+          Text($r('app.string.steady_section_medication'))
             .fontSize(10)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1.4)
@@ -1892,12 +1950,12 @@ struct Index {
             .padding({ top: SunSpacing.xs })
 
           if (this.activeMeds().length === 0) {
-            Text('No medications set up.')
+            Text($r('app.string.steady_no_meds_set_up'))
               .fontSize(SunType.body)
               .fontColor(SunColor.pebble)
           } else {
             Row({ space: SunSpacing.md }) {
-              Text('Doses logged')
+              Text($r('app.string.steady_doses_logged'))
                 .fontSize(SunType.body)
                 .fontWeight(FontWeight.Medium)
                 .fontColor(SunColor.ink)
@@ -1969,7 +2027,7 @@ struct Index {
     Column({ space: SunSpacing.md }) {
       SunCard() {
         Column({ space: SunSpacing.sm }) {
-          Text('TODAY')
+          Text($r('app.string.steady_section_today'))
             .fontSize(10)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1.4)
@@ -1989,7 +2047,7 @@ struct Index {
 
               if (this.confirmingDeleteMedKey === this.medKey(med)) {
                 Row({ space: SunSpacing.sm }) {
-                  Button('Confirm Delete')
+                  Button($r('app.string.steady_confirm_delete'))
                     .height(34)
                     .padding({ left: 12, right: 12 })
                     .borderRadius(999)
@@ -1997,7 +2055,7 @@ struct Index {
                     .fontColor(SunColor.white)
                     .onClick(() => this.deleteMedication(med))
 
-                  Button('Cancel')
+                  Button($r('app.string.steady_cancel'))
                     .height(34)
                     .padding({ left: 12, right: 12 })
                     .borderRadius(999)
@@ -2007,7 +2065,7 @@ struct Index {
                     .onClick(() => this.confirmingDeleteMedKey = '')
                 }
               } else {
-                Button('Delete')
+                Button($r('app.string.steady_delete'))
                   .height(34)
                   .padding({ left: 12, right: 12 })
                   .borderRadius(999)
@@ -2024,12 +2082,12 @@ struct Index {
 
           if (this.activeMeds().length === 0) {
             Column({ space: SunSpacing.xs }) {
-              Text('No medications')
+              Text($r('app.string.steady_meds_empty_title'))
                 .fontSize(SunType.body)
                 .fontWeight(FontWeight.Bold)
                 .fontColor(SunColor.ink)
 
-              Text('Add one to get reminders and a daily checklist.')
+              Text($r('app.string.steady_meds_empty_message'))
                 .fontSize(SunType.caption)
                 .fontColor(SunColor.pebble)
             }
@@ -2042,13 +2100,13 @@ struct Index {
 
       SunCard() {
         Column({ space: SunSpacing.md }) {
-          Text(this.editingMedKey.length > 0 ? 'EDIT MEDICATION' : 'NEW MEDICATION')
+          Text(this.editingMedKey.length > 0 ? $r('app.string.steady_section_edit_medication') : $r('app.string.steady_section_new_medication'))
             .fontSize(10)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1.4)
             .fontColor(SunColor.pebble)
 
-          TextInput({ placeholder: 'Name', text: this.medName })
+          TextInput({ placeholder: $r('app.string.steady_placeholder_med_name'), text: this.medName })
             .height(46)
             .width('100%')
             .fontSize(14)
@@ -2058,7 +2116,7 @@ struct Index {
             .border({ width: 1, color: SunColor.border })
             .onChange((value: string) => this.medName = value)
 
-          TextInput({ placeholder: 'Dosage (e.g. 500mg)', text: this.medDose })
+          TextInput({ placeholder: $r('app.string.steady_placeholder_med_dose'), text: this.medDose })
             .height(46)
             .width('100%')
             .fontSize(14)
@@ -2086,20 +2144,20 @@ struct Index {
           }
 
           SunButton({
-            label: 'Add Time',
+            label: $r('app.string.steady_add_time'),
             role: SunButtonRole.Secondary,
             action: () => this.pickMedTime()
           })
 
           SunButton({
-            label: this.editingMedKey.length > 0 ? 'Save Medication' : 'Add Medication',
+            label: this.editingMedKey.length > 0 ? $r('app.string.steady_save_medication') : $r('app.string.steady_add_medication'),
             role: SunButtonRole.Secondary,
             action: () => this.addMedication()
           })
 
           if (this.editingMedKey.length > 0) {
             SunButton({
-              label: 'Cancel Edit',
+              label: $r('app.string.steady_cancel_edit'),
               role: SunButtonRole.Secondary,
               action: () => this.resetMedicationForm()
             })
@@ -2112,7 +2170,7 @@ struct Index {
   }
 
   @Builder
-  private paywallFeature(icon: string, text: string) {
+  private paywallFeature(icon: string, text: ResourceStr) {
     Row({ space: SunSpacing.md }) {
       Text(icon)
         .fontSize(18)
@@ -2136,24 +2194,24 @@ struct Index {
           .fontColor(SunColor.ink)
 
         Column({ space: 12 }) {
-          this.paywallFeature('▣', 'PDF reports for doctor visits')
-          this.paywallFeature('⌁', 'Trends beyond the last 7 days')
-          this.paywallFeature('▦', 'CSV export')
-          this.paywallFeature('▥', 'All widgets')
+          this.paywallFeature('▣', $r('app.string.steady_paywall_feature_reports'))
+          this.paywallFeature('⌁', $r('app.string.steady_paywall_feature_trends'))
+          this.paywallFeature('▦', $r('app.string.steady_paywall_feature_csv'))
+          this.paywallFeature('▥', $r('app.string.steady_paywall_feature_widgets'))
         }
         .width('100%')
         .alignItems(HorizontalAlign.Start)
 
-        Text('Pay once. Yours forever. No subscription.')
+        Text($r('app.string.steady_paywall_pitch'))
           .fontSize(14)
           .fontColor(SunColor.pebble)
 
         SunButton({
-          label: 'Unlock for $1.99',
+          label: $r('app.string.steady_paywall_unlock'),
           action: () => this.unlockPro()
         })
 
-        Button('Restore purchase')
+        Button($r('app.string.steady_paywall_restore'))
           .height(36)
           .backgroundColor(Color.Transparent)
           .fontSize(14)
@@ -2174,7 +2232,7 @@ struct Index {
       SunCard() {
         Column({ space: SunSpacing.sm }) {
           SunButton({
-            label: this.reportOpen ? 'Hide Doctor report' : 'Doctor report',
+            label: this.reportOpen ? $r('app.string.steady_hide_doctor_report') : $r('app.string.steady_doctor_report'),
             role: SunButtonRole.Secondary,
             action: () => this.toggleDoctorReport()
           })
@@ -2182,13 +2240,13 @@ struct Index {
           if (this.reportOpen) {
             Row({ space: SunSpacing.sm }) {
               SunButton({
-                label: `From ${this.dateLabel(this.reportStartTime())}`,
+                label: $r('app.string.steady_report_from_format', this.dateLabel(this.reportStartTime())),
                 role: SunButtonRole.Secondary,
                 action: () => this.pickReportDate('start')
               })
 
               SunButton({
-                label: `To ${this.dateLabel(this.reportEndTime())}`,
+                label: $r('app.string.steady_report_to_format', this.dateLabel(this.reportEndTime())),
                 role: SunButtonRole.Secondary,
                 action: () => this.pickReportDate('end')
               })
@@ -2203,7 +2261,7 @@ struct Index {
                 .lineHeight(18)
 
               SunButton({
-                label: 'Share report',
+                label: $r('app.string.steady_share_report'),
                 role: SunButtonRole.Secondary,
                 action: () => {
                   this.shareDoctorReport()
@@ -2211,7 +2269,7 @@ struct Index {
               })
             } else {
               SunButton({
-                label: 'Generate report',
+                label: $r('app.string.steady_generate_report'),
                 role: SunButtonRole.Secondary,
                 action: () => this.showPaywall()
               })
@@ -2219,14 +2277,14 @@ struct Index {
           }
 
           SunButton({
-            label: 'Export CSV',
+            label: $r('app.string.steady_export_csv'),
             role: SunButtonRole.Secondary,
             action: () => this.exportCsv()
           })
 
           if (this.proUnlocked) {
             SunListRow({
-              title: 'CSV Preview',
+              title: $r('app.string.steady_csv_preview'),
               caption: this.csvPreview()
             })
           }
@@ -2236,7 +2294,7 @@ struct Index {
 
       SunCard() {
         Column({ space: SunSpacing.md }) {
-          Text('MY TARGET RANGES')
+          Text($r('app.string.steady_section_target_ranges'))
             .fontSize(10)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1.4)
@@ -2246,7 +2304,7 @@ struct Index {
             this.targetRangeEditor(kind)
           }, (kind: string) => kind)
 
-          Text('Set these with your doctor. Steady only counts readings against ranges you enter — it never judges them.')
+          Text($r('app.string.steady_target_ranges_note'))
             .fontSize(12)
             .fontColor(SunColor.pebble)
             .lineHeight(18)
@@ -2257,13 +2315,13 @@ struct Index {
 
       SunCard() {
         Column({ space: SunSpacing.md }) {
-          Text('MEASUREMENT REMINDER')
+          Text($r('app.string.steady_section_measurement_reminder'))
             .fontSize(10)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1.4)
             .fontColor(SunColor.pebble)
 
-          Button(this.reminderEnabled ? 'Daily reminder on' : 'Daily reminder off')
+          Button(this.reminderEnabled ? $r('app.string.steady_reminder_on_label') : $r('app.string.steady_reminder_off_label'))
             .height(42)
             .width('100%')
             .borderRadius(999)
@@ -2288,9 +2346,9 @@ struct Index {
             .onChange((value: TimePickerResult) => this.setReminderTime(value.hour, value.minute))
 
           SunListRow({
-            title: 'Measurement reminder',
+            title: $r('app.string.steady_measurement_reminder'),
             value: this.reminderLabel(),
-            caption: 'Take a minute to log your readings.'
+            caption: $r('app.string.steady_reminder_caption')
           })
 
         }
@@ -2298,7 +2356,7 @@ struct Index {
         .alignItems(HorizontalAlign.Start)
       }
 
-      Text('Steady is a record-keeping tool, not a medical device. It does not diagnose, treat, or give medical advice. Target ranges shown are the ones you entered yourself. Always consult your doctor about your readings.')
+      Text($r('app.string.steady_disclaimer'))
         .fontSize(12)
         .fontColor(SunColor.pebble)
         .lineHeight(18)
@@ -2313,7 +2371,7 @@ struct Index {
             })
           } else {
             SunListRow({
-              title: 'Steady Pro — unlocked'
+              title: $r('app.string.steady_pro_unlocked_row')
             })
           }
           this.paywallPanel()
@@ -2323,53 +2381,60 @@ struct Index {
     }
   }
 
-  build() {
-    Stack({ alignContent: Alignment.BottomEnd }) {
-      SunToolShell({
-        manifest: appProfile,
-        onPrimaryAction: () => this.logReading()
-      }) {
-        Column({ space: SunSpacing.md }) {
-          Scroll() {
-            Column() {
-              if (this.tab === 'Timeline') {
-                this.timeline()
-              } else if (this.tab === 'Trends') {
-                this.trends()
-              } else if (this.tab === 'Meds') {
-                this.medsView()
-              } else {
-                this.settings()
-              }
-            }
-            .width('100%')
-            .padding({ bottom: 116 })
-          }
-          .width('100%')
-          .layoutWeight(1)
+  private steadyTabs(): SunTabItem[] {
+    return [
+      { id: 'Timeline', label: $r('app.string.steady_tab_timeline') },
+      { id: 'Trends', label: $r('app.string.steady_tab_trends') },
+      { id: 'Meds', label: $r('app.string.steady_tab_meds') },
+      { id: 'Settings', label: $r('app.string.steady_tab_settings') }
+    ]
+  }
 
-          Scroll() {
-            Row({ space: SunSpacing.sm }) {
-              this.tabButton('Timeline')
-              this.tabButton('Trends')
-              this.tabButton('Meds')
-              this.tabButton('Settings')
-            }
-          }
-          .width('100%')
-          .height(44)
-          .scrollable(ScrollDirection.Horizontal)
-          .scrollBar(BarState.Off)
+  @Builder
+  private steadyTabBody(tabId: string) {
+    Scroll() {
+      Column() {
+        if (tabId === 'Timeline') {
+          this.timeline()
+        } else if (tabId === 'Trends') {
+          this.trends()
+        } else if (tabId === 'Meds') {
+          this.medsView()
+        } else {
+          this.settings()
         }
-        .width('100%')
-        .height('100%')
       }
+      .width('100%')
+      .padding({ left: SunSpacing.xl, right: SunSpacing.xl, bottom: 120 })
+    }
+    .width('100%')
+    .height('100%')
+    .scrollBar(BarState.Off)
+    .edgeEffect(EdgeEffect.Spring)
+  }
+
+  build() {
+    Column() {
+      SunSafeRoot({ mode: appProfile.mode }) {
+        Stack({ alignContent: Alignment.BottomEnd }) {
+        SunTabShell({
+        manifest: appProfile,
+        tabs: this.steadyTabs(),
+        activeTab: this.tab,
+        onTabChange: (tabId: string) => {
+          this.tab = tabId
+          this.quickActionsOpen = false
+        },
+        tabBody: (tabId: string) => {
+          this.steadyTabBody(tabId)
+        }
+      })
 
       Column({ space: SunSpacing.sm }) {
         if (this.quickActionsOpen) {
           Column({ space: SunSpacing.sm }) {
             ForEach(this.kinds, (kind: string) => {
-              Button(kind)
+              Button(this.kindLabel(kind))
                 .height(38)
                 .padding({ left: SunSpacing.lg, right: SunSpacing.lg })
                 .borderRadius(999)
@@ -2378,13 +2443,14 @@ struct Index {
                 .fontSize(12)
                 .fontWeight(FontWeight.Bold)
                 .border({ width: 1, color: SunColor.border })
+                .shadow({ radius: 12, color: '#00000018', offsetY: 4 }) // ponytail: translucent shadow, no SunColor token
                 .onClick(() => this.selectQuickKind(kind))
             }, (kind: string) => kind)
           }
           .alignItems(HorizontalAlign.End)
           .padding(SunSpacing.sm)
           .borderRadius(18)
-          .backgroundColor('#FFF6E8')
+          .backgroundColor(SunColor.cream)
           .border({ width: 1, color: SunColor.border })
         }
 
@@ -2396,10 +2462,15 @@ struct Index {
           .fontColor(SunColor.ink)
           .fontSize(28)
           .fontWeight(FontWeight.Bold)
+          .shadow({ radius: 8, color: '#00000022', offsetY: 2 }) // ponytail: translucent shadow, no SunColor token
           .onClick(() => this.quickActionsOpen = !this.quickActionsOpen)
       }
-      .alignItems(HorizontalAlign.End)
-      .margin({ right: SunSpacing.xl, bottom: 88 })
+        .alignItems(HorizontalAlign.End)
+        .margin({ right: SunSpacing.xl, bottom: SunSpacing.lg })
+      }
+        .width('100%')
+        .height('100%')
+      }
     }
     .width('100%')
     .height('100%')

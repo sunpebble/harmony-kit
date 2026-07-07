@@ -2,6 +2,8 @@ import {
   SunColor,
   SunRadius,
   SunSpacing,
+  SunMode,
+  SunSafeRoot,
   SunToolShell,
   SunType
 } from 'sunpebble_ui'
@@ -70,6 +72,38 @@ PersistentStorage.persistProp('simmer.savedPresets.v1', '')
 PersistentStorage.persistProp('simmer.nextPresetId.v1', 1)
 PersistentStorage.persistProp('simmer.proUnlocked.v1', false)
 
+// Stored timer/preset labels stay English (persisted data keys); translate at display only.
+function presetLabelRes(label: string): Resource | undefined {
+  switch (label) {
+    case 'Timer': return $r('app.string.simmer_label_timer')
+    case 'Tea': return $r('app.string.simmer_label_tea')
+    case 'Ramen': return $r('app.string.simmer_label_ramen')
+    case 'French Press': return $r('app.string.simmer_label_french_press')
+    case 'Rest Steak': return $r('app.string.simmer_label_rest_steak')
+    case 'Soft Egg': return $r('app.string.simmer_label_soft_egg')
+    case 'Steam Veg': return $r('app.string.simmer_label_steam_veg')
+    case 'Hard Egg': return $r('app.string.simmer_label_hard_egg')
+    case 'Pasta': return $r('app.string.simmer_label_pasta')
+    case 'Dumplings': return $r('app.string.simmer_label_dumplings')
+    case 'Rice': return $r('app.string.simmer_label_rice')
+    case 'Potatoes': return $r('app.string.simmer_label_potatoes')
+    case 'Oven': return $r('app.string.simmer_label_oven')
+    default: return undefined
+  }
+}
+
+function displayLabel(context: common.Context | undefined, label: string): string {
+  const res = presetLabelRes(label)
+  if (!res || !context) {
+    return label
+  }
+  try {
+    return context.resourceManager.getStringSync(res)
+  } catch (_error) {
+    return label
+  }
+}
+
 @Component
 struct Burner {
   @ObjectLink timer: KitchenTimer
@@ -116,7 +150,7 @@ struct Burner {
       Stack() {
         Circle({ width: 142, height: 142 })
           .fillOpacity(0)
-          .stroke('#E6DCCB')
+          .stroke(SunColor.border)
           .strokeWidth(8)
 
         Circle({ width: 142, height: 142 })
@@ -132,12 +166,12 @@ struct Burner {
             .fontSize(36)
 
           if (this.timer.done) {
-            Text('DONE')
+            Text($r('app.string.simmer_burner_done'))
               .fontSize(15)
               .fontWeight(FontWeight.Bold)
               .fontColor(SunColor.sun)
 
-            Text(`OVER +${this.timerText(this.overdue())}`)
+            Text($r('app.string.simmer_burner_over_format', this.timerText(this.overdue())))
               .fontSize(9)
               .fontWeight(FontWeight.Medium)
               .fontColor(SunColor.pebble)
@@ -148,7 +182,7 @@ struct Burner {
               .fontColor(SunColor.ink)
 
             if (!this.timer.running) {
-              Text('PAUSED')
+              Text($r('app.string.simmer_burner_paused'))
                 .fontSize(9)
                 .fontWeight(FontWeight.Medium)
                 .fontColor(SunColor.pebble)
@@ -160,7 +194,7 @@ struct Burner {
       .height(150)
       .onClick(() => this.onTap(this.timer.id))
 
-      Text(this.timer.label.toUpperCase())
+      Text(displayLabel(this.getUIContext().getHostContext(), this.timer.label).toUpperCase())
         .fontSize(11)
         .fontWeight(FontWeight.Medium)
         .fontColor(SunColor.pebble)
@@ -169,9 +203,9 @@ struct Burner {
         .textOverflow({ overflow: TextOverflow.Ellipsis })
 
       Row({ space: 6 }) {
-        this.actionButton('+1 minute', () => this.onAddMinute(this.timer.id), SunColor.ink)
-        this.actionButton('Restart', () => this.onRestart(this.timer.id), SunColor.ink)
-        this.actionButton('Cancel', () => this.onCancel(this.timer.id), SunColor.danger)
+        this.actionButton($r('app.string.simmer_action_add_minute'), () => this.onAddMinute(this.timer.id), SunColor.ink)
+        this.actionButton($r('app.string.simmer_action_restart'), () => this.onRestart(this.timer.id), SunColor.ink)
+        this.actionButton($r('app.string.simmer_action_cancel'), () => this.onCancel(this.timer.id), SunColor.danger)
       }
       .width('100%')
       .justifyContent(FlexAlign.Center)
@@ -182,7 +216,7 @@ struct Burner {
   }
 
   @Builder
-  private actionButton(label: string, action: () => void, color: string) {
+  private actionButton(label: ResourceStr, action: () => void, color: string) {
     Button(label)
       .height(30)
       .padding({ left: 8, right: 8 })
@@ -191,7 +225,7 @@ struct Burner {
       .fontColor(color)
       .fontSize(10)
       .fontWeight(FontWeight.Bold)
-      .border({ width: 1, color: '#D8CFBD' })
+      .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
       .onClick(action)
   }
 }
@@ -291,7 +325,7 @@ struct Index {
 
   private saveCustomPresetAndStart(): void {
     if (!this.proUnlocked) {
-      this.showToast('Simmer Pro unlocks saved custom presets.')
+      this.showToast($r('app.string.simmer_toast_pro_required'))
       return
     }
     const seconds = this.customSecondsTotal()
@@ -370,15 +404,17 @@ struct Index {
   }
 
   private customMinuteOptions(): string[] {
+    const unit = this.resString($r('app.string.simmer_minute_unit'))
     const options: string[] = []
     for (let minute = 0; minute <= 180; minute++) {
-      options.push(`${minute} min`)
+      options.push(`${minute} ${unit}`)
     }
     return options
   }
 
   private customSecondLabels(): string[] {
-    return this.customSecondOptions.map((seconds: number) => `${seconds} sec`)
+    const unit = this.resString($r('app.string.simmer_second_unit'))
+    return this.customSecondOptions.map((seconds: number) => `${seconds} ${unit}`)
   }
 
   private customLabel(): string {
@@ -408,7 +444,7 @@ struct Index {
   private unlockPro(): void {
     this.proUnlocked = true
     this.paywallOpen = false
-    this.showToast('Simmer Pro unlocked on this device.')
+    this.showToast($r('app.string.simmer_toast_pro_unlocked'))
   }
 
   private showPaywall(): void {
@@ -593,9 +629,9 @@ struct Index {
         const request: reminderAgentManager.ReminderRequestTimer = {
           reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_TIMER,
           triggerTimeInSeconds: Math.max(1, Math.ceil((timer.endAt - now) / 1000)),
-          title: `${timer.emoji} ${timer.label}`,
-          content: "Time's up!",
-          expiredContent: `${timer.label} is done.`,
+          title: `${timer.emoji} ${this.labelText(timer.label)}`,
+          content: this.resString($r('app.string.simmer_reminder_content')),
+          expiredContent: this.resString($r('app.string.simmer_reminder_expired_format'), this.labelText(timer.label)),
           notificationId: 400000 + timer.id,
           tapDismissed: true
         }
@@ -619,7 +655,16 @@ struct Index {
     }
   }
 
-  private showToast(message: string): void {
+  private resString(res: Resource, ...args: Array<string | number>): string {
+    const context = this.getUIContext().getHostContext()
+    return context ? context.resourceManager.getStringSync(res, ...args) : ''
+  }
+
+  private labelText(label: string): string {
+    return displayLabel(this.getUIContext().getHostContext(), label)
+  }
+
+  private showToast(message: ResourceStr): void {
     try {
       this.getUIContext().getPromptAction().showToast({
         message,
@@ -631,7 +676,7 @@ struct Index {
   }
 
   private showDone(label: string): void {
-    this.showToast(`${label} is done`)
+    this.showToast($r('app.string.simmer_toast_done_format', this.labelText(label)))
   }
 
   private timerText(seconds: number): string {
@@ -652,12 +697,12 @@ struct Index {
       Text('🍳')
         .fontSize(56)
 
-      Text('Nothing on the stove')
+      Text($r('app.string.simmer_empty_title'))
         .fontSize(17)
         .fontWeight(FontWeight.Bold)
         .fontColor(SunColor.ink)
 
-      Text('Tap a preset below to start a timer.\nSimmer keeps it running with\nsystem timer alerts.')
+      Text($r('app.string.simmer_empty_message'))
         .fontSize(13)
         .fontColor(SunColor.pebble)
         .textAlign(TextAlign.Center)
@@ -694,7 +739,7 @@ struct Index {
   private customPanel() {
     if (this.customOpen) {
       Column({ space: SunSpacing.md }) {
-        Text('CUSTOM TIMER')
+        Text($r('app.string.simmer_custom_title'))
           .fontSize(12)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(2)
@@ -703,13 +748,19 @@ struct Index {
         Scroll() {
           Row({ space: SunSpacing.sm }) {
             ForEach(this.customEmojis, (emoji: string) => {
-              Button(emoji)
-                .width(38)
-                .height(38)
-                .borderRadius(999)
-                .backgroundColor(this.customEmoji === emoji ? SunColor.sun : SunColor.white)
-                .fontSize(20)
-                .onClick(() => this.customEmoji = emoji)
+              Button({ type: ButtonType.Normal }) {
+                Text(emoji)
+                  .fontSize(22)
+                  .lineHeight(26)
+                  .textAlign(TextAlign.Center)
+                  .width('100%')
+              }
+              .width(44)
+              .height(44)
+              .padding(0)
+              .borderRadius(999)
+              .backgroundColor(this.customEmoji === emoji ? SunColor.sun : SunColor.white)
+              .onClick(() => this.customEmoji = emoji)
             }, (emoji: string) => emoji)
           }
         }
@@ -746,18 +797,18 @@ struct Index {
         }
         .width('100%')
 
-        TextInput({ placeholder: 'Label (optional)', text: this.customLabelText })
+        TextInput({ placeholder: $r('app.string.simmer_label_placeholder'), text: this.customLabelText })
           .height(44)
           .width('100%')
           .fontSize(14)
           .fontColor(SunColor.ink)
           .backgroundColor(SunColor.white)
           .borderRadius(8)
-          .border({ width: 1, color: '#D8CFBD' })
+          .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
           .onChange((value: string) => this.customLabelText = value)
 
         if (this.proUnlocked) {
-          Button('SAVE AS PRESET')
+          Button($r('app.string.simmer_save_as_preset'))
             .height(38)
             .width('100%')
             .borderRadius(SunRadius.pill)
@@ -765,11 +816,11 @@ struct Index {
             .fontColor(SunColor.ink)
             .fontSize(12)
             .fontWeight(FontWeight.Bold)
-            .border({ width: 1, color: '#D8CFBD' })
+            .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
             .onClick(() => this.customSaveAsPreset = !this.customSaveAsPreset)
         }
 
-        Button('START')
+        Button($r('app.string.simmer_start'))
           .height(44)
           .width('100%')
           .borderRadius(SunRadius.pill)
@@ -779,7 +830,7 @@ struct Index {
           .fontWeight(FontWeight.Bold)
           .onClick(() => this.startCustomFromPanel())
 
-        Button('Cancel')
+        Button($r('app.string.simmer_action_cancel'))
           .height(38)
           .width('100%')
           .borderRadius(SunRadius.pill)
@@ -787,7 +838,7 @@ struct Index {
           .fontColor(SunColor.ink)
           .fontSize(12)
           .fontWeight(FontWeight.Bold)
-          .border({ width: 1, color: '#D8CFBD' })
+          .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
           .onClick(() => {
             this.customOpen = false
             this.customSaveAsPreset = false
@@ -796,8 +847,8 @@ struct Index {
       }
       .width('100%')
       .padding(SunSpacing.lg)
-      .backgroundColor('#F7F0E5')
-      .border({ width: 1, color: '#D8CFBD' })
+      .backgroundColor('#F7F0E5') // ponytail: no SunColor token for #F7F0E5 panel tint
+      .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
       .borderRadius(18)
     }
   }
@@ -806,7 +857,7 @@ struct Index {
   private presetBar() {
     Scroll() {
       Row({ space: 10 }) {
-        Button('+ Custom')
+        Button($r('app.string.simmer_custom_button'))
           .height(44)
           .padding({ left: 16, right: 16 })
           .borderRadius(SunRadius.pill)
@@ -820,7 +871,7 @@ struct Index {
         ForEach(this.savedPresets, (preset: SavedPresetTimer) => {
           if (this.confirmingPresetId === preset.id) {
             Row({ space: 4 }) {
-              Button('Remove Preset')
+              Button($r('app.string.simmer_remove_preset'))
                 .height(34)
                 .padding({ left: 12, right: 12 })
                 .borderRadius(999)
@@ -830,7 +881,7 @@ struct Index {
                 .fontWeight(FontWeight.Bold)
                 .onClick(() => this.removeSavedPreset(preset.id))
 
-              Button('Cancel')
+              Button($r('app.string.simmer_action_cancel'))
                 .height(34)
                 .padding({ left: 12, right: 12 })
                 .borderRadius(999)
@@ -838,21 +889,26 @@ struct Index {
                 .fontColor(SunColor.ink)
                 .fontSize(12)
                 .fontWeight(FontWeight.Bold)
-                .border({ width: 1, color: '#D8CFBD' })
+                .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
                 .onClick(() => this.confirmingPresetId = -1)
             }
             .height(56)
           } else {
             Row({ space: 4 }) {
-              Button(`${preset.emoji} ${preset.label} · ${this.timerText(preset.seconds)}`)
-                .height(44)
-                .padding({ left: 16, right: 12 })
-                .borderRadius(SunRadius.pill)
-                .backgroundColor(SunColor.sun)
-                .fontColor(SunColor.ink)
-                .fontSize(13)
-                .fontWeight(FontWeight.Medium)
-                .onClick(() => this.startSavedPreset(preset))
+              Button({ type: ButtonType.Normal }) {
+                Text(`${preset.emoji} ${this.labelText(preset.label)} · ${this.timerText(preset.seconds)}`)
+                  .fontSize(13)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(SunColor.ink)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  .constraintSize({ maxWidth: 220 })
+              }
+              .height(44)
+              .padding({ left: 16, right: 12 })
+              .borderRadius(SunRadius.pill)
+              .backgroundColor(SunColor.sun)
+              .onClick(() => this.startSavedPreset(preset))
 
               Button('×')
                 .width(34)
@@ -862,7 +918,7 @@ struct Index {
                 .fontColor(SunColor.danger)
                 .fontSize(16)
                 .fontWeight(FontWeight.Bold)
-                .border({ width: 1, color: '#D8CFBD' })
+                .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
                 .onClick(() => this.confirmingPresetId = preset.id)
             }
             .height(56)
@@ -870,14 +926,19 @@ struct Index {
         }, (preset: SavedPresetTimer) => preset.id.toString())
 
         ForEach(this.presets, (preset: PresetTimer) => {
-          Button(`${preset.emoji} ${preset.label} · ${this.timerText(preset.seconds)}`)
+          Button({ type: ButtonType.Normal }) {
+            Text(`${preset.emoji} ${this.labelText(preset.label)} · ${this.timerText(preset.seconds)}`)
+              .fontSize(13)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(SunColor.ink)
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+              .constraintSize({ maxWidth: 220 })
+          }
             .height(44)
             .padding({ left: 16, right: 16 })
             .borderRadius(SunRadius.pill)
             .backgroundColor('#F7F0E5')
-            .fontColor(SunColor.ink)
-            .fontSize(13)
-            .fontWeight(FontWeight.Medium)
             .onClick(() => this.startPreset(preset))
         }, (preset: PresetTimer) => preset.label)
       }
@@ -891,7 +952,7 @@ struct Index {
   }
 
   @Builder
-  private paywallFeature(icon: string, text: string) {
+  private paywallFeature(icon: string, text: ResourceStr) {
     Row({ space: SunSpacing.md }) {
       Text(icon)
         .fontSize(18)
@@ -909,30 +970,30 @@ struct Index {
   private paywallPanel() {
     if (this.paywallOpen && !this.proUnlocked) {
       Column({ space: SunSpacing.lg }) {
-        Text('SIMMER PRO')
+        Text($r('app.string.simmer_pro_title'))
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(4)
           .fontColor(SunColor.ink)
 
         Column({ space: 14 }) {
-          this.paywallFeature('⏱', 'Run every burner at once — unlimited timers')
-          this.paywallFeature('⚡', 'All of them tracked with system timer alerts')
-          this.paywallFeature('★', 'Save your go-to timers as presets')
-          this.paywallFeature('↺', 'Restart finished timers without rebuilding them')
-          this.paywallFeature('♥', 'Support an indie developer')
+          this.paywallFeature('⏱', $r('app.string.simmer_paywall_feature_unlimited'))
+          this.paywallFeature('⚡', $r('app.string.simmer_paywall_feature_alerts'))
+          this.paywallFeature('★', $r('app.string.simmer_paywall_feature_presets'))
+          this.paywallFeature('↺', $r('app.string.simmer_paywall_feature_restart'))
+          this.paywallFeature('♥', $r('app.string.simmer_paywall_feature_indie'))
         }
         .width('100%')
         .alignItems(HorizontalAlign.Start)
 
-        Text('PAY ONCE. YOURS FOREVER.\nNO SUBSCRIPTION. NO ACCOUNT.')
+        Text($r('app.string.simmer_paywall_pitch'))
           .fontSize(11)
           .fontWeight(FontWeight.Bold)
           .fontColor(SunColor.pebble)
           .lineHeight(17)
           .textAlign(TextAlign.Center)
 
-        Button('UNLOCK FOR $1.99')
+        Button($r('app.string.simmer_paywall_unlock'))
           .height(48)
           .width('100%')
           .borderRadius(SunRadius.md)
@@ -942,7 +1003,7 @@ struct Index {
           .fontWeight(FontWeight.Bold)
           .onClick(() => this.unlockPro())
 
-        Button('Restore Purchase')
+        Button($r('app.string.simmer_restore_purchase'))
           .height(36)
           .backgroundColor(Color.Transparent)
           .fontSize(12)
@@ -957,10 +1018,12 @@ struct Index {
   }
 
   build() {
-    Stack({ alignContent: Alignment.TopEnd }) {
+    Column() {
+      SunSafeRoot({ mode: SunMode.Light }) {
       SunToolShell({
         manifest: appProfile,
-        onPrimaryAction: () => this.startCustom()
+        showPro: !this.proUnlocked,
+        onPro: () => this.showPaywall()
       }) {
         Column() {
           if (this.timers.length === 0) {
@@ -976,18 +1039,6 @@ struct Index {
         .width('100%')
         .height('100%')
       }
-
-      if (!this.proUnlocked) {
-        Button('PRO')
-          .height(48)
-          .padding({ left: SunSpacing.lg, right: SunSpacing.lg })
-          .borderRadius(SunRadius.pill)
-          .backgroundColor(SunColor.sun)
-          .fontColor(SunColor.ink)
-          .fontSize(SunType.body)
-          .fontWeight(FontWeight.Medium)
-          .margin({ top: SunSpacing.xl, right: SunSpacing.xl })
-          .onClick(() => this.showPaywall())
       }
     }
     .width('100%')

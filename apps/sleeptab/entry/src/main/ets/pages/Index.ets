@@ -2,6 +2,7 @@ import {
   SunButton,
   SunButtonRole,
   SunColor,
+  SunSafeRoot,
   SunSpacing,
   SunToolShell,
   SunType
@@ -74,6 +75,19 @@ struct Index {
     return days[date.getDay()]
   }
 
+  // Display mapping only — night.day stays an English storage key.
+  private dayText(day: string): Resource {
+    switch (day) {
+      case 'MON': return $r('app.string.sleeptab_day_mon')
+      case 'TUE': return $r('app.string.sleeptab_day_tue')
+      case 'WED': return $r('app.string.sleeptab_day_wed')
+      case 'THU': return $r('app.string.sleeptab_day_thu')
+      case 'FRI': return $r('app.string.sleeptab_day_fri')
+      case 'SAT': return $r('app.string.sleeptab_day_sat')
+      default: return $r('app.string.sleeptab_day_sun')
+    }
+  }
+
   private adjustDraftHours(delta: number): void {
     this.draftHours = Math.max(0.5, Math.min(14, Math.round((this.draftHours + delta) * 4) / 4))
   }
@@ -142,7 +156,7 @@ struct Index {
         }
       })
     } catch (_error) {
-      this.showToast('Date picker unavailable.')
+      this.showToast($r('app.string.sleeptab_toast_date_picker_unavailable'))
     }
   }
 
@@ -162,11 +176,11 @@ struct Index {
       Column({ space: SunSpacing.md }) {
         Row({ space: SunSpacing.md }) {
           Column({ space: SunSpacing.xs }) {
-            Text('NIGHT')
+            Text($r('app.string.sleeptab_entry_night_label'))
               .fontSize(11)
               .fontWeight(FontWeight.Bold)
               .letterSpacing(1.5)
-              .fontColor('#BFB8AA')
+              .fontColor(SunColor.darkSecondary)
             Text(`${this.hoursText(this.draftHours)} · ${this.draftBedtime}`)
               .fontSize(22)
               .fontWeight(FontWeight.Bold)
@@ -179,7 +193,7 @@ struct Index {
             .height(38)
             .padding({ left: 12, right: 12 })
             .borderRadius(999)
-            .backgroundColor('#31354A')
+            .backgroundColor('#31354A') // ponytail: dark chip bg, no SunColor token
             .fontColor(SunColor.cream)
             .fontSize(12)
             .onClick(() => this.adjustDraftHours(-0.25))
@@ -188,18 +202,18 @@ struct Index {
             .height(38)
             .padding({ left: 12, right: 12 })
             .borderRadius(999)
-            .backgroundColor('#F7B733')
+            .backgroundColor(SunColor.sun)
             .fontColor(SunColor.night)
             .fontSize(12)
             .onClick(() => this.adjustDraftHours(0.25))
         }
         .width('100%')
 
-        Button(`Night · ${this.draftDateKey()}`)
+        Button($r('app.string.sleeptab_entry_night_date_format', this.draftDateKey()))
           .height(38)
           .padding({ left: 14, right: 14 })
           .borderRadius(999)
-          .backgroundColor('#31354A')
+          .backgroundColor('#31354A') // ponytail: dark chip bg, no SunColor token
           .fontColor(SunColor.cream)
           .fontSize(12)
           .fontWeight(FontWeight.Bold)
@@ -209,25 +223,25 @@ struct Index {
           .width('100%')
           .height(120)
           .selectedTextStyle({ color: SunColor.cream, font: { size: 22, weight: FontWeight.Bold } })
-          .textStyle({ color: '#BFB8AA', font: { size: 18, weight: FontWeight.Medium } })
+          .textStyle({ color: SunColor.darkSecondary, font: { size: 18, weight: FontWeight.Medium } })
           .onChange((value: TimePickerResult) => this.setDraftBedtime(value.hour, value.minute))
 
         if (this.hasDraftNight()) {
           Column({ space: SunSpacing.sm }) {
-            Text(`Saved night · ${this.draftNightSummary()}`)
+            Text($r('app.string.sleeptab_entry_saved_night_format', this.draftNightSummary()))
               .fontSize(12)
-              .fontColor('#BFB8AA')
+              .fontColor(SunColor.darkSecondary)
 
             if (this.confirmingDeleteNightDate === this.draftDateKey()) {
               Row({ space: SunSpacing.sm }) {
                 SunButton({
-                  label: 'Confirm Delete',
+                  label: $r('app.string.sleeptab_confirm_delete'),
                   role: SunButtonRole.Danger,
                   action: () => this.deleteNight(this.draftDateKey())
                 })
 
                 SunButton({
-                  label: 'Cancel',
+                  label: $r('app.string.sleeptab_cancel'),
                   role: SunButtonRole.Secondary,
                   action: () => this.confirmingDeleteNightDate = ''
                 })
@@ -235,7 +249,7 @@ struct Index {
               .width('100%')
             } else {
               SunButton({
-                label: 'Delete night',
+                label: $r('app.string.sleeptab_delete_night'),
                 role: SunButtonRole.Danger,
                 action: () => this.confirmingDeleteNightDate = this.draftDateKey()
               })
@@ -250,7 +264,7 @@ struct Index {
     }
     .width('100%')
     .padding(SunSpacing.lg)
-    .backgroundColor('#24283A')
+    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
     .borderRadius(20)
   }
 
@@ -440,14 +454,14 @@ struct Index {
   private unlockPro(): void {
     this.proUnlocked = true
     this.paywallOpen = false
-    this.showToast('Sleeptab Pro unlocked on this device.')
+    this.showToast($r('app.string.sleeptab_toast_pro_unlocked'))
   }
 
   private showPaywall(): void {
     this.paywallOpen = true
   }
 
-  private showToast(message: string): void {
+  private showToast(message: ResourceStr): void {
     try {
       this.getUIContext().getPromptAction().showToast({ message, duration: 1800 })
     } catch (_error) {
@@ -461,8 +475,8 @@ struct Index {
       .height(34)
       .padding({ left: 14, right: 14 })
       .borderRadius(999)
-      .backgroundColor(this.rangeNights === value ? '#F7B733' : '#31354A')
-      .fontColor(this.rangeNights === value ? SunColor.night : '#BFB8AA')
+      .backgroundColor(this.rangeNights === value ? SunColor.sun : '#31354A') // ponytail: dark chip bg, no SunColor token
+      .fontColor(this.rangeNights === value ? SunColor.night : SunColor.darkSecondary)
       .fontSize(12)
       .fontWeight(FontWeight.Bold)
       .onClick(() => this.setRange(value))
@@ -474,13 +488,13 @@ struct Index {
       Column({ space: SunSpacing.sm }) {
         Text('🌙')
           .fontSize(56)
-        Text('No sleep data yet')
+        Text($r('app.string.sleeptab_empty_title'))
           .fontSize(17)
           .fontWeight(FontWeight.Bold)
           .fontColor(SunColor.cream)
-        Text('Add a night below to start tracking manually.')
+        Text($r('app.string.sleeptab_empty_message'))
           .fontSize(13)
-          .fontColor('#BFB8AA')
+          .fontColor(SunColor.darkSecondary)
           .textAlign(TextAlign.Center)
           .lineHeight(20)
       }
@@ -489,7 +503,7 @@ struct Index {
     }
     .width('100%')
     .padding(SunSpacing.lg)
-    .backgroundColor('#24283A')
+    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
     .borderRadius(20)
   }
 
@@ -497,10 +511,10 @@ struct Index {
   private debtCard() {
     Column({ space: SunSpacing.sm }) {
       if (this.debtHours() <= 0) {
-        Text('ALL CAUGHT UP')
+        Text($r('app.string.sleeptab_debt_caught_up'))
           .fontSize(34)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#F7B733')
+          .fontColor(SunColor.sun)
       } else {
         Text(this.hoursText(this.debtHours()))
           .fontSize(46)
@@ -508,15 +522,15 @@ struct Index {
           .fontColor(SunColor.cream)
       }
 
-      Text(this.debtHours() <= 0 ? 'NO SLEEP DEBT · LAST 14 NIGHTS' : 'SLEEP DEBT · LAST 14 NIGHTS')
+      Text(this.debtHours() <= 0 ? $r('app.string.sleeptab_debt_none_label') : $r('app.string.sleeptab_debt_label'))
         .fontSize(11)
         .fontWeight(FontWeight.Bold)
         .letterSpacing(1.5)
-        .fontColor('#BFB8AA')
+        .fontColor(SunColor.darkSecondary)
     }
     .width('100%')
     .padding({ top: 30, bottom: 30 })
-    .backgroundColor('#24283A')
+    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
     .borderRadius(20)
   }
 
@@ -537,13 +551,13 @@ struct Index {
                 Blank()
                   .width('100%')
                   .height(this.sleepBarHeight(night.hours))
-                  .backgroundColor(night.hours >= this.goalHours ? '#F7B733' : '#8C6925')
+                  .backgroundColor(night.hours >= this.goalHours ? SunColor.sun : '#8C6925') // ponytail: dim goal-miss bar, no SunColor token
                   .borderRadius(5)
 
-                Text(night.day)
+                Text(this.dayText(night.day))
                   .fontSize(9)
                   .fontWeight(FontWeight.Bold)
-                  .fontColor('#BFB8AA')
+                  .fontColor(SunColor.darkSecondary)
               }
               .layoutWeight(1)
               .height(168)
@@ -556,12 +570,12 @@ struct Index {
             Blank()
               .height(1)
               .layoutWeight(1)
-              .backgroundColor('#BFB8AA')
+              .backgroundColor(SunColor.darkSecondary)
 
-            Text(`GOAL ${this.hoursText(this.goalHours)}`)
+            Text($r('app.string.sleeptab_chart_goal_format', this.hoursText(this.goalHours)))
               .fontSize(9)
               .fontWeight(FontWeight.Bold)
-              .fontColor('#BFB8AA')
+              .fontColor(SunColor.darkSecondary)
           }
           .width('100%')
           .alignItems(VerticalAlign.Center)
@@ -573,7 +587,7 @@ struct Index {
     }
     .width('100%')
     .padding(SunSpacing.lg)
-    .backgroundColor('#24283A')
+    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
     .borderRadius(20)
   }
 
@@ -582,11 +596,11 @@ struct Index {
     Column() {
       Row() {
         Column({ space: SunSpacing.xs }) {
-          Text('AVG · LAST 7 NIGHTS')
+          Text($r('app.string.sleeptab_week_avg_label'))
             .fontSize(10)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1)
-            .fontColor('#BFB8AA')
+            .fontColor(SunColor.darkSecondary)
           Text(this.hoursText(this.averageHours(7)))
             .fontSize(SunType.title)
             .fontWeight(FontWeight.Bold)
@@ -596,15 +610,15 @@ struct Index {
         .alignItems(HorizontalAlign.Start)
 
         Column({ space: SunSpacing.xs }) {
-          Text('VS GOAL')
+          Text($r('app.string.sleeptab_week_vs_goal_label'))
             .fontSize(10)
             .fontWeight(FontWeight.Bold)
             .letterSpacing(1)
-            .fontColor('#BFB8AA')
+            .fontColor(SunColor.darkSecondary)
           Text((this.averageHours(7) >= this.goalHours ? '+' : '-') + this.hoursText(Math.abs(this.averageHours(7) - this.goalHours)))
             .fontSize(SunType.title)
             .fontWeight(FontWeight.Bold)
-            .fontColor(this.averageHours(7) >= this.goalHours ? '#F7B733' : SunColor.cream)
+            .fontColor(this.averageHours(7) >= this.goalHours ? SunColor.sun : SunColor.cream)
         }
         .alignItems(HorizontalAlign.End)
       }
@@ -612,7 +626,7 @@ struct Index {
     }
     .width('100%')
     .padding(SunSpacing.lg)
-    .backgroundColor('#24283A')
+    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
     .borderRadius(20)
   }
 
@@ -620,29 +634,29 @@ struct Index {
   private insightsCard() {
     Column() {
       Column({ space: SunSpacing.md }) {
-        Text(`INSIGHTS · LAST ${this.shownNights().length} NIGHTS`)
+        Text($r('app.string.sleeptab_insights_title_format', this.shownNights().length))
           .fontSize(10)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1)
-          .fontColor('#BFB8AA')
+          .fontColor(SunColor.darkSecondary)
 
         if (this.proUnlocked) {
           if (this.hasNightsForDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])) {
-            this.insightRow('WEEKDAY AVG', this.hoursText(this.averageForDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])))
+            this.insightRow($r('app.string.sleeptab_insight_weekday_avg'), this.hoursText(this.averageForDays(['MON', 'TUE', 'WED', 'THU', 'FRI'])))
           }
           if (this.hasNightsForDays(['SAT', 'SUN'])) {
-            this.insightRow('WEEKEND AVG', this.hoursText(this.averageForDays(['SAT', 'SUN'])))
+            this.insightRow($r('app.string.sleeptab_insight_weekend_avg'), this.hoursText(this.averageForDays(['SAT', 'SUN'])))
           }
-          this.insightRow('BEST NIGHT', this.bestNightText())
-          this.insightRow('ROUGHEST', this.roughestNightText())
+          this.insightRow($r('app.string.sleeptab_insight_best_night'), this.bestNightText())
+          this.insightRow($r('app.string.sleeptab_insight_roughest'), this.roughestNightText())
           if (this.bedtimeValues().length >= 2) {
-            this.insightRow('AVG BEDTIME', this.clockText(this.averageBedtimeMinutes()))
-            this.insightRow('CONSISTENCY', `± ${this.hoursText(this.consistencyMinutes() / 60)}`)
+            this.insightRow($r('app.string.sleeptab_insight_avg_bedtime'), this.clockText(this.averageBedtimeMinutes()))
+            this.insightRow($r('app.string.sleeptab_insight_consistency'), `± ${this.hoursText(this.consistencyMinutes() / 60)}`)
           }
         } else {
-          Text('🔒 Weekday vs weekend, best & roughest nights — unlock with Pro')
+          Text($r('app.string.sleeptab_insights_locked'))
             .fontSize(12)
-            .fontColor('#BFB8AA')
+            .fontColor(SunColor.darkSecondary)
             .lineHeight(18)
             .onClick(() => this.showPaywall())
         }
@@ -652,18 +666,18 @@ struct Index {
     }
     .width('100%')
     .padding(SunSpacing.lg)
-    .backgroundColor('#24283A')
+    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
     .borderRadius(20)
   }
 
   @Builder
-  private insightRow(label: string, value: string) {
+  private insightRow(label: ResourceStr, value: string) {
     Row() {
       Text(label)
         .fontSize(11)
         .fontWeight(FontWeight.Bold)
         .letterSpacing(1)
-        .fontColor('#BFB8AA')
+        .fontColor(SunColor.darkSecondary)
       Blank().layoutWeight(1)
       Text(value)
         .fontSize(15)
@@ -677,18 +691,18 @@ struct Index {
   private goalCard() {
     Column() {
       Row({ space: SunSpacing.md }) {
-        Text('SLEEP NEED')
+        Text($r('app.string.sleeptab_goal_label'))
           .fontSize(11)
           .fontWeight(FontWeight.Bold)
           .letterSpacing(1.5)
-          .fontColor('#BFB8AA')
+          .fontColor(SunColor.darkSecondary)
           .layoutWeight(1)
 
         Button('-')
           .width(38)
           .height(38)
           .borderRadius(999)
-          .backgroundColor('#31354A')
+          .backgroundColor('#31354A') // ponytail: dark chip bg, no SunColor token
           .fontColor(SunColor.cream)
           .onClick(() => this.adjustGoal(-0.25))
 
@@ -701,7 +715,7 @@ struct Index {
           .width(38)
           .height(38)
           .borderRadius(999)
-          .backgroundColor('#F7B733')
+          .backgroundColor(SunColor.sun)
           .fontColor(SunColor.night)
           .onClick(() => this.adjustGoal(0.25))
       }
@@ -709,12 +723,12 @@ struct Index {
     }
     .width('100%')
     .padding(SunSpacing.lg)
-    .backgroundColor('#24283A')
+    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
     .borderRadius(20)
   }
 
   @Builder
-  private paywallFeature(icon: string, text: string) {
+  private paywallFeature(icon: string, text: ResourceStr) {
     Row({ space: SunSpacing.md }) {
       Text(icon)
         .fontSize(18)
@@ -739,46 +753,48 @@ struct Index {
           .fontColor(SunColor.cream)
 
         Column({ space: 14 }) {
-          this.paywallFeature('▥', 'Full sleep history — 30 and 90 night trends')
-          this.paywallFeature('◌', 'Insights — bedtime consistency, weekday vs weekend')
-          this.paywallFeature('▦', 'Sleep debt widget on your Home Screen')
-          this.paywallFeature('♥', 'Support an indie developer')
+          this.paywallFeature('▥', $r('app.string.sleeptab_paywall_feature_history'))
+          this.paywallFeature('◌', $r('app.string.sleeptab_paywall_feature_insights'))
+          this.paywallFeature('▦', $r('app.string.sleeptab_paywall_feature_widget'))
+          this.paywallFeature('♥', $r('app.string.sleeptab_paywall_feature_indie'))
         }
         .width('100%')
         .alignItems(HorizontalAlign.Start)
 
-        Text('PAY ONCE. YOURS FOREVER.\nNO SUBSCRIPTION. NO ACCOUNT.\nYOUR DATA NEVER LEAVES THIS DEVICE.')
+        Text($r('app.string.sleeptab_paywall_promise'))
           .fontSize(11)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#BFB8AA')
+          .fontColor(SunColor.darkSecondary)
           .lineHeight(17)
           .textAlign(TextAlign.Center)
 
         SunButton({
-          label: 'UNLOCK FOR $1.99',
+          label: $r('app.string.sleeptab_paywall_unlock'),
           action: () => this.unlockPro()
         })
 
-        Button('Restore Purchase')
+        Button($r('app.string.sleeptab_paywall_restore'))
           .height(36)
           .backgroundColor(Color.Transparent)
           .fontSize(12)
-          .fontColor('#BFB8AA')
+          .fontColor(SunColor.darkSecondary)
           .onClick(() => this.unlockPro())
       }
       .width('100%')
       .alignItems(HorizontalAlign.Center)
       .padding(SunSpacing.lg)
-      .backgroundColor('#24283A')
+      .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
       .borderRadius(20)
     }
   }
 
   build() {
-    Stack({ alignContent: Alignment.TopEnd }) {
+    Column() {
+      SunSafeRoot({ mode: appProfile.mode }) {
       SunToolShell({
         manifest: appProfile,
-        onPrimaryAction: () => this.addNight()
+        showPro: !this.proUnlocked,
+        onPro: () => this.showPaywall()
       }) {
         Scroll() {
           Column({ space: SunSpacing.lg }) {
@@ -796,35 +812,15 @@ struct Index {
             }
 
             this.paywallPanel()
-
-            Button(this.hasDraftNight() ? 'Update night' : 'Save night')
-              .height(48)
-              .padding({ left: SunSpacing.lg, right: SunSpacing.lg })
-              .borderRadius(999)
-              .backgroundColor('#F7B733')
-              .fontColor(SunColor.night)
-              .fontSize(SunType.body)
-              .fontWeight(FontWeight.Medium)
-              .onClick(() => this.addNight())
           }
           .width('100%')
-          .padding({ bottom: SunSpacing.xl })
+          .padding({ left: SunSpacing.xl, right: SunSpacing.xl, bottom: SunSpacing.xl })
         }
         .width('100%')
         .height('100%')
+        .scrollBar(BarState.Off)
+        .edgeEffect(EdgeEffect.Spring)
       }
-
-      if (!this.proUnlocked) {
-        Button('PRO')
-          .height(36)
-          .padding({ left: SunSpacing.sm, right: SunSpacing.sm })
-          .borderRadius(0)
-          .backgroundColor(SunColor.night)
-          .fontColor('#F7B733')
-          .fontSize(13)
-          .fontWeight(FontWeight.Bold)
-          .margin({ top: SunSpacing.xl, right: SunSpacing.xl })
-          .onClick(() => this.showPaywall())
       }
     }
     .width('100%')

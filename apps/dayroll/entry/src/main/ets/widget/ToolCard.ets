@@ -4,7 +4,7 @@ import { appProfile } from '../AppProfile'
 @Component
 export struct ToolCard {
   value: string = '--'
-  label: string = 'Ready'
+  label: ResourceStr = $r('app.string.dayroll_card_label')
 
   build() {
     Column({ space: SunSpacing.xs }) {
