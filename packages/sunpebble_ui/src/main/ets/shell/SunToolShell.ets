@@ -5,9 +5,9 @@ import { SunButton } from '../components/SunButton'
 @Builder
 function emptyBody() {}
 
-@Component
+@ComponentV2
 export struct SunToolShell {
-  manifest: SunAppManifest = {
+  @Param manifest: SunAppManifest = {
     name: 'Sunpebble',
     tagline: '',
     primaryAction: '',
@@ -16,12 +16,10 @@ export struct SunToolShell {
   }
 
   @BuilderParam body: () => void = emptyBody
-  onPrimaryAction: () => void = () => {}
+  @Param onPrimaryAction: () => void = () => {}
 
-  @Prop
-  showPro: boolean = false
-
-  onPro: () => void = () => {}
+  @Param showPro: boolean = false
+  @Param onPro: () => void = () => {}
 
   private shellBackground(): ResourceColor {
     return this.manifest.mode === SunMode.Dark ? SunColor.night : SunColor.cream
