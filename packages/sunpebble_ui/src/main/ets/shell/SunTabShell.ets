@@ -19,7 +19,7 @@ export struct SunTabShell {
     mode: SunMode.Light
   }
 
-  tabs: SunTabItem[] = []
+  @Param tabs: SunTabItem[] = []
   @Param activeTab: string = ''
 
   @Param onTabChange: (tabId: string) => void = () => {}
