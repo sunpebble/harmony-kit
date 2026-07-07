@@ -747,23 +747,41 @@ struct Index {
     .justifyContent(FlexAlign.Center)
   }
 
+  private gridColumns(): string {
+    if (this.containerWidth >= 840) {
+      return '1fr 1fr 1fr'
+    }
+    if (this.containerWidth >= 600) {
+      return '1fr 1fr'
+    }
+    return '1fr'
+  }
+
   @Builder
   private burnerList() {
     Scroll() {
-      Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
+      Grid() {
         ForEach(this.timers, (timer: KitchenTimer) => {
-          Burner({
-            timer: timer,
-            nowMs: this.nowMs,
-            onTap: (id: number) => this.handleTimerTap(id),
-            onAddMinute: (id: number) => this.addMinute(id),
-            onRestart: (id: number) => this.restartTimer(id),
-            onCancel: (id: number) => this.deleteTimer(id)
-          })
+          GridItem() {
+            Burner({
+              timer: timer,
+              nowMs: this.nowMs,
+              onTap: (id: number) => this.handleTimerTap(id),
+              onAddMinute: (id: number) => this.addMinute(id),
+              onRestart: (id: number) => this.restartTimer(id),
+              onCancel: (id: number) => this.deleteTimer(id)
+            })
+          }
         }, (timer: KitchenTimer) => timer.id.toString())
       }
+      .columnsTemplate(this.gridColumns())
+      .columnsGap(SunSpacing.lg)
+      .rowsGap(SunSpacing.lg)
       .padding(SunSpacing.xl)
       .width('100%')
+      .onAreaChange((_old: Area, newArea: Area) => {
+        this.containerWidth = newArea.width as number
+      })
     }
     .width('100%')
     .layoutWeight(1)
