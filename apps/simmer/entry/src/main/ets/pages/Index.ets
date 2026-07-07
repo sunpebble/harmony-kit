@@ -670,7 +670,6 @@ struct Index {
         await reminderAgentManager.publishReminder(request)
       }
     } catch (_error) {
-      // ponytail: visible timers are source of truth; reminders rebuild on the next timer edit.
     }
   }
 
@@ -709,7 +708,6 @@ struct Index {
         duration: 2000
       })
     } catch (_error) {
-      // ponytail: visible state is the fallback if toast is unavailable.
     }
   }
 
@@ -863,7 +861,7 @@ struct Index {
           .fontColor(SunColor.ink)
           .backgroundColor(SunColor.white)
           .borderRadius(8)
-          .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
+          .border({ width: 1, color: SunColor.hairline })
           .onChange((value: string) => {
             this.customLabelText = value
             AppStorage.setOrCreate('simmer.customLabel.v1', this.customLabelText)
@@ -878,7 +876,7 @@ struct Index {
             .fontColor(SunColor.ink)
             .fontSize(12)
             .fontWeight(FontWeight.Bold)
-            .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
+            .border({ width: 1, color: SunColor.hairline })
             .onClick(() => this.customSaveAsPreset = !this.customSaveAsPreset)
         }
 
@@ -902,7 +900,7 @@ struct Index {
           .fontColor(SunColor.ink)
           .fontSize(12)
           .fontWeight(FontWeight.Bold)
-          .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
+          .border({ width: 1, color: SunColor.hairline })
           .onClick(() => {
             this.customOpen = false
             this.customSaveAsPreset = false
@@ -911,8 +909,8 @@ struct Index {
       }
       .width('100%')
       .padding(SunSpacing.lg)
-      .backgroundColor('#F7F0E5') // ponytail: no SunColor token for #F7F0E5 panel tint
-      .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
+      .backgroundColor(SunColor.panelTint)
+      .border({ width: 1, color: SunColor.hairline })
       .borderRadius(18)
     }
   }
@@ -1003,7 +1001,7 @@ struct Index {
             .height(44)
             .padding({ left: 16, right: 16 })
             .borderRadius(SunRadius.pill)
-            .backgroundColor('#F7F0E5')
+            .backgroundColor(SunColor.panelTint)
             .onClick(() => this.startPreset(preset))
         }, (preset: PresetTimer) => preset.label)
       }
