@@ -10,25 +10,27 @@ import {
 import { uniformTypeDescriptor as utd } from '@kit.ArkData'
 import { intl } from '@kit.LocalizationKit'
 import { pasteboard } from '@kit.BasicServicesKit'
-import { common } from '@kit.AbilityKit'
+import { AbilityConstant, common, Configuration, EnvironmentCallback } from '@kit.AbilityKit'
 import { reminderAgentManager } from '@kit.BackgroundTasksKit'
 import { notificationManager } from '@kit.NotificationKit'
 import { systemShare } from '@kit.ShareKit'
 
 interface RollEntry {
   date: string
-  day: string
-  month: string
   mood: string
   line: string
 }
 
 interface MonthStat {
   key: string
-  label: string
   logged: number
   avgMood: number
 }
+
+const DAY_OPTS: intl.DateTimeOptions = { month: 'short', day: '2-digit' } as intl.DateTimeOptions
+const MONTH_OPTS: intl.DateTimeOptions = { month: 'long', year: 'numeric' } as intl.DateTimeOptions
+const COMPOSE_OPTS: intl.DateTimeOptions = { weekday: 'long', month: 'short', day: 'numeric' } as intl.DateTimeOptions
+const NARROW_MONTH_OPTS: intl.DateTimeOptions = { month: 'narrow' } as intl.DateTimeOptions
 
 PersistentStorage.persistProp('dayroll.mood.v1', '😐')
 PersistentStorage.persistProp('dayroll.entries.v1', '')
@@ -45,10 +47,13 @@ PersistentStorage.persistProp('dayroll.proUnlocked.v1', true)
 struct Index {
   private moods: string[] = ['😄', '🙂', '😐', '😞', '😣']
   private tapeScroller: Scroller = new Scroller()
-  private dayFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), { month: 'short', day: '2-digit' } as intl.DateTimeOptions)
-  private monthFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), { month: 'long', year: 'numeric' } as intl.DateTimeOptions)
-  private composeFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), { weekday: 'long', month: 'short', day: 'numeric' } as intl.DateTimeOptions)
-  private narrowMonthFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), { month: 'narrow' } as intl.DateTimeOptions)
+  @State private fmtLocale: string = new intl.Locale().toString()
+  private builtLocale: string = new intl.Locale().toString()
+  private dayFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), DAY_OPTS)
+  private monthFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), MONTH_OPTS)
+  private composeFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), COMPOSE_OPTS)
+  private narrowMonthFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), NARROW_MONTH_OPTS)
+  private envCallbackId: number = -1
   @StorageLink('dayroll.mood.v1') private mood: string = '😐'
   @StorageLink('dayroll.entries.v1') private entriesJson: string = ''
   @StorageLink('dayroll.exportOpen.v1') private exportOpen: boolean = false
@@ -70,6 +75,36 @@ struct Index {
 
   aboutToAppear(): void {
     this.loadEntries()
+    const context = this.getUIContext().getHostContext()
+    if (context) {
+      const envCallback: EnvironmentCallback = {
+        onConfigurationUpdated: (config: Configuration): void => {
+          this.fmtLocale = config.language ?? new intl.Locale().toString()
+        },
+        onMemoryLevel: (_level: AbilityConstant.MemoryLevel): void => {
+        }
+      }
+      this.envCallbackId = context.getApplicationContext().on('environment', envCallback)
+    }
+  }
+
+  aboutToDisappear(): void {
+    if (this.envCallbackId >= 0) {
+      this.getUIContext().getHostContext()?.getApplicationContext().off('environment', this.envCallbackId)
+    }
+  }
+
+  // ponytail: formatters rebuild lazily on first format after a locale change;
+  // reading @State fmtLocale here is what re-renders every derived date label.
+  private ensureFormats(): void {
+    if (this.builtLocale === this.fmtLocale) {
+      return
+    }
+    this.builtLocale = this.fmtLocale
+    this.dayFormat = new intl.DateTimeFormat(this.fmtLocale, DAY_OPTS)
+    this.monthFormat = new intl.DateTimeFormat(this.fmtLocale, MONTH_OPTS)
+    this.composeFormat = new intl.DateTimeFormat(this.fmtLocale, COMPOSE_OPTS)
+    this.narrowMonthFormat = new intl.DateTimeFormat(this.fmtLocale, NARROW_MONTH_OPTS)
   }
 
   private loadEntries(): void {
@@ -101,8 +136,7 @@ struct Index {
   private saveToday(): void {
     const line = this.draftLine
     const date = this.activeDate()
-    const day = this.dateFromKey(date)
-    const entry: RollEntry = { date, day: this.dayLabel(day), month: this.monthLabel(day), mood: this.mood, line }
+    const entry: RollEntry = { date, mood: this.mood, line }
     const rest = this.entries.filter((item: RollEntry) => item.date !== date)
     this.entries = this.sortEntries([entry, ...rest])
     this.draftLine = ''
@@ -242,6 +276,7 @@ struct Index {
   }
 
   private monthShortLabel(date: Date): string {
+    this.ensureFormats()
     return this.narrowMonthFormat.format(date).toUpperCase()
   }
 
@@ -257,7 +292,6 @@ struct Index {
       const scoreTotal = scores.reduce((total: number, score: number) => total + score, 0)
       const stat: MonthStat = {
         key,
-        label: this.monthShortLabel(month),
         logged: entries.length,
         avgMood: scores.length > 0 ? scoreTotal / scores.length : 0
       }
@@ -291,12 +325,8 @@ struct Index {
   }
 
   private normalizeEntry(entry: RollEntry): RollEntry {
-    const date = entry.date ? entry.date : this.dateKey(new Date())
-    const parsed = this.dateFromKey(date)
     return {
-      date,
-      day: this.dayLabel(parsed),
-      month: this.monthLabel(parsed),
+      date: entry.date ? entry.date : this.dateKey(new Date()),
       mood: this.validMood(entry.mood),
       line: typeof entry.line === 'string' ? entry.line : ''
     }
@@ -396,14 +426,17 @@ struct Index {
   }
 
   private dayLabel(date: Date): string {
+    this.ensureFormats()
     return this.dayFormat.format(date).toUpperCase()
   }
 
   private monthLabel(date: Date): string {
+    this.ensureFormats()
     return this.monthFormat.format(date).toUpperCase()
   }
 
   private composeDateTitle(date: Date): string {
+    this.ensureFormats()
     return this.composeFormat.format(date).toUpperCase()
   }
 
@@ -862,7 +895,7 @@ struct Index {
 
             ForEach(this.entriesForMonth(month), (entry: RollEntry) => {
               Row({ space: 10 }) {
-                Text(entry.day)
+                Text(this.dayLabel(this.dateFromKey(entry.date)))
                   .fontSize(12)
                   .fontWeight(FontWeight.Bold)
                   .fontColor(SunColor.pebble)
@@ -993,7 +1026,7 @@ struct Index {
 
         ForEach(this.monthlyStats(), (stat: MonthStat) => {
           Row({ space: SunSpacing.sm }) {
-            Text(stat.label)
+            Text(this.monthShortLabel(this.dateFromKey(`${stat.key}-01`)))
               .fontSize(10)
               .fontWeight(FontWeight.Bold)
               .fontColor(SunColor.pebble)
@@ -1080,7 +1113,7 @@ struct Index {
           Text(this.moodForScore(stat.avgMood))
             .fontSize(12)
 
-          Text(stat.label)
+          Text(this.monthShortLabel(this.dateFromKey(`${stat.key}-01`)))
             .fontSize(9)
             .fontWeight(FontWeight.Bold)
             .fontColor(SunColor.pebble)
