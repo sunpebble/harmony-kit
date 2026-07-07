@@ -77,6 +77,10 @@
       "value": "取消"
     },
     {
+      "name": "simmer_action_delete",
+      "value": "删除"
+    },
+    {
       "name": "simmer_empty_title",
       "value": "炉子上空空如也"
     },
@@ -103,6 +107,10 @@
     {
       "name": "simmer_save_as_preset",
       "value": "存为预设"
+    },
+    {
+      "name": "simmer_saved_presets_title",
+      "value": "我的预设"
     },
     {
       "name": "simmer_start",

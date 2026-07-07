@@ -14,6 +14,8 @@ export class SunColor {
   static readonly danger: string = '#B82118'
   static readonly disabledBg: string = '#E9DDCA'
   static readonly darkSecondary: string = '#BFB8AA'
+  static readonly hairline: string = '#D8CFBD'
+  static readonly panelTint: string = '#F7F0E5'
 }
 
 export class SunSpacing {
