@@ -87,7 +87,7 @@ PersistentStorage.persistProp('steady.reminderHour.v1', 8)
 PersistentStorage.persistProp('steady.reminderMinute.v1', 0)
 PersistentStorage.persistProp('steady.trendRange.v1', '7D')
 PersistentStorage.persistProp('steady.trendKind.v1', 'Blood pressure')
-PersistentStorage.persistProp('steady.proUnlocked.v1', false)
+PersistentStorage.persistProp('steady.proUnlocked.v1', true)
 PersistentStorage.persistProp('steady.targetBpLow.v1', '')
 PersistentStorage.persistProp('steady.targetBpHigh.v1', '')
 PersistentStorage.persistProp('steady.targetGlucoseLow.v1', '')
@@ -119,7 +119,7 @@ struct Index {
   @StorageLink('steady.reminderMinute.v1') private reminderMinute: number = 0
   @StorageLink('steady.trendRange.v1') private trendRange: string = '7D'
   @StorageLink('steady.trendKind.v1') private trendKind: string = 'Blood pressure'
-  @StorageLink('steady.proUnlocked.v1') private proUnlocked: boolean = false
+  @StorageLink('steady.proUnlocked.v1') private proUnlocked: boolean = true
   @StorageLink('steady.targetBpLow.v1') private targetBpLow: string = ''
   @StorageLink('steady.targetBpHigh.v1') private targetBpHigh: string = ''
   @StorageLink('steady.targetGlucoseLow.v1') private targetGlucoseLow: string = ''

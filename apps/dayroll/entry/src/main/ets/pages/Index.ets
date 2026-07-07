@@ -38,7 +38,7 @@ PersistentStorage.persistProp('dayroll.exportFormat.v1', 'Plain Text')
 PersistentStorage.persistProp('dayroll.reminderEnabled.v1', false)
 PersistentStorage.persistProp('dayroll.reminderHour.v1', 21)
 PersistentStorage.persistProp('dayroll.reminderMinute.v1', 0)
-PersistentStorage.persistProp('dayroll.proUnlocked.v1', false)
+PersistentStorage.persistProp('dayroll.proUnlocked.v1', true)
 
 @Entry
 @Component
@@ -58,7 +58,7 @@ struct Index {
   @StorageLink('dayroll.reminderEnabled.v1') private reminderEnabled: boolean = false
   @StorageLink('dayroll.reminderHour.v1') private reminderHour: number = 21
   @StorageLink('dayroll.reminderMinute.v1') private reminderMinute: number = 0
-  @StorageLink('dayroll.proUnlocked.v1') private proUnlocked: boolean = false
+  @StorageLink('dayroll.proUnlocked.v1') private proUnlocked: boolean = true
   @State private draftLine: string = ''
   @State private editingDate: string = ''
   @State private confirmingDelete: boolean = false

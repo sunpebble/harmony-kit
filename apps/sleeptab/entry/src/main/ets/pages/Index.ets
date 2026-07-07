@@ -44,7 +44,7 @@ PersistentStorage.persistProp('sleeptab.draftHours.v1', 7.5)
 PersistentStorage.persistProp('sleeptab.draftBedtime.v1', '23:30')
 PersistentStorage.persistProp('sleeptab.draftDate.v1', '')
 PersistentStorage.persistProp('sleeptab.nights.v1', '')
-PersistentStorage.persistProp('sleeptab.proUnlocked.v1', false)
+PersistentStorage.persistProp('sleeptab.proUnlocked.v1', true)
 
 @Entry
 @Component
@@ -55,7 +55,7 @@ struct Index {
   @StorageLink('sleeptab.draftBedtime.v1') private draftBedtime: string = '23:30'
   @StorageLink('sleeptab.draftDate.v1') private draftDate: string = ''
   @StorageLink('sleeptab.nights.v1') private nightsJson: string = ''
-  @StorageLink('sleeptab.proUnlocked.v1') private proUnlocked: boolean = false
+  @StorageLink('sleeptab.proUnlocked.v1') private proUnlocked: boolean = true
   @State private nights: SleepNight[] = []
   @State private confirmingDeleteNightDate: string = ''
   @State private paywallOpen: boolean = false

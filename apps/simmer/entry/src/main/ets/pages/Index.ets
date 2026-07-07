@@ -71,7 +71,7 @@ PersistentStorage.persistProp('simmer.customEmoji.v1', '🍲')
 PersistentStorage.persistProp('simmer.customLabel.v1', '')
 PersistentStorage.persistProp('simmer.savedPresets.v1', '')
 PersistentStorage.persistProp('simmer.nextPresetId.v1', 1)
-PersistentStorage.persistProp('simmer.proUnlocked.v1', false)
+PersistentStorage.persistProp('simmer.proUnlocked.v1', true)
 
 // Stored timer/preset labels stay English (persisted data keys); translate at display only.
 function presetLabelRes(label: string): Resource | undefined {
@@ -260,7 +260,7 @@ struct Index {
   @StorageLink('simmer.customLabel.v1') private customLabelText: string = ''
   @StorageLink('simmer.savedPresets.v1') private savedPresetsJson: string = ''
   @StorageLink('simmer.nextPresetId.v1') private nextPresetId: number = 1
-  @StorageLink('simmer.proUnlocked.v1') private proUnlocked: boolean = false
+  @StorageLink('simmer.proUnlocked.v1') private proUnlocked: boolean = true
   @State private customOpen: boolean = false
   @State private timers: KitchenTimer[] = []
   @State private savedPresets: SavedPresetTimer[] = []
