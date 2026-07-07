@@ -292,7 +292,7 @@ struct Index {
       day: this.dayLabel(parsed),
       month: this.monthLabel(parsed),
       mood: this.validMood(entry.mood),
-      line: entry.line
+      line: typeof entry.line === 'string' ? entry.line : ''
     }
   }
 
