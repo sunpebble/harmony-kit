@@ -21,4 +21,12 @@ export default class EntryAbility extends UIAbility {
       hilog.info(DOMAIN, 'Simmer', 'Loaded Index page')
     })
   }
+
+  onForeground(): void {
+    hilog.info(DOMAIN, 'Simmer', 'Ability onForeground')
+  }
+
+  onBackground(): void {
+    hilog.info(DOMAIN, 'Simmer', 'Ability onBackground')
+  }
 }

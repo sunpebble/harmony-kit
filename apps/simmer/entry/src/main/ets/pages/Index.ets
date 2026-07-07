@@ -284,6 +284,10 @@ struct Index {
     }
   }
 
+  onPageShow(): void {
+    this.tick()
+  }
+
   private startPreset(preset: PresetTimer): void {
     this.startTimer(preset.label, preset.emoji, preset.seconds)
   }
