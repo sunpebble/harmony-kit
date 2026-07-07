@@ -894,6 +894,64 @@ struct Index {
   }
 
   @Builder
+  private deleteSwipeAction(id: number) {
+    Button($r('app.string.simmer_action_delete'))
+      .height('100%')
+      .padding({ left: 16, right: 16 })
+      .backgroundColor(SunColor.danger)
+      .fontColor(SunColor.white)
+      .fontSize(13)
+      .fontWeight(FontWeight.Bold)
+      .onClick(() => this.removeSavedPreset(id))
+  }
+
+  @Builder
+  private savedPresetsBlock() {
+    if (this.savedPresets.length > 0) {
+      Column({ space: SunSpacing.sm }) {
+        Text($r('app.string.simmer_saved_presets_title'))
+          .fontSize(12)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(2)
+          .fontColor(SunColor.pebble)
+
+        List({ space: SunSpacing.sm }) {
+          ForEach(this.savedPresets, (preset: SavedPresetTimer) => {
+            ListItem() {
+              Row({ space: 8 }) {
+                Text(preset.emoji).fontSize(20)
+                Text(this.labelText(preset.label))
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(SunColor.ink)
+                  .layoutWeight(1)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                Text(this.timerText(preset.seconds))
+                  .fontSize(13)
+                  .fontColor(SunColor.pebble)
+              }
+              .width('100%')
+              .height(48)
+              .padding({ left: 16, right: 16 })
+              .borderRadius(SunRadius.md)
+              .backgroundColor(SunColor.white)
+              .border({ width: 1, color: SunColor.border })
+              .onClick(() => this.startSavedPreset(preset))
+            }
+            .swipeAction({
+              end: { builder: () => this.deleteSwipeAction(preset.id) }
+            })
+          }, (preset: SavedPresetTimer) => preset.id.toString())
+        }
+        .width('100%')
+      }
+      .width('100%')
+      .padding({ left: SunSpacing.xl, right: SunSpacing.xl, bottom: SunSpacing.sm })
+    }
+  }
+
+  @Builder
   private presetBar() {
     Scroll() {
       Row({ space: 10 }) {
@@ -907,63 +965,6 @@ struct Index {
           .fontWeight(FontWeight.Medium)
           .border({ width: 1, color: SunColor.pebble })
           .onClick(() => this.startCustom())
-
-        ForEach(this.savedPresets, (preset: SavedPresetTimer) => {
-          if (this.confirmingPresetId === preset.id) {
-            Row({ space: 4 }) {
-              Button($r('app.string.simmer_remove_preset'))
-                .height(34)
-                .padding({ left: 12, right: 12 })
-                .borderRadius(999)
-                .backgroundColor(SunColor.danger)
-                .fontColor(SunColor.white)
-                .fontSize(12)
-                .fontWeight(FontWeight.Bold)
-                .onClick(() => this.removeSavedPreset(preset.id))
-
-              Button($r('app.string.simmer_action_cancel'))
-                .height(34)
-                .padding({ left: 12, right: 12 })
-                .borderRadius(999)
-                .backgroundColor(SunColor.white)
-                .fontColor(SunColor.ink)
-                .fontSize(12)
-                .fontWeight(FontWeight.Bold)
-                .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
-                .onClick(() => this.confirmingPresetId = -1)
-            }
-            .height(56)
-          } else {
-            Row({ space: 4 }) {
-              Button({ type: ButtonType.Normal }) {
-                Text(`${preset.emoji} ${this.labelText(preset.label)} · ${this.timerText(preset.seconds)}`)
-                  .fontSize(13)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor(SunColor.ink)
-                  .maxLines(1)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-                  .constraintSize({ maxWidth: 220 })
-              }
-              .height(44)
-              .padding({ left: 16, right: 12 })
-              .borderRadius(SunRadius.pill)
-              .backgroundColor(SunColor.sun)
-              .onClick(() => this.startSavedPreset(preset))
-
-              Button('×')
-                .width(34)
-                .height(34)
-                .borderRadius(999)
-                .backgroundColor(SunColor.white)
-                .fontColor(SunColor.danger)
-                .fontSize(16)
-                .fontWeight(FontWeight.Bold)
-                .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
-                .onClick(() => this.confirmingPresetId = preset.id)
-            }
-            .height(56)
-          }
-        }, (preset: SavedPresetTimer) => preset.id.toString())
 
         ForEach(this.presets, (preset: PresetTimer) => {
           Button({ type: ButtonType.Normal }) {
@@ -1071,6 +1072,8 @@ struct Index {
           } else {
             this.burnerList()
           }
+
+          this.savedPresetsBlock()
 
           this.customPanel()
           this.presetBar()
