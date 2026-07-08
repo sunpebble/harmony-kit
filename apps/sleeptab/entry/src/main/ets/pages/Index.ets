@@ -16,10 +16,10 @@ interface SleepNight {
   bedtime?: string
 }
 
-@Component
+@ComponentV2
 struct InsightRow {
-  label: ResourceStr = ''
-  @Prop value: string = ''
+  @Param label: ResourceStr = ''
+  @Param value: string = ''
 
   build() {
     Row() {
@@ -47,21 +47,28 @@ PersistentStorage.persistProp('sleeptab.nights.v1', '')
 PersistentStorage.persistProp('sleeptab.proUnlocked.v1', true)
 
 @Entry
-@Component
+@ComponentV2
 struct Index {
-  @StorageLink('sleeptab.goalHours.v1') private goalHours: number = 8
-  @StorageLink('sleeptab.rangeNights.v1') private rangeNights: number = 7
-  @StorageLink('sleeptab.draftHours.v1') private draftHours: number = 7.5
-  @StorageLink('sleeptab.draftBedtime.v1') private draftBedtime: string = '23:30'
-  @StorageLink('sleeptab.draftDate.v1') private draftDate: string = ''
-  @StorageLink('sleeptab.nights.v1') private nightsJson: string = ''
-  @StorageLink('sleeptab.proUnlocked.v1') private proUnlocked: boolean = true
-  @State private nights: SleepNight[] = []
-  @State private confirmingDeleteNightDate: string = ''
-  @State private paywallOpen: boolean = false
+  @Local private goalHours: number = 8
+  @Local private rangeNights: number = 7
+  @Local private draftHours: number = 7.5
+  @Local private draftBedtime: string = '23:30'
+  @Local private draftDate: string = ''
+  @Local private nightsJson: string = ''
+  @Local private proUnlocked: boolean = true
+  @Local private nights: SleepNight[] = []
+  @Local private confirmingDeleteNightDate: string = ''
+  @Local private paywallOpen: boolean = false
   private scroller: Scroller = new Scroller()
 
   aboutToAppear(): void {
+    this.goalHours = AppStorage.get<number>('sleeptab.goalHours.v1') ?? 8
+    this.rangeNights = AppStorage.get<number>('sleeptab.rangeNights.v1') ?? 7
+    this.draftHours = AppStorage.get<number>('sleeptab.draftHours.v1') ?? 7.5
+    this.draftBedtime = AppStorage.get<string>('sleeptab.draftBedtime.v1') ?? '23:30'
+    this.draftDate = AppStorage.get<string>('sleeptab.draftDate.v1') ?? ''
+    this.nightsJson = AppStorage.get<string>('sleeptab.nights.v1') ?? ''
+    this.proUnlocked = AppStorage.get<boolean>('sleeptab.proUnlocked.v1') ?? true
     this.loadNights()
   }
 
@@ -113,6 +120,7 @@ struct Index {
 
   private adjustDraftHours(delta: number): void {
     this.draftHours = Math.max(0.5, Math.min(14, Math.round((this.draftHours + delta) * 4) / 4))
+    AppStorage.setOrCreate('sleeptab.draftHours.v1', this.draftHours)
   }
 
   private addNight(): void {
@@ -160,11 +168,14 @@ struct Index {
 
   private applyDraftDate(date: string): void {
     this.draftDate = date
+    AppStorage.setOrCreate('sleeptab.draftDate.v1', this.draftDate)
     this.confirmingDeleteNightDate = ''
     const matches = this.nights.filter((night: SleepNight) => night.date === date)
     if (matches.length > 0) {
       this.draftHours = matches[0].hours
+      AppStorage.setOrCreate('sleeptab.draftHours.v1', this.draftHours)
       this.draftBedtime = this.validBedtime(matches[0].bedtime) || this.draftBedtime
+      AppStorage.setOrCreate('sleeptab.draftBedtime.v1', this.draftBedtime)
     }
   }
 
@@ -191,6 +202,7 @@ struct Index {
 
   private setDraftBedtime(hour: number, minute: number): void {
     this.draftBedtime = `${this.pad(Math.max(0, Math.min(23, hour)))}:${this.pad(Math.max(0, Math.min(59, minute)))}`
+    AppStorage.setOrCreate('sleeptab.draftBedtime.v1', this.draftBedtime)
   }
 
   @Builder
@@ -216,7 +228,7 @@ struct Index {
             .height(38)
             .padding({ left: 12, right: 12 })
             .borderRadius(999)
-            .backgroundColor('#31354A') // ponytail: dark chip bg, no SunColor token
+            .backgroundColor('#31354A')
             .fontColor(SunColor.cream)
             .fontSize(12)
             .onClick(() => this.adjustDraftHours(-0.25))
@@ -236,7 +248,7 @@ struct Index {
           .height(38)
           .padding({ left: 14, right: 14 })
           .borderRadius(999)
-          .backgroundColor('#31354A') // ponytail: dark chip bg, no SunColor token
+          .backgroundColor('#31354A')
           .fontColor(SunColor.cream)
           .fontSize(12)
           .fontWeight(FontWeight.Bold)
@@ -292,7 +304,7 @@ struct Index {
     }
     .width('100%')
     .padding(SunSpacing.lg)
-    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
+    .backgroundColor('#24283A')
     .borderRadius(20)
   }
 
@@ -323,6 +335,7 @@ struct Index {
 
   private saveNights(): void {
     this.nightsJson = JSON.stringify(this.nights)
+    AppStorage.setOrCreate('sleeptab.nights.v1', this.nightsJson)
   }
 
   private shownNights(): SleepNight[] {
@@ -483,14 +496,17 @@ struct Index {
       return
     }
     this.rangeNights = value
+    AppStorage.setOrCreate('sleeptab.rangeNights.v1', this.rangeNights)
   }
 
   private adjustGoal(delta: number): void {
     this.goalHours = Math.max(5, Math.min(10, this.goalHours + delta))
+    AppStorage.setOrCreate('sleeptab.goalHours.v1', this.goalHours)
   }
 
   private unlockPro(): void {
     this.proUnlocked = true
+    AppStorage.setOrCreate('sleeptab.proUnlocked.v1', this.proUnlocked)
     this.paywallOpen = false
     this.showToast($r('app.string.sleeptab_toast_pro_unlocked'))
   }
@@ -503,7 +519,6 @@ struct Index {
     try {
       this.getUIContext().getPromptAction().showToast({ message, duration: 1800 })
     } catch (_error) {
-      // ponytail: lock still works if toast is unavailable.
     }
   }
 
@@ -516,7 +531,7 @@ struct Index {
       .height(34)
       .padding({ left: 14, right: 14 })
       .borderRadius(999)
-      .backgroundColor(this.rangeNights === value ? SunColor.sun : '#31354A') // ponytail: dark chip bg, no SunColor token
+      .backgroundColor(this.rangeNights === value ? SunColor.sun : '#31354A')
       .fontColor(this.rangeNights === value ? SunColor.night : SunColor.darkSecondary)
       .fontSize(12)
       .fontWeight(FontWeight.Bold)
@@ -544,7 +559,7 @@ struct Index {
     }
     .width('100%')
     .padding(SunSpacing.lg)
-    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
+    .backgroundColor('#24283A')
     .borderRadius(20)
   }
 
@@ -571,7 +586,7 @@ struct Index {
     }
     .width('100%')
     .padding({ top: 30, bottom: 30 })
-    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
+    .backgroundColor('#24283A')
     .borderRadius(20)
   }
 
@@ -586,14 +601,13 @@ struct Index {
         }
 
         Stack({ alignContent: Alignment.Bottom }) {
-          // ponytail: 30/90 晚间距 1px 挤同屏当 sparkline 读；再细分需要按周聚合
           Row({ space: this.rangeNights > 7 ? 1 : SunSpacing.sm }) {
             ForEach(this.shownNights(), (night: SleepNight) => {
               Column({ space: SunSpacing.xs }) {
                 Blank()
                   .width('100%')
                   .height(this.sleepBarHeight(night.hours))
-                  .backgroundColor(night.hours >= this.goalHours ? SunColor.sun : '#8C6925') // ponytail: dim goal-miss bar, no SunColor token
+                  .backgroundColor(night.hours >= this.goalHours ? SunColor.sun : '#8C6925')
                   .borderRadius(this.rangeNights > 7 ? 1 : 5)
 
                 Text(this.rangeNights <= 7 ? this.dayText(night.day) : ' ')
@@ -629,7 +643,7 @@ struct Index {
     }
     .width('100%')
     .padding(SunSpacing.lg)
-    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
+    .backgroundColor('#24283A')
     .borderRadius(20)
   }
 
@@ -668,7 +682,7 @@ struct Index {
     }
     .width('100%')
     .padding(SunSpacing.lg)
-    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
+    .backgroundColor('#24283A')
     .borderRadius(20)
   }
 
@@ -708,7 +722,7 @@ struct Index {
     }
     .width('100%')
     .padding(SunSpacing.lg)
-    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
+    .backgroundColor('#24283A')
     .borderRadius(20)
   }
 
@@ -727,7 +741,7 @@ struct Index {
           .width(38)
           .height(38)
           .borderRadius(999)
-          .backgroundColor('#31354A') // ponytail: dark chip bg, no SunColor token
+          .backgroundColor('#31354A')
           .fontColor(SunColor.cream)
           .onClick(() => this.adjustGoal(-0.25))
 
@@ -748,7 +762,7 @@ struct Index {
     }
     .width('100%')
     .padding(SunSpacing.lg)
-    .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
+    .backgroundColor('#24283A')
     .borderRadius(20)
   }
 
@@ -815,7 +829,7 @@ struct Index {
       .width('100%')
       .alignItems(HorizontalAlign.Center)
       .padding(SunSpacing.lg)
-      .backgroundColor('#24283A') // ponytail: dark card bg, no SunColor token
+      .backgroundColor('#24283A')
       .borderRadius(20)
       .onAppear(() => this.scroller.scrollEdge(Edge.Bottom))
     }
