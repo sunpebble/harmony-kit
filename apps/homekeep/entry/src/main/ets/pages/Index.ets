@@ -35,7 +35,7 @@ PersistentStorage.persistProp('homekeep.filter.v1', 'Due')
 PersistentStorage.persistProp('homekeep.tasks.v1', '')
 
 @Entry
-@Component
+@ComponentV2
 struct Index {
   private presets: PresetTask[] = [
     { title: 'Replace HVAC filter', area: 'Air', cadence: 90 },
@@ -43,17 +43,20 @@ struct Index {
     { title: 'Clean dishwasher filter', area: 'Kitchen', cadence: 30 },
     { title: 'Flush water heater', area: 'Utility', cadence: 180 }
   ]
-  @StorageLink('homekeep.nextId.v1') private nextId: number = 1
-  @StorageLink('homekeep.filter.v1') private filter: string = 'Due'
-  @StorageLink('homekeep.tasks.v1') private tasksJson: string = ''
-  @State private draftTitle: string = ''
-  @State private draftArea: string = ''
-  @State private draftCadence: number = 30
-  @State private tasks: KeepTask[] = []
-  @State private confirmingTaskId: number = -1
+  @Local private nextId: number = 1
+  @Local private filter: string = 'Due'
+  @Local private tasksJson: string = ''
+  @Local private draftTitle: string = ''
+  @Local private draftArea: string = ''
+  @Local private draftCadence: number = 30
+  @Local private tasks: KeepTask[] = []
+  @Local private confirmingTaskId: number = -1
   private scroller: Scroller = new Scroller()
 
   aboutToAppear(): void {
+    this.nextId = AppStorage.get<number>('homekeep.nextId.v1') ?? 1
+    this.filter = AppStorage.get<string>('homekeep.filter.v1') ?? 'Due'
+    this.tasksJson = AppStorage.get<string>('homekeep.tasks.v1') ?? ''
     this.loadTasks()
   }
 
@@ -75,6 +78,7 @@ struct Index {
 
   private saveTasks(): void {
     this.tasksJson = JSON.stringify(this.tasks)
+    AppStorage.setOrCreate('homekeep.tasks.v1', this.tasksJson)
   }
 
   private saveTasksAndSyncReminders(): void {
@@ -126,6 +130,7 @@ struct Index {
       return taskWithId
     })
     this.nextId = nextId
+    AppStorage.setOrCreate('homekeep.nextId.v1', this.nextId)
     return normalized
   }
 
@@ -145,7 +150,9 @@ struct Index {
       }
     ]
     this.nextId += 1
+    AppStorage.setOrCreate('homekeep.nextId.v1', this.nextId)
     this.filter = 'All'
+    AppStorage.setOrCreate('homekeep.filter.v1', this.filter)
     this.confirmingTaskId = -1
     this.saveTasksAndSyncReminders()
   }
@@ -165,10 +172,12 @@ struct Index {
     }
     this.tasks = [task, ...this.tasks]
     this.nextId += 1
+    AppStorage.setOrCreate('homekeep.nextId.v1', this.nextId)
     this.draftTitle = ''
     this.draftArea = ''
     this.draftCadence = 30
     this.filter = 'All'
+    AppStorage.setOrCreate('homekeep.filter.v1', this.filter)
     this.confirmingTaskId = -1
     this.saveTasksAndSyncReminders()
   }
@@ -177,7 +186,6 @@ struct Index {
     try {
       this.getUIContext().getPromptAction().showToast({ message, duration: 1800 })
     } catch (_error) {
-      // ponytail: validation still blocks empty custom tasks if toast is unavailable.
     }
   }
 
@@ -255,7 +263,6 @@ struct Index {
         await reminderAgentManager.publishReminder(request)
       }
     } catch (_error) {
-      // ponytail: task storage is source of truth; reminders can be rebuilt on the next edit.
     }
   }
 
@@ -387,7 +394,10 @@ struct Index {
       .fontSize(12)
       .fontWeight(FontWeight.Bold)
       .border({ width: 1, color: SunColor.border })
-      .onClick(() => this.filter = id)
+      .onClick(() => {
+        this.filter = id
+        AppStorage.setOrCreate('homekeep.filter.v1', this.filter)
+      })
   }
 
   @Builder
@@ -570,7 +580,7 @@ struct Index {
             .height(42)
             .padding({ left: 14, right: 14 })
             .borderRadius(999)
-            .backgroundColor('#EDF4EF')
+            .backgroundColor(SunColor.panelTint)
             .onClick(() => this.addPreset(preset))
         }, (preset: PresetTask) => preset.title)
       }
@@ -593,7 +603,6 @@ struct Index {
           try {
             this.getUIContext().getFocusController().requestFocus('draftTitle')
           } catch (_e) {
-            // ponytail: focus is best-effort; the form is already on screen.
           }
         },
         showPro: false,
