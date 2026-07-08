@@ -117,34 +117,6 @@
       "value": "MOOD MIX — ALL TIME"
     },
     {
-      "name": "dayroll_paywall_feature_export",
-      "value": "Export your tape — text, Markdown or CSV"
-    },
-    {
-      "name": "dayroll_paywall_feature_stats",
-      "value": "Streaks, mood trends & yearly review"
-    },
-    {
-      "name": "dayroll_paywall_feature_memories",
-      "value": "On This Day — see past years while you write"
-    },
-    {
-      "name": "dayroll_paywall_feature_indie",
-      "value": "Support an indie developer"
-    },
-    {
-      "name": "dayroll_paywall_pitch",
-      "value": "PAY ONCE. YOURS FOREVER.\nNO SUBSCRIPTION. NO ACCOUNT."
-    },
-    {
-      "name": "dayroll_paywall_unlock",
-      "value": "UNLOCK FOR $1.99"
-    },
-    {
-      "name": "dayroll_restore_purchase",
-      "value": "Restore Purchase"
-    },
-    {
       "name": "dayroll_reminder_panel_title",
       "value": "DAILY REMINDER"
     },
@@ -181,10 +153,6 @@
       "value": "Daily reminder off."
     },
     {
-      "name": "dayroll_toast_pro_unlocked",
-      "value": "Dayroll Pro unlocked on this device."
-    },
-    {
       "name": "dayroll_toast_copied_format",
       "value": "%1$s copied."
     },
@@ -193,8 +161,20 @@
       "value": "Copy failed."
     },
     {
-      "name": "dayroll_paywall_close",
-      "value": "Not now"
+      "name": "dayroll_tab_log",
+      "value": "Log"
+    },
+    {
+      "name": "dayroll_tab_calendar",
+      "value": "Calendar"
+    },
+    {
+      "name": "dayroll_tab_insights",
+      "value": "Insights"
+    },
+    {
+      "name": "dayroll_calendar_heatmap_title",
+      "value": "YEAR IN MOODS"
     }
   ]
 }

@@ -14,6 +14,7 @@ import { AbilityConstant, common, Configuration, EnvironmentCallback } from '@ki
 import { reminderAgentManager } from '@kit.BackgroundTasksKit'
 import { notificationManager } from '@kit.NotificationKit'
 import { systemShare } from '@kit.ShareKit'
+import { CalendarView } from '../components/CalendarView'
 
 interface RollEntry {
   date: string
@@ -34,13 +35,10 @@ const NARROW_MONTH_OPTS: intl.DateTimeOptions = { month: 'narrow' } as intl.Date
 
 PersistentStorage.persistProp('dayroll.mood.v1', '😐')
 PersistentStorage.persistProp('dayroll.entries.v1', '')
-PersistentStorage.persistProp('dayroll.exportOpen.v1', false)
-PersistentStorage.persistProp('dayroll.statsOpen.v1', false)
 PersistentStorage.persistProp('dayroll.exportFormat.v1', 'Plain Text')
 PersistentStorage.persistProp('dayroll.reminderEnabled.v1', false)
 PersistentStorage.persistProp('dayroll.reminderHour.v1', 21)
 PersistentStorage.persistProp('dayroll.reminderMinute.v1', 0)
-PersistentStorage.persistProp('dayroll.proUnlocked.v1', true)
 
 @Entry
 @ComponentV2
@@ -56,33 +54,26 @@ struct Index {
   private envCallbackId: number = -1
   @Local private mood: string = '😐'
   @Local private entriesJson: string = ''
-  @Local private exportOpen: boolean = false
-  @Local private statsOpen: boolean = false
   @Local private exportFormat: string = 'Plain Text'
-  @Local private reminderOpen: boolean = false
   @Local private reminderEnabled: boolean = false
   @Local private reminderHour: number = 21
   @Local private reminderMinute: number = 0
-  @Local private proUnlocked: boolean = true
   @Local private draftLine: string = ''
   @Local private editingDate: string = ''
   @Local private confirmingDelete: boolean = false
   @Local private composerOpen: boolean = false
   @Local private selectedMonth: string = ''
-  @Local private paywallOpen: boolean = false
-  @Local private paywallIntent: string = ''
   @Local private entries: RollEntry[] = []
+  @Local private activeTab: number = 0
+  @Local private calMonth: string = `${new Date().getFullYear()}-${this.pad(new Date().getMonth() + 1)}`
 
   aboutToAppear(): void {
     this.mood = AppStorage.get<string>('dayroll.mood.v1') ?? '😐'
     this.entriesJson = AppStorage.get<string>('dayroll.entries.v1') ?? ''
-    this.exportOpen = AppStorage.get<boolean>('dayroll.exportOpen.v1') ?? false
-    this.statsOpen = AppStorage.get<boolean>('dayroll.statsOpen.v1') ?? false
     this.exportFormat = AppStorage.get<string>('dayroll.exportFormat.v1') ?? 'Plain Text'
     this.reminderEnabled = AppStorage.get<boolean>('dayroll.reminderEnabled.v1') ?? false
     this.reminderHour = AppStorage.get<number>('dayroll.reminderHour.v1') ?? 21
     this.reminderMinute = AppStorage.get<number>('dayroll.reminderMinute.v1') ?? 0
-    this.proUnlocked = AppStorage.get<boolean>('dayroll.proUnlocked.v1') ?? true
 
     this.loadEntries()
     const context = this.getUIContext().getHostContext()
@@ -401,9 +392,6 @@ struct Index {
   }
 
   private memories(): RollEntry[] {
-    if (!this.proUnlocked) {
-      return []
-    }
     const active = this.dateFromKey(this.activeDate())
     return this.entries.filter((entry: RollEntry) => {
       if (entry.date === this.activeDate()) {
@@ -563,49 +551,6 @@ struct Index {
     }
   }
 
-  private unlockPro(): void {
-    this.proUnlocked = true
-    AppStorage.setOrCreate('dayroll.proUnlocked.v1', this.proUnlocked)
-    this.paywallOpen = false
-    if (this.paywallIntent === 'Stats') {
-      this.statsOpen = true
-      AppStorage.setOrCreate('dayroll.statsOpen.v1', this.statsOpen)
-    } else if (this.paywallIntent === 'Export') {
-      this.exportOpen = true
-      AppStorage.setOrCreate('dayroll.exportOpen.v1', this.exportOpen)
-    }
-    this.paywallIntent = ''
-    this.showToast($r('app.string.dayroll_toast_pro_unlocked'))
-  }
-
-  private showPaywall(): void {
-    this.paywallOpen = true
-  }
-
-  private toggleStats(): void {
-    if (!this.proUnlocked) {
-      this.statsOpen = false
-      AppStorage.setOrCreate('dayroll.statsOpen.v1', this.statsOpen)
-      this.paywallIntent = 'Stats'
-      this.showPaywall()
-      return
-    }
-    this.statsOpen = !this.statsOpen
-    AppStorage.setOrCreate('dayroll.statsOpen.v1', this.statsOpen)
-  }
-
-  private toggleExport(): void {
-    if (!this.proUnlocked) {
-      this.exportOpen = false
-      AppStorage.setOrCreate('dayroll.exportOpen.v1', this.exportOpen)
-      this.paywallIntent = 'Export'
-      this.showPaywall()
-      return
-    }
-    this.exportOpen = !this.exportOpen
-    AppStorage.setOrCreate('dayroll.exportOpen.v1', this.exportOpen)
-  }
-
   private formatDisplay(format: string): Resource {
     if (format === 'Markdown') {
       return $r('app.string.dayroll_format_markdown')
@@ -665,29 +610,11 @@ struct Index {
   private headerTitleRow() {
     Row() {
       Text('DAYROLL')
-        .fontSize(18)
-        .fontWeight(FontWeight.Bold)
-        .letterSpacing(2)
-        .fontColor(SunColor.ink)
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .layoutWeight(1)
-
-      Row({ space: 6 }) {
-        this.toolbarIcon('🔔', () => {
-          this.reminderOpen = !this.reminderOpen
-        })
-        this.toolbarIcon('📊', () => {
-          this.toggleStats()
-        })
-        this.toolbarIcon('↗', () => {
-          this.toggleExport()
-        })
-      }
-      .flexShrink(0)
+        .fontSize(18).fontWeight(FontWeight.Bold).letterSpacing(2)
+        .fontColor(SunColor.ink).maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
     }
-    .width('100%')
-    .alignItems(VerticalAlign.Center)
+    .width('100%').alignItems(VerticalAlign.Center)
   }
 
   @Builder
@@ -725,33 +652,6 @@ struct Index {
     }
     .width('100%')
     .alignItems(HorizontalAlign.Start)
-  }
-
-  private toolbarIconActive(label: string): boolean {
-    if (label === '🔔') {
-      return this.reminderOpen
-    }
-    if (label === '📊') {
-      return this.statsOpen || (this.paywallOpen && this.paywallIntent === 'Stats')
-    }
-    return this.exportOpen || (this.paywallOpen && this.paywallIntent === 'Export')
-  }
-
-  @Builder
-  private toolbarIcon(label: string, action: () => void) {
-    Button({ type: ButtonType.Normal }) {
-      Text(label)
-        .fontSize(20)
-        .lineHeight(24)
-        .textAlign(TextAlign.Center)
-        .width('100%')
-    }
-    .width(40)
-    .height(40)
-    .padding(0)
-    .borderRadius(999)
-    .backgroundColor(this.toolbarIconActive(label) ? SunColor.sun : '#F5EBD9')
-    .onClick(action)
   }
 
   @Builder
@@ -975,41 +875,38 @@ struct Index {
 
   @Builder
   private exportPreview() {
-    if (this.exportOpen && this.proUnlocked) {
-      Column({ space: SunSpacing.sm }) {
-        Text($r('app.string.dayroll_export_preview_title'))
-          .fontSize(10)
-          .fontWeight(FontWeight.Bold)
-          .letterSpacing(1.5)
-          .fontColor(SunColor.pebble)
+    Column({ space: SunSpacing.sm }) {
+      Text($r('app.string.dayroll_export_preview_title'))
+        .fontSize(10)
+        .fontWeight(FontWeight.Bold)
+        .letterSpacing(1.5)
+        .fontColor(SunColor.pebble)
 
-        Row({ space: SunSpacing.sm }) {
-          this.formatButton('Plain Text')
-          this.formatButton('Markdown')
-          this.formatButton('CSV')
-        }
-
-        Text(this.exportText())
-          .fontSize(12)
-          .fontColor(SunColor.ink)
-          .lineHeight(18)
-          .width('100%')
-
-        SunButton({
-          label: $r('app.string.dayroll_share_export'),
-          role: SunButtonRole.Secondary,
-          action: () => {
-            this.shareExportText()
-          }
-        })
+      Row({ space: SunSpacing.sm }) {
+        this.formatButton('Plain Text')
+        this.formatButton('Markdown')
+        this.formatButton('CSV')
       }
-      .width('100%')
-      .alignItems(HorizontalAlign.Start)
-      .padding(SunSpacing.md)
-      .backgroundColor('#FFFDF7')
-      .border({ width: 1, color: '#C8BDAA' })
-      .onAppear(() => this.tapeScroller.scrollEdge(Edge.Bottom))
+
+      Text(this.exportText())
+        .fontSize(12)
+        .fontColor(SunColor.ink)
+        .lineHeight(18)
+        .width('100%')
+
+      SunButton({
+        label: $r('app.string.dayroll_share_export'),
+        role: SunButtonRole.Secondary,
+        action: () => {
+          this.shareExportText()
+        }
+      })
     }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+    .padding(SunSpacing.md)
+    .backgroundColor('#FFFDF7')
+    .border({ width: 1, color: '#C8BDAA' })
   }
 
   @Builder
@@ -1030,7 +927,6 @@ struct Index {
 
   @Builder
   private statsPreview() {
-    if (this.statsOpen && this.proUnlocked) {
       Column({ space: SunSpacing.md }) {
         Text($r('app.string.dayroll_stats_title'))
           .fontSize(14)
@@ -1127,8 +1023,6 @@ struct Index {
       .padding(SunSpacing.md)
       .backgroundColor('#FFFDF7')
       .border({ width: 1, color: '#C8BDAA' })
-      .onAppear(() => this.tapeScroller.scrollEdge(Edge.Bottom))
-    }
   }
 
   @Builder
@@ -1177,88 +1071,7 @@ struct Index {
   }
 
   @Builder
-  private paywallFeature(icon: string, text: ResourceStr) {
-    Row({ space: SunSpacing.md }) {
-      Text(icon)
-        .fontSize(18)
-        .width(24)
-        .textAlign(TextAlign.Center)
-      Text(text)
-        .fontSize(14)
-        .fontColor(SunColor.ink)
-        .layoutWeight(1)
-    }
-    .width('100%')
-    .alignItems(VerticalAlign.Center)
-  }
-
-  @Builder
-  private paywallPanel() {
-    if (this.paywallOpen && !this.proUnlocked) {
-      Column({ space: SunSpacing.lg }) {
-        Text('DAYROLL PRO')
-          .fontSize(20)
-          .fontWeight(FontWeight.Bold)
-          .letterSpacing(4)
-          .fontColor(SunColor.ink)
-          .width('100%')
-          .textAlign(TextAlign.Center)
-
-        this.perforation()
-
-        Column({ space: 14 }) {
-          this.paywallFeature('↗', $r('app.string.dayroll_paywall_feature_export'))
-          this.paywallFeature('▥', $r('app.string.dayroll_paywall_feature_stats'))
-          this.paywallFeature('↺', $r('app.string.dayroll_paywall_feature_memories'))
-          this.paywallFeature('♥', $r('app.string.dayroll_paywall_feature_indie'))
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Start)
-
-        this.perforation()
-
-        Text($r('app.string.dayroll_paywall_pitch'))
-          .fontSize(11)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(SunColor.pebble)
-          .lineHeight(17)
-          .width('100%')
-          .textAlign(TextAlign.Center)
-
-        SunButton({
-          label: $r('app.string.dayroll_paywall_unlock'),
-          action: () => this.unlockPro()
-        })
-
-        Button($r('app.string.dayroll_restore_purchase'))
-          .height(36)
-          .backgroundColor(Color.Transparent)
-          .fontSize(12)
-          .fontColor(SunColor.pebble)
-          .onClick(() => this.unlockPro())
-
-        Button($r('app.string.dayroll_paywall_close'))
-          .height(36)
-          .backgroundColor(Color.Transparent)
-          .fontSize(12)
-          .fontColor(SunColor.pebble)
-          .onClick(() => {
-            this.paywallOpen = false
-            this.paywallIntent = ''
-          })
-      }
-      .width('100%')
-      .alignItems(HorizontalAlign.Center)
-      .padding(SunSpacing.lg)
-      .backgroundColor('#FFFDF7')
-      .border({ width: 1, color: '#C8BDAA' })
-      .onAppear(() => this.tapeScroller.scrollEdge(Edge.Bottom))
-    }
-  }
-
-  @Builder
   private reminderPanel() {
-    if (this.reminderOpen) {
       Column({ space: SunSpacing.md }) {
         Text($r('app.string.dayroll_reminder_panel_title'))
           .fontSize(12)
@@ -1310,8 +1123,6 @@ struct Index {
       .padding(SunSpacing.md)
       .backgroundColor('#FFFDF7')
       .border({ width: 1, color: '#C8BDAA' })
-      .onAppear(() => this.tapeScroller.scrollEdge(Edge.Bottom))
-    }
   }
 
   @Builder
@@ -1335,53 +1146,109 @@ struct Index {
     .alignItems(HorizontalAlign.Center)
   }
 
+  @Builder
+  private bottomBar(label: ResourceStr, icon: string, index: number) {
+    Column({ space: 2 }) {
+      Text(icon).fontSize(19).lineHeight(22)
+      Text(label).fontSize(10).fontWeight(FontWeight.Bold)
+        .fontColor(this.activeTab === index ? SunColor.ink : SunColor.pebble)
+    }
+    .width('100%').padding({ top: 6, bottom: 6 })
+    .backgroundColor('#FFFDF7')
+  }
+
+  @Builder
+  private logTab() {
+    Stack({ alignContent: Alignment.Bottom }) {
+      Column() {
+        this.topChrome()
+        Row() {
+          Scroll(this.tapeScroller) {
+            Column({ space: SunSpacing.lg }) {
+              this.perforation()
+              if (this.composerOpen) {
+                this.composer()
+                this.perforation()
+              }
+              this.rollList()
+            }
+            .width('100%')
+            .padding({ left: 20, right: 20, top: SunSpacing.sm, bottom: 120 })
+            .backgroundColor('#FFFDF7')
+          }
+          .layoutWeight(1).height('100%').align(Alignment.Top)
+          .scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring)
+
+          if (this.months().length > 1 && !this.composerOpen) {
+            this.monthIndexStrip()
+          }
+        }
+        .width('100%').layoutWeight(1).backgroundColor('#FFFDF7')
+      }
+      .width('100%').height('100%')
+
+      this.logBar()
+    }
+    .width('100%').height('100%')
+  }
+
+  @Builder
+  private calendarTab() {
+    Scroll() {
+      CalendarView({
+        entries: this.entries,
+        calMonth: this.calMonth,
+        onMonthChange: (month: string) => { this.calMonth = month },
+        onPickDay: (dateKey: string) => { this.pickDayFromCalendar(dateKey) }
+      })
+    }
+    .layoutWeight(1).height('100%').scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring)
+    .backgroundColor('#FFFDF7')
+  }
+
+  private pickDayFromCalendar(dateKey: string): void {
+    const existing = this.entries.find((e: RollEntry) => e.date === dateKey)
+    this.editingDate = dateKey
+    this.mood = existing ? (this.validMood(existing.mood) || '😐') : '😐'
+    AppStorage.setOrCreate('dayroll.mood.v1', this.mood)
+    this.draftLine = existing ? existing.line : ''
+    this.confirmingDelete = false
+    this.composerOpen = true
+    this.activeTab = 0
+  }
+
+  @Builder
+  private insightsTab() {
+    Scroll() {
+      Column({ space: SunSpacing.lg }) {
+        this.statsPreview()
+        this.exportPreview()
+        this.reminderPanel()
+      }
+      .width('100%')
+      .padding({ left: 20, right: 20, top: SunSpacing.md, bottom: 40 })
+      .backgroundColor('#FFFDF7')
+    }
+    .layoutWeight(1).height('100%').scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring)
+    .backgroundColor('#FFFDF7')
+  }
+
   build() {
     Column() {
       SunSafeRoot({ mode: SunMode.Light }) {
-        Stack({ alignContent: Alignment.Bottom }) {
-          Column() {
-            this.topChrome()
-
-            Row() {
-              Scroll(this.tapeScroller) {
-                Column({ space: SunSpacing.lg }) {
-                  this.perforation()
-                  if (this.composerOpen) {
-                    this.composer()
-                    this.perforation()
-                  }
-                  this.rollList()
-
-                  this.reminderPanel()
-                  this.paywallPanel()
-                  this.statsPreview()
-                  this.exportPreview()
-                }
-                .width('100%')
-                .padding({ left: 20, right: 20, top: SunSpacing.sm, bottom: 120 })
-                .backgroundColor('#FFFDF7')
-              }
-              .layoutWeight(1)
-              .height('100%')
-              .align(Alignment.Top)
-              .scrollBar(BarState.Off)
-              .edgeEffect(EdgeEffect.Spring)
-
-              if (this.months().length > 1 && !this.composerOpen) {
-                this.monthIndexStrip()
-              }
-            }
-            .width('100%')
-            .layoutWeight(1)
-            .backgroundColor('#FFFDF7')
-          }
-          .width('100%')
-          .height('100%')
-
-          this.logBar()
+        Tabs({ barPosition: BarPosition.End, index: this.activeTab }) {
+          TabContent() { this.logTab() }
+            .tabBar(this.bottomBar($r('app.string.dayroll_tab_log'), '📝', 0))
+          TabContent() { this.calendarTab() }
+            .tabBar(this.bottomBar($r('app.string.dayroll_tab_calendar'), '📅', 1))
+          TabContent() { this.insightsTab() }
+            .tabBar(this.bottomBar($r('app.string.dayroll_tab_insights'), '📊', 2))
         }
-        .width('100%')
-        .height('100%')
+        .barMode(BarMode.Fixed)
+        .scrollable(false)
+        .barBackgroundColor('#FFFDF7')
+        .onChange((index: number) => { this.activeTab = index })
+        .width('100%').height('100%')
       }
     }
     .width('100%')

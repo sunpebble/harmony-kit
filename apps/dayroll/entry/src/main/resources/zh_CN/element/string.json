@@ -97,34 +97,6 @@
       "value": "心情分布 — 全部"
     },
     {
-      "name": "dayroll_paywall_feature_export",
-      "value": "导出你的日记 — 文本、Markdown 或 CSV"
-    },
-    {
-      "name": "dayroll_paywall_feature_stats",
-      "value": "连续打卡、心情趋势与年度回顾"
-    },
-    {
-      "name": "dayroll_paywall_feature_memories",
-      "value": "那年今天 — 写下今天时回看往年"
-    },
-    {
-      "name": "dayroll_paywall_feature_indie",
-      "value": "支持独立开发者"
-    },
-    {
-      "name": "dayroll_paywall_pitch",
-      "value": "一次买断，永久拥有。\n无订阅，无账号。"
-    },
-    {
-      "name": "dayroll_paywall_unlock",
-      "value": "以 $1.99 解锁"
-    },
-    {
-      "name": "dayroll_restore_purchase",
-      "value": "恢复购买"
-    },
-    {
       "name": "dayroll_reminder_panel_title",
       "value": "每日提醒"
     },
@@ -161,10 +133,6 @@
       "value": "已关闭每日提醒。"
     },
     {
-      "name": "dayroll_toast_pro_unlocked",
-      "value": "已在此设备解锁 Dayroll Pro。"
-    },
-    {
       "name": "dayroll_toast_copied_format",
       "value": "%1$s 已复制。"
     },
@@ -181,10 +149,6 @@
       "value": "CSV"
     },
     {
-      "name": "dayroll_paywall_close",
-      "value": "暂不解锁"
-    },
-    {
       "name": "EntryAbility_label",
       "value": "Dayroll"
     },
@@ -195,6 +159,22 @@
     {
       "name": "module_desc",
       "value": "Dayroll"
+    },
+    {
+      "name": "dayroll_tab_log",
+      "value": "记录"
+    },
+    {
+      "name": "dayroll_tab_calendar",
+      "value": "日历"
+    },
+    {
+      "name": "dayroll_tab_insights",
+      "value": "洞察"
+    },
+    {
+      "name": "dayroll_calendar_heatmap_title",
+      "value": "年度热力图"
     }
   ]
 }
