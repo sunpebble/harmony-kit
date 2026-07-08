@@ -100,58 +100,86 @@ PersistentStorage.persistProp('steady.targetOxygenLow.v1', '')
 PersistentStorage.persistProp('steady.targetOxygenHigh.v1', '')
 
 @Entry
-@Component
+@ComponentV2
 struct Index {
   private kinds: string[] = ['Blood pressure', 'Blood glucose', 'Weight', 'Heart rate', 'Blood oxygen']
-  @StorageLink('steady.tab.v1') private tab: string = 'Timeline'
-  @StorageLink('steady.nextId.v1') private nextId: number = 1
-  @StorageLink('steady.selectedKind.v1') private selectedKind: string = 'Blood pressure'
-  @StorageLink('steady.selectedMealtime.v1') private selectedMealtime: string = ''
-  @StorageLink('steady.draftPrimary.v1') private draftPrimary: string = ''
-  @StorageLink('steady.draftSecondary.v1') private draftSecondary: string = ''
-  @StorageLink('steady.draftNote.v1') private draftNote: string = ''
-  @StorageLink('steady.readings.v1') private readingsJson: string = ''
-  @StorageLink('steady.lastReadings.v1') private lastReadingsJson: string = ''
-  @StorageLink('steady.meds.v1') private medsJson: string = ''
-  @StorageLink('steady.symptoms.v1') private symptomsJson: string = ''
-  @StorageLink('steady.reminderEnabled.v1') private reminderEnabled: boolean = false
-  @StorageLink('steady.reminderHour.v1') private reminderHour: number = 8
-  @StorageLink('steady.reminderMinute.v1') private reminderMinute: number = 0
-  @StorageLink('steady.trendRange.v1') private trendRange: string = '7D'
-  @StorageLink('steady.trendKind.v1') private trendKind: string = 'Blood pressure'
-  @StorageLink('steady.proUnlocked.v1') private proUnlocked: boolean = true
-  @StorageLink('steady.targetBpLow.v1') private targetBpLow: string = ''
-  @StorageLink('steady.targetBpHigh.v1') private targetBpHigh: string = ''
-  @StorageLink('steady.targetGlucoseLow.v1') private targetGlucoseLow: string = ''
-  @StorageLink('steady.targetGlucoseHigh.v1') private targetGlucoseHigh: string = ''
-  @StorageLink('steady.targetWeightLow.v1') private targetWeightLow: string = ''
-  @StorageLink('steady.targetWeightHigh.v1') private targetWeightHigh: string = ''
-  @StorageLink('steady.targetHeartRateLow.v1') private targetHeartRateLow: string = ''
-  @StorageLink('steady.targetHeartRateHigh.v1') private targetHeartRateHigh: string = ''
-  @StorageLink('steady.targetOxygenLow.v1') private targetOxygenLow: string = ''
-  @StorageLink('steady.targetOxygenHigh.v1') private targetOxygenHigh: string = ''
-  @State private readings: Reading[] = []
-  @State private meds: Medication[] = []
-  @State private medName: string = ''
-  @State private medDose: string = ''
-  @State private medTimes: string[] = ['08:00']
-  @State private editingMedKey: string = ''
-  @State private confirmingDeleteMedKey: string = ''
-  @State private medRevision: number = 0
-  @State private symptoms: Symptom[] = []
-  @State private symptomName: string = ''
-  @State private symptomSeverity: number = 1
-  @State private symptomNote: string = ''
-  @State private draftReadingAt: number = 0
-  @State private reportStartAt: number = 0
-  @State private reportEndAt: number = 0
-  @State private reportOpen: boolean = false
-  @State private paywallOpen: boolean = false
-  @State private confirmingTimelineDeleteKey: string = ''
-  @State private quickActionsOpen: boolean = false
+  @Local private tab: string = 'Timeline'
+  @Local private nextId: number = 1
+  @Local private selectedKind: string = 'Blood pressure'
+  @Local private selectedMealtime: string = ''
+  @Local private draftPrimary: string = ''
+  @Local private draftSecondary: string = ''
+  @Local private draftNote: string = ''
+  @Local private readingsJson: string = ''
+  @Local private lastReadingsJson: string = ''
+  @Local private medsJson: string = ''
+  @Local private symptomsJson: string = ''
+  @Local private reminderEnabled: boolean = false
+  @Local private reminderHour: number = 8
+  @Local private reminderMinute: number = 0
+  @Local private trendRange: string = '7D'
+  @Local private trendKind: string = 'Blood pressure'
+  @Local private proUnlocked: boolean = true
+  @Local private targetBpLow: string = ''
+  @Local private targetBpHigh: string = ''
+  @Local private targetGlucoseLow: string = ''
+  @Local private targetGlucoseHigh: string = ''
+  @Local private targetWeightLow: string = ''
+  @Local private targetWeightHigh: string = ''
+  @Local private targetHeartRateLow: string = ''
+  @Local private targetHeartRateHigh: string = ''
+  @Local private targetOxygenLow: string = ''
+  @Local private targetOxygenHigh: string = ''
+  @Local private readings: Reading[] = []
+  @Local private meds: Medication[] = []
+  @Local private medName: string = ''
+  @Local private medDose: string = ''
+  @Local private medTimes: string[] = ['08:00']
+  @Local private editingMedKey: string = ''
+  @Local private confirmingDeleteMedKey: string = ''
+  @Local private medRevision: number = 0
+  @Local private symptoms: Symptom[] = []
+  @Local private symptomName: string = ''
+  @Local private symptomSeverity: number = 1
+  @Local private symptomNote: string = ''
+  @Local private draftReadingAt: number = 0
+  @Local private reportStartAt: number = 0
+  @Local private reportEndAt: number = 0
+  @Local private reportOpen: boolean = false
+  @Local private paywallOpen: boolean = false
+  @Local private confirmingTimelineDeleteKey: string = ''
+  @Local private quickActionsOpen: boolean = false
   private usedEntityIds: number[] = []
 
   aboutToAppear(): void {
+    this.tab = AppStorage.get<string>('steady.tab.v1') ?? 'Timeline'
+    this.nextId = AppStorage.get<number>('steady.nextId.v1') ?? 1
+    this.selectedKind = AppStorage.get<string>('steady.selectedKind.v1') ?? 'Blood pressure'
+    this.selectedMealtime = AppStorage.get<string>('steady.selectedMealtime.v1') ?? ''
+    this.draftPrimary = AppStorage.get<string>('steady.draftPrimary.v1') ?? ''
+    this.draftSecondary = AppStorage.get<string>('steady.draftSecondary.v1') ?? ''
+    this.draftNote = AppStorage.get<string>('steady.draftNote.v1') ?? ''
+    this.readingsJson = AppStorage.get<string>('steady.readings.v1') ?? ''
+    this.lastReadingsJson = AppStorage.get<string>('steady.lastReadings.v1') ?? ''
+    this.medsJson = AppStorage.get<string>('steady.meds.v1') ?? ''
+    this.symptomsJson = AppStorage.get<string>('steady.symptoms.v1') ?? ''
+    this.reminderEnabled = AppStorage.get<boolean>('steady.reminderEnabled.v1') ?? false
+    this.reminderHour = AppStorage.get<number>('steady.reminderHour.v1') ?? 8
+    this.reminderMinute = AppStorage.get<number>('steady.reminderMinute.v1') ?? 0
+    this.trendRange = AppStorage.get<string>('steady.trendRange.v1') ?? '7D'
+    this.trendKind = AppStorage.get<string>('steady.trendKind.v1') ?? 'Blood pressure'
+    this.proUnlocked = AppStorage.get<boolean>('steady.proUnlocked.v1') ?? true
+    this.targetBpLow = AppStorage.get<string>('steady.targetBpLow.v1') ?? ''
+    this.targetBpHigh = AppStorage.get<string>('steady.targetBpHigh.v1') ?? ''
+    this.targetGlucoseLow = AppStorage.get<string>('steady.targetGlucoseLow.v1') ?? ''
+    this.targetGlucoseHigh = AppStorage.get<string>('steady.targetGlucoseHigh.v1') ?? ''
+    this.targetWeightLow = AppStorage.get<string>('steady.targetWeightLow.v1') ?? ''
+    this.targetWeightHigh = AppStorage.get<string>('steady.targetWeightHigh.v1') ?? ''
+    this.targetHeartRateLow = AppStorage.get<string>('steady.targetHeartRateLow.v1') ?? ''
+    this.targetHeartRateHigh = AppStorage.get<string>('steady.targetHeartRateHigh.v1') ?? ''
+    this.targetOxygenLow = AppStorage.get<string>('steady.targetOxygenLow.v1') ?? ''
+    this.targetOxygenHigh = AppStorage.get<string>('steady.targetOxygenHigh.v1') ?? ''
+
     this.usedEntityIds = []
     this.loadReadings()
     this.loadMeds()
@@ -209,6 +237,7 @@ struct Index {
 
   private saveReadings(): void {
     this.readingsJson = JSON.stringify(this.readings)
+    AppStorage.setOrCreate('steady.readings.v1', this.readingsJson)
   }
 
   private lastReadings(): ReadingMemory[] {
@@ -219,6 +248,7 @@ struct Index {
       return JSON.parse(this.lastReadingsJson) as ReadingMemory[]
     } catch (_error) {
       this.lastReadingsJson = ''
+      AppStorage.setOrCreate('steady.lastReadings.v1', this.lastReadingsJson)
       return []
     }
   }
@@ -229,16 +259,20 @@ struct Index {
       { kind: this.selectedKind, primary, secondary },
       ...rest
     ])
+    AppStorage.setOrCreate('steady.lastReadings.v1', this.lastReadingsJson)
   }
 
   private applyLastReading(kind: string): void {
     const memory = this.lastReadings().find((item: ReadingMemory) => item.kind === kind)
     this.draftPrimary = memory ? memory.primary : ''
     this.draftSecondary = kind === 'Blood pressure' && memory ? memory.secondary : ''
+    AppStorage.setOrCreate('steady.draftPrimary.v1', this.draftPrimary)
+    AppStorage.setOrCreate('steady.draftSecondary.v1', this.draftSecondary)
   }
 
   private saveMeds(): void {
     this.medsJson = JSON.stringify(this.meds)
+    AppStorage.setOrCreate('steady.meds.v1', this.medsJson)
   }
 
   private saveMedsAndSyncReminders(): void {
@@ -271,6 +305,7 @@ struct Index {
     }
     this.usedEntityIds.push(id)
     this.nextId = Math.max(nextId, id + 1)
+    AppStorage.setOrCreate('steady.nextId.v1', this.nextId)
     return id
   }
 
@@ -291,6 +326,7 @@ struct Index {
 
   private saveSymptoms(): void {
     this.symptomsJson = JSON.stringify(this.symptoms)
+    AppStorage.setOrCreate('steady.symptoms.v1', this.symptomsJson)
   }
 
   private normalizeSymptom(symptom: Symptom): Symptom {
@@ -338,20 +374,26 @@ struct Index {
       ...this.readings
     ]
     this.nextId += 1
+    AppStorage.setOrCreate('steady.nextId.v1', this.nextId)
     this.draftNote = ''
+    AppStorage.setOrCreate('steady.draftNote.v1', this.draftNote)
     this.draftReadingAt = 0
     this.selectedMealtime = ''
+    AppStorage.setOrCreate('steady.selectedMealtime.v1', this.selectedMealtime)
     this.confirmingTimelineDeleteKey = ''
     this.saveReadings()
   }
 
   private selectQuickKind(kind: string): void {
     this.selectedKind = kind
+    AppStorage.setOrCreate('steady.selectedKind.v1', this.selectedKind)
     this.applyLastReading(kind)
     if (kind !== 'Blood glucose') {
       this.selectedMealtime = ''
+      AppStorage.setOrCreate('steady.selectedMealtime.v1', this.selectedMealtime)
     }
     this.tab = 'Timeline'
+    AppStorage.setOrCreate('steady.tab.v1', this.tab)
     this.quickActionsOpen = false
   }
 
@@ -400,7 +442,7 @@ struct Index {
     try {
       this.getUIContext().getPromptAction().showToast({ message, duration: 1800 })
     } catch (_error) {
-      // ponytail: validation still blocks the bad save if toast is unavailable.
+      // validation still blocks the bad save if toast is unavailable.
     }
   }
 
@@ -469,6 +511,7 @@ struct Index {
 
   private unlockPro(): void {
     this.proUnlocked = true
+    AppStorage.setOrCreate('steady.proUnlocked.v1', this.proUnlocked)
     this.paywallOpen = false
     this.showToast(this.t($r('app.string.steady_toast_pro_unlocked')))
   }
@@ -477,6 +520,7 @@ struct Index {
     this.paywallOpen = true
     // paywallPanel 只挂在 Settings 页；从 Trends 触发时必须切过去，否则用户看不到任何反馈
     this.tab = 'Settings'
+    AppStorage.setOrCreate('steady.tab.v1', this.tab)
   }
 
   private toggleDoctorReport(): void {
@@ -810,6 +854,7 @@ struct Index {
       ...this.symptoms
     ]
     this.nextId += 1
+    AppStorage.setOrCreate('steady.nextId.v1', this.nextId)
     this.symptomName = ''
     this.symptomNote = ''
     this.confirmingTimelineDeleteKey = ''
@@ -861,28 +906,38 @@ struct Index {
   private setTargetLow(kind: string, value: string): void {
     if (kind === 'Blood pressure') {
       this.targetBpLow = value
+      AppStorage.setOrCreate('steady.targetBpLow.v1', this.targetBpLow)
     } else if (kind === 'Blood glucose') {
       this.targetGlucoseLow = value
+      AppStorage.setOrCreate('steady.targetGlucoseLow.v1', this.targetGlucoseLow)
     } else if (kind === 'Weight') {
       this.targetWeightLow = value
+      AppStorage.setOrCreate('steady.targetWeightLow.v1', this.targetWeightLow)
     } else if (kind === 'Heart rate') {
       this.targetHeartRateLow = value
+      AppStorage.setOrCreate('steady.targetHeartRateLow.v1', this.targetHeartRateLow)
     } else if (kind === 'Blood oxygen') {
       this.targetOxygenLow = value
+      AppStorage.setOrCreate('steady.targetOxygenLow.v1', this.targetOxygenLow)
     }
   }
 
   private setTargetHigh(kind: string, value: string): void {
     if (kind === 'Blood pressure') {
       this.targetBpHigh = value
+      AppStorage.setOrCreate('steady.targetBpHigh.v1', this.targetBpHigh)
     } else if (kind === 'Blood glucose') {
       this.targetGlucoseHigh = value
+      AppStorage.setOrCreate('steady.targetGlucoseHigh.v1', this.targetGlucoseHigh)
     } else if (kind === 'Weight') {
       this.targetWeightHigh = value
+      AppStorage.setOrCreate('steady.targetWeightHigh.v1', this.targetWeightHigh)
     } else if (kind === 'Heart rate') {
       this.targetHeartRateHigh = value
+      AppStorage.setOrCreate('steady.targetHeartRateHigh.v1', this.targetHeartRateHigh)
     } else if (kind === 'Blood oxygen') {
       this.targetOxygenHigh = value
+      AppStorage.setOrCreate('steady.targetOxygenHigh.v1', this.targetOxygenHigh)
     }
   }
 
@@ -1345,6 +1400,7 @@ struct Index {
 
   private enableMeasurementReminder(): void {
     this.reminderEnabled = true
+    AppStorage.setOrCreate('steady.reminderEnabled.v1', this.reminderEnabled)
     this.syncReminders(true)
   }
 
@@ -1357,6 +1413,7 @@ struct Index {
       }
       if (!await this.requestNotificationAccess()) {
         this.reminderEnabled = false
+        AppStorage.setOrCreate('steady.reminderEnabled.v1', this.reminderEnabled)
         this.showToast(this.t($r('app.string.steady_toast_enable_notifications')))
         return
       }
@@ -1400,6 +1457,7 @@ struct Index {
       }
     } catch (_error) {
       this.reminderEnabled = false
+      AppStorage.setOrCreate('steady.reminderEnabled.v1', this.reminderEnabled)
       this.showToast(this.t($r('app.string.steady_toast_enable_notifications')))
     }
   }
@@ -1412,9 +1470,10 @@ struct Index {
     try {
       await reminderAgentManager.cancelAllReminders()
       this.reminderEnabled = false
+      AppStorage.setOrCreate('steady.reminderEnabled.v1', this.reminderEnabled)
       this.syncReminders()
     } catch (_error) {
-      // ponytail: stale reminder ids should not block the visible off state.
+      // stale reminder ids should not block the visible off state.
     }
     this.showToast(this.t($r('app.string.steady_toast_reminder_off')))
   }
@@ -1451,6 +1510,7 @@ struct Index {
           return
         }
         this.trendRange = label
+        AppStorage.setOrCreate('steady.trendRange.v1', this.trendRange)
       })
   }
 
@@ -1471,9 +1531,11 @@ struct Index {
       .border({ width: 1, color: SunColor.border })
       .onClick(() => {
         this.selectedKind = kind
+        AppStorage.setOrCreate('steady.selectedKind.v1', this.selectedKind)
         this.applyLastReading(kind)
         if (kind !== 'Blood glucose') {
           this.selectedMealtime = ''
+          AppStorage.setOrCreate('steady.selectedMealtime.v1', this.selectedMealtime)
         }
       })
   }
@@ -1489,7 +1551,10 @@ struct Index {
       .fontSize(12)
       .fontWeight(FontWeight.Bold)
       .border({ width: 1, color: SunColor.border })
-      .onClick(() => this.selectedMealtime = value)
+      .onClick(() => {
+        this.selectedMealtime = value
+        AppStorage.setOrCreate('steady.selectedMealtime.v1', this.selectedMealtime)
+      })
   }
 
   private pickReadingTime(): void {
@@ -1597,6 +1662,8 @@ struct Index {
   private setReminderTime(hour: number, minute: number): void {
     this.reminderHour = Math.max(0, Math.min(23, hour))
     this.reminderMinute = Math.max(0, Math.min(59, minute))
+    AppStorage.setOrCreate('steady.reminderHour.v1', this.reminderHour)
+    AppStorage.setOrCreate('steady.reminderMinute.v1', this.reminderMinute)
     if (this.reminderEnabled) {
       this.syncReminders(true)
     }
@@ -1635,7 +1702,10 @@ struct Index {
               .borderRadius(8)
               .border({ width: 1, color: SunColor.border })
               .type(InputType.NUMBER_DECIMAL)
-              .onChange((value: string) => this.draftPrimary = value)
+              .onChange((value: string) => {
+                this.draftPrimary = value
+                AppStorage.setOrCreate('steady.draftPrimary.v1', this.draftPrimary)
+              })
 
             TextInput({ placeholder: $r('app.string.steady_placeholder_diastolic'), text: this.draftSecondary })
               .height(46)
@@ -1646,7 +1716,10 @@ struct Index {
               .borderRadius(8)
               .border({ width: 1, color: SunColor.border })
               .type(InputType.NUMBER_DECIMAL)
-              .onChange((value: string) => this.draftSecondary = value)
+              .onChange((value: string) => {
+                this.draftSecondary = value
+                AppStorage.setOrCreate('steady.draftSecondary.v1', this.draftSecondary)
+              })
           }
           .width('100%')
         } else {
@@ -1659,7 +1732,10 @@ struct Index {
             .borderRadius(8)
             .border({ width: 1, color: SunColor.border })
             .type(InputType.NUMBER_DECIMAL)
-              .onChange((value: string) => this.draftPrimary = value)
+              .onChange((value: string) => {
+                this.draftPrimary = value
+                AppStorage.setOrCreate('steady.draftPrimary.v1', this.draftPrimary)
+              })
         }
 
         if (this.selectedKind === 'Blood glucose') {
@@ -1690,7 +1766,10 @@ struct Index {
           .backgroundColor(SunColor.white)
           .borderRadius(8)
           .border({ width: 1, color: SunColor.border })
-          .onChange((value: string) => this.draftNote = value)
+          .onChange((value: string) => {
+            this.draftNote = value
+            AppStorage.setOrCreate('steady.draftNote.v1', this.draftNote)
+          })
 
         SunButton({
           label: $r('app.string.steady_save_kind_format', this.kindText(this.selectedKind)),
@@ -1890,7 +1969,10 @@ struct Index {
       .fontColor(this.trendKind === kind ? SunColor.cream : SunColor.ink)
       .fontSize(12)
       .border({ width: 1, color: SunColor.border })
-      .onClick(() => this.trendKind = kind)
+      .onClick(() => {
+        this.trendKind = kind
+        AppStorage.setOrCreate('steady.trendKind.v1', this.trendKind)
+      })
   }
 
   @Builder
@@ -2450,6 +2532,7 @@ struct Index {
         activeTab: this.tab,
         onTabChange: (tabId: string) => {
           this.tab = tabId
+          AppStorage.setOrCreate('steady.tab.v1', this.tab)
           this.quickActionsOpen = false
         },
         tabBody: (tabId: string) => {
@@ -2470,7 +2553,7 @@ struct Index {
                 .fontSize(12)
                 .fontWeight(FontWeight.Bold)
                 .border({ width: 1, color: SunColor.border })
-                .shadow({ radius: 12, color: '#00000018', offsetY: 4 }) // ponytail: translucent shadow, no SunColor token
+                .shadow({ radius: 12, color: '#00000018', offsetY: 4 })
                 .onClick(() => this.selectQuickKind(kind))
             }, (kind: string) => kind)
           }
@@ -2489,11 +2572,11 @@ struct Index {
           .fontColor(SunColor.ink)
           .fontSize(28)
           .fontWeight(FontWeight.Bold)
-          .shadow({ radius: 8, color: '#00000022', offsetY: 2 }) // ponytail: translucent shadow, no SunColor token
+          .shadow({ radius: 8, color: '#00000022', offsetY: 2 })
           .onClick(() => this.quickActionsOpen = !this.quickActionsOpen)
       }
         .alignItems(HorizontalAlign.End)
-        // ponytail: 56 = SunTabShell barHeight，抬 FAB 到 tab bar 之上，避免遮住 Settings 标签
+        // 56 = SunTabShell barHeight，抬 FAB 到 tab bar 之上，避免遮住 Settings 标签
         .margin({ right: SunSpacing.xl, bottom: 56 + SunSpacing.lg })
       }
         .width('100%')
