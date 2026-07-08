@@ -34,13 +34,18 @@ export function bindSunWindowInsets(windowStage: window.WindowStage): void {
   const model = AppStorageV2.connect(SunWindowInsetsModel, INSETS_KEY, () => new SunWindowInsetsModel())!
   try {
     const mainWindow = windowStage.getMainWindowSync()
-    mainWindow.setWindowLayoutFullScreen(true)
-    applyInsets(mainWindow, model)
+    // Register before going full screen so the transition's own avoidAreaChange isn't missed.
     mainWindow.on('avoidAreaChange', (data: window.AvoidAreaOptions) => {
       if (data.type !== window.AvoidAreaType.TYPE_KEYBOARD) {
         applyInsets(mainWindow, model)
       }
     })
+    // Read avoid areas only AFTER the full-screen transition resolves. A synchronous read here
+    // returns the pre-fullscreen (often 0) status-bar height on some devices (e.g. Mate 70),
+    // leaving topVp=0 so the immersive header draws under the status bar and overlaps it.
+    mainWindow.setWindowLayoutFullScreen(true)
+      .then(() => applyInsets(mainWindow, model))
+      .catch(() => applyInsets(mainWindow, model))
   } catch (_error) {
     model.topVp = 0
     model.bottomVp = 0

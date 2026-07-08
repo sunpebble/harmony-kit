@@ -1,6 +1,6 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit'
 import { hilog } from '@kit.PerformanceAnalysisKit'
-import { window } from '@kit.ArkUI'
+import { window, KeyboardAvoidMode } from '@kit.ArkUI'
 import { bindSunWindowInsets } from 'sunpebble_ui'
 
 const DOMAIN = 0xC0DE
@@ -18,6 +18,9 @@ export default class EntryAbility extends UIAbility {
         hilog.error(DOMAIN, 'Sleeptab', 'Failed to load page: %{public}s', JSON.stringify(err))
         return
       }
+      // Default OFFSET keyboard avoidance shifts the whole window up, pushing the top
+      // safe-area padding (header) into the status bar. RESIZE shrinks instead — header stays.
+      windowStage.getMainWindowSync().getUIContext().setKeyboardAvoidMode(KeyboardAvoidMode.RESIZE)
       hilog.info(DOMAIN, 'Sleeptab', 'Loaded Index page')
     })
   }

@@ -505,6 +505,16 @@ struct Index {
   }
 
   private async requestNotificationAccess(): Promise<boolean> {
+    // requestEnableNotification() is a one-shot prompt: once dismissed/denied it rejects forever —
+    // even after the user enables notifications in Settings. Check the live state first, only
+    // prompt when actually disabled, and re-check after a rejection to catch that case.
+    try {
+      if (await notificationManager.isNotificationEnabled()) {
+        return true
+      }
+    } catch (_error) {
+      // fall through to the prompt
+    }
     const context = this.getUIContext().getHostContext()
     if (!context) {
       return false
@@ -513,7 +523,11 @@ struct Index {
       await notificationManager.requestEnableNotification(context as common.UIAbilityContext)
       return true
     } catch (_error) {
-      return false
+      try {
+        return await notificationManager.isNotificationEnabled()
+      } catch (_err) {
+        return false
+      }
     }
   }
 
@@ -845,7 +859,9 @@ struct Index {
               .height(32)
               .padding({ top: SunSpacing.xs, bottom: SunSpacing.xs })
               .onClick(() => this.editEntry(entry))
-            }, (entry: RollEntry) => entry.date)
+              // Key must include mood/line: editing a day replaces the RollEntry object under the
+              // same date, so a date-only key would reuse the old row and show a stale emoji.
+            }, (entry: RollEntry) => `${entry.date}|${entry.mood}|${entry.line}`)
           }
           .width('100%')
           .alignItems(HorizontalAlign.Start)
@@ -973,7 +989,7 @@ struct Index {
               .width(22)
           }
           .width('100%')
-        }, (stat: MonthStat) => stat.key)
+        }, (stat: MonthStat) => `${stat.key}|${stat.logged}`)
 
         this.perforation()
 
@@ -1016,7 +1032,7 @@ struct Index {
               .layoutWeight(Math.max(1, this.entries.length - this.moodCount(candidate) + 1))
           }
           .width('100%')
-        }, (candidate: string) => candidate)
+        }, (candidate: string) => `${candidate}|${this.moodCount(candidate)}`)
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
@@ -1048,7 +1064,7 @@ struct Index {
         .height(138)
         .justifyContent(FlexAlign.End)
         .alignItems(HorizontalAlign.Center)
-      }, (stat: MonthStat) => stat.key)
+      }, (stat: MonthStat) => `${stat.key}|${stat.avgMood}`)
     }
     .width('100%')
     .height(142)

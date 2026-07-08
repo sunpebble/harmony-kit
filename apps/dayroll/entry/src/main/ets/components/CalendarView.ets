@@ -173,7 +173,7 @@ export struct CalendarView {
                 .height(9).layoutWeight(1)
                 .borderRadius(2)
                 .backgroundColor(day <= this.daysOf(mk) ? this.heatShade(this.dayHeat(mk, day)) : Color.Transparent)
-            }, (day: number) => `${mk}-${day}`)
+            }, (day: number) => `${mk}-${day}-${this.dayHeat(mk, day)}`)
         }
         .width('100%').alignItems(VerticalAlign.Center)
       }, (mk: string) => mk)
@@ -230,7 +230,7 @@ export struct CalendarView {
       Grid() {
         ForEach(this.cells(), (key: string, i: number) => {
           GridItem() { this.dayCell(key) }
-        }, (key: string, i: number) => `${this.calMonth}-${i}`)
+        }, (key: string, i: number) => `${this.calMonth}-${i}-${this.moodFor(key)}`)
       }
       .columnsTemplate('1fr 1fr 1fr 1fr 1fr 1fr 1fr')
       .columnsGap(4).rowsGap(4)
