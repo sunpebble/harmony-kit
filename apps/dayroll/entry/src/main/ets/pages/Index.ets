@@ -43,37 +43,47 @@ PersistentStorage.persistProp('dayroll.reminderMinute.v1', 0)
 PersistentStorage.persistProp('dayroll.proUnlocked.v1', true)
 
 @Entry
-@Component
+@ComponentV2
 struct Index {
   private moods: string[] = ['😄', '🙂', '😐', '😞', '😣']
   private tapeScroller: Scroller = new Scroller()
-  @State private fmtLocale: string = new intl.Locale().toString()
+  @Local private fmtLocale: string = new intl.Locale().toString()
   private builtLocale: string = new intl.Locale().toString()
   private dayFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), DAY_OPTS)
   private monthFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), MONTH_OPTS)
   private composeFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), COMPOSE_OPTS)
   private narrowMonthFormat: intl.DateTimeFormat = new intl.DateTimeFormat(new intl.Locale().toString(), NARROW_MONTH_OPTS)
   private envCallbackId: number = -1
-  @StorageLink('dayroll.mood.v1') private mood: string = '😐'
-  @StorageLink('dayroll.entries.v1') private entriesJson: string = ''
-  @StorageLink('dayroll.exportOpen.v1') private exportOpen: boolean = false
-  @StorageLink('dayroll.statsOpen.v1') private statsOpen: boolean = false
-  @StorageLink('dayroll.exportFormat.v1') private exportFormat: string = 'Plain Text'
-  @State private reminderOpen: boolean = false
-  @StorageLink('dayroll.reminderEnabled.v1') private reminderEnabled: boolean = false
-  @StorageLink('dayroll.reminderHour.v1') private reminderHour: number = 21
-  @StorageLink('dayroll.reminderMinute.v1') private reminderMinute: number = 0
-  @StorageLink('dayroll.proUnlocked.v1') private proUnlocked: boolean = true
-  @State private draftLine: string = ''
-  @State private editingDate: string = ''
-  @State private confirmingDelete: boolean = false
-  @State private composerOpen: boolean = false
-  @State private selectedMonth: string = ''
-  @State private paywallOpen: boolean = false
-  @State private paywallIntent: string = ''
-  @State private entries: RollEntry[] = []
+  @Local private mood: string = '😐'
+  @Local private entriesJson: string = ''
+  @Local private exportOpen: boolean = false
+  @Local private statsOpen: boolean = false
+  @Local private exportFormat: string = 'Plain Text'
+  @Local private reminderOpen: boolean = false
+  @Local private reminderEnabled: boolean = false
+  @Local private reminderHour: number = 21
+  @Local private reminderMinute: number = 0
+  @Local private proUnlocked: boolean = true
+  @Local private draftLine: string = ''
+  @Local private editingDate: string = ''
+  @Local private confirmingDelete: boolean = false
+  @Local private composerOpen: boolean = false
+  @Local private selectedMonth: string = ''
+  @Local private paywallOpen: boolean = false
+  @Local private paywallIntent: string = ''
+  @Local private entries: RollEntry[] = []
 
   aboutToAppear(): void {
+    this.mood = AppStorage.get<string>('dayroll.mood.v1') ?? '😐'
+    this.entriesJson = AppStorage.get<string>('dayroll.entries.v1') ?? ''
+    this.exportOpen = AppStorage.get<boolean>('dayroll.exportOpen.v1') ?? false
+    this.statsOpen = AppStorage.get<boolean>('dayroll.statsOpen.v1') ?? false
+    this.exportFormat = AppStorage.get<string>('dayroll.exportFormat.v1') ?? 'Plain Text'
+    this.reminderEnabled = AppStorage.get<boolean>('dayroll.reminderEnabled.v1') ?? false
+    this.reminderHour = AppStorage.get<number>('dayroll.reminderHour.v1') ?? 21
+    this.reminderMinute = AppStorage.get<number>('dayroll.reminderMinute.v1') ?? 0
+    this.proUnlocked = AppStorage.get<boolean>('dayroll.proUnlocked.v1') ?? true
+
     this.loadEntries()
     const context = this.getUIContext().getHostContext()
     if (context) {
@@ -94,8 +104,8 @@ struct Index {
     }
   }
 
-  // ponytail: formatters rebuild lazily on first format after a locale change;
-  // reading @State fmtLocale here is what re-renders every derived date label.
+  // Formatters rebuild lazily on first format after a locale change;
+  // reading fmtLocale here is what re-renders every derived date label.
   private ensureFormats(): void {
     if (this.builtLocale === this.fmtLocale) {
       return
@@ -131,6 +141,7 @@ struct Index {
 
   private saveEntries(): void {
     this.entriesJson = JSON.stringify(this.entries)
+    AppStorage.setOrCreate('dayroll.entries.v1', this.entriesJson)
   }
 
   private saveToday(): void {
@@ -159,6 +170,7 @@ struct Index {
   private editEntry(entry: RollEntry): void {
     this.editingDate = entry.date
     this.mood = this.validMood(entry.mood) || '😐'
+    AppStorage.setOrCreate('dayroll.mood.v1', this.mood)
     this.draftLine = entry.line
     this.confirmingDelete = false
     this.composerOpen = true
@@ -180,6 +192,7 @@ struct Index {
     }
     this.editingDate = today
     this.mood = '😐'
+    AppStorage.setOrCreate('dayroll.mood.v1', this.mood)
     this.draftLine = ''
     this.confirmingDelete = false
     this.composerOpen = true
@@ -459,6 +472,7 @@ struct Index {
     try {
       if (!await this.requestNotificationAccess()) {
         this.reminderEnabled = false
+        AppStorage.setOrCreate('dayroll.reminderEnabled.v1', this.reminderEnabled)
         this.showToast($r('app.string.dayroll_toast_enable_notifications'))
         return
       }
@@ -476,11 +490,13 @@ struct Index {
       }
       await reminderAgentManager.publishReminder(request)
       this.reminderEnabled = true
+      AppStorage.setOrCreate('dayroll.reminderEnabled.v1', this.reminderEnabled)
       if (!quiet) {
         this.showToast($r('app.string.dayroll_toast_reminder_set', this.reminderTimeLabel()))
       }
     } catch (_error) {
       this.reminderEnabled = false
+      AppStorage.setOrCreate('dayroll.reminderEnabled.v1', this.reminderEnabled)
       this.showToast($r('app.string.dayroll_toast_enable_notifications'))
     }
   }
@@ -493,9 +509,10 @@ struct Index {
     try {
       await reminderAgentManager.cancelAllReminders()
     } catch (_error) {
-      // ponytail: stale reminder ids should not block the visible off state.
+      // Stale reminder ids should not block the visible off state.
     }
     this.reminderEnabled = false
+    AppStorage.setOrCreate('dayroll.reminderEnabled.v1', this.reminderEnabled)
     this.showToast($r('app.string.dayroll_toast_reminder_off'))
   }
 
@@ -524,7 +541,7 @@ struct Index {
         duration: 2000
       })
     } catch (_error) {
-      // ponytail: visible lock state is enough if toast is unavailable.
+      // Visible lock state is enough if toast is unavailable.
     }
   }
 
@@ -539,6 +556,8 @@ struct Index {
   private setReminderTime(hour: number, minute: number): void {
     this.reminderHour = Math.max(0, Math.min(23, hour))
     this.reminderMinute = Math.max(0, Math.min(59, minute))
+    AppStorage.setOrCreate('dayroll.reminderHour.v1', this.reminderHour)
+    AppStorage.setOrCreate('dayroll.reminderMinute.v1', this.reminderMinute)
     if (this.reminderEnabled) {
       this.scheduleDailyReminder(true)
     }
@@ -546,11 +565,14 @@ struct Index {
 
   private unlockPro(): void {
     this.proUnlocked = true
+    AppStorage.setOrCreate('dayroll.proUnlocked.v1', this.proUnlocked)
     this.paywallOpen = false
     if (this.paywallIntent === 'Stats') {
       this.statsOpen = true
+      AppStorage.setOrCreate('dayroll.statsOpen.v1', this.statsOpen)
     } else if (this.paywallIntent === 'Export') {
       this.exportOpen = true
+      AppStorage.setOrCreate('dayroll.exportOpen.v1', this.exportOpen)
     }
     this.paywallIntent = ''
     this.showToast($r('app.string.dayroll_toast_pro_unlocked'))
@@ -563,21 +585,25 @@ struct Index {
   private toggleStats(): void {
     if (!this.proUnlocked) {
       this.statsOpen = false
+      AppStorage.setOrCreate('dayroll.statsOpen.v1', this.statsOpen)
       this.paywallIntent = 'Stats'
       this.showPaywall()
       return
     }
     this.statsOpen = !this.statsOpen
+    AppStorage.setOrCreate('dayroll.statsOpen.v1', this.statsOpen)
   }
 
   private toggleExport(): void {
     if (!this.proUnlocked) {
       this.exportOpen = false
+      AppStorage.setOrCreate('dayroll.exportOpen.v1', this.exportOpen)
       this.paywallIntent = 'Export'
       this.showPaywall()
       return
     }
     this.exportOpen = !this.exportOpen
+    AppStorage.setOrCreate('dayroll.exportOpen.v1', this.exportOpen)
   }
 
   private formatDisplay(format: string): Resource {
@@ -628,7 +654,7 @@ struct Index {
         Blank()
           .width(10)
           .height(1)
-          .backgroundColor('#C8BDAA') // ponytail: paper perforation tint, no Sun token
+          .backgroundColor('#C8BDAA')
       }, (item: number) => item.toString())
     }
     .width('100%')
@@ -763,7 +789,10 @@ struct Index {
           .backgroundColor(this.mood === candidate ? SunColor.ink : '#F5EBD9')
           .opacity(this.mood === candidate ? 1 : 0.85)
           .scale({ x: this.mood === candidate ? 1.08 : 1, y: this.mood === candidate ? 1.08 : 1 })
-          .onClick(() => this.mood = candidate)
+          .onClick(() => {
+            this.mood = candidate
+            AppStorage.setOrCreate('dayroll.mood.v1', this.mood)
+          })
         }, (candidate: string) => candidate)
       }
       .width('100%')
@@ -774,9 +803,9 @@ struct Index {
         .fontSize(15)
         .fontColor(SunColor.ink)
         .placeholderColor(SunColor.pebble)
-        .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
+        .backgroundColor('#FFFDF7')
         .borderRadius(8)
-        .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
+        .border({ width: 1, color: '#C8BDAA' })
         .onChange((value: string) => this.draftLine = value)
 
       if (this.memories().length > 0) {
@@ -977,8 +1006,8 @@ struct Index {
       .width('100%')
       .alignItems(HorizontalAlign.Start)
       .padding(SunSpacing.md)
-      .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
-      .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
+      .backgroundColor('#FFFDF7')
+      .border({ width: 1, color: '#C8BDAA' })
       .onAppear(() => this.tapeScroller.scrollEdge(Edge.Bottom))
     }
   }
@@ -989,11 +1018,14 @@ struct Index {
       .height(34)
       .padding({ left: 12, right: 12 })
       .borderRadius(999)
-      .backgroundColor(this.exportFormat === label ? SunColor.ink : '#F5EBD9') // ponytail: pill idle tint, no Sun token
+      .backgroundColor(this.exportFormat === label ? SunColor.ink : '#F5EBD9')
       .fontColor(this.exportFormat === label ? SunColor.cream : SunColor.ink)
       .fontSize(11)
       .fontWeight(FontWeight.Bold)
-      .onClick(() => this.exportFormat = label)
+      .onClick(() => {
+        this.exportFormat = label
+        AppStorage.setOrCreate('dayroll.exportFormat.v1', this.exportFormat)
+      })
   }
 
   @Builder
@@ -1034,7 +1066,7 @@ struct Index {
             Blank()
               .height(8)
               .layoutWeight(Math.max(1, stat.logged))
-              .backgroundColor(stat.logged > 0 ? SunColor.ink : '#D8CCBA') // ponytail: empty bar tint, no Sun token
+              .backgroundColor(stat.logged > 0 ? SunColor.ink : '#D8CCBA')
             Blank()
               .height(8)
               .layoutWeight(Math.max(1, this.maxMonthlyLogged() - stat.logged + 1))
@@ -1093,8 +1125,8 @@ struct Index {
       .width('100%')
       .alignItems(HorizontalAlign.Start)
       .padding(SunSpacing.md)
-      .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
-      .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
+      .backgroundColor('#FFFDF7')
+      .border({ width: 1, color: '#C8BDAA' })
       .onAppear(() => this.tapeScroller.scrollEdge(Edge.Bottom))
     }
   }
@@ -1107,7 +1139,7 @@ struct Index {
           Blank()
             .width('100%')
             .height(this.moodTrendHeight(stat.avgMood))
-            .backgroundColor(stat.avgMood > 0 ? SunColor.ink : '#D8CCBA') // ponytail: empty bar tint, no Sun token
+            .backgroundColor(stat.avgMood > 0 ? SunColor.ink : '#D8CCBA')
             .borderRadius(4)
 
           Text(this.moodForScore(stat.avgMood))
@@ -1218,8 +1250,8 @@ struct Index {
       .width('100%')
       .alignItems(HorizontalAlign.Center)
       .padding(SunSpacing.lg)
-      .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
-      .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
+      .backgroundColor('#FFFDF7')
+      .border({ width: 1, color: '#C8BDAA' })
       .onAppear(() => this.tapeScroller.scrollEdge(Edge.Bottom))
     }
   }
@@ -1238,7 +1270,7 @@ struct Index {
           .height(42)
           .width('100%')
           .borderRadius(999)
-          .backgroundColor(this.reminderEnabled ? SunColor.ink : '#F5EBD9') // ponytail: pill idle tint, no Sun token
+          .backgroundColor(this.reminderEnabled ? SunColor.ink : '#F5EBD9')
           .fontColor(this.reminderEnabled ? SunColor.cream : SunColor.ink)
           .fontSize(13)
           .fontWeight(FontWeight.Bold)
@@ -1276,8 +1308,8 @@ struct Index {
       .width('100%')
       .alignItems(HorizontalAlign.Start)
       .padding(SunSpacing.md)
-      .backgroundColor('#FFFDF7') // ponytail: tape paper white, no Sun token
-      .border({ width: 1, color: '#C8BDAA' }) // ponytail: paper edge tint, no Sun token
+      .backgroundColor('#FFFDF7')
+      .border({ width: 1, color: '#C8BDAA' })
       .onAppear(() => this.tapeScroller.scrollEdge(Edge.Bottom))
     }
   }
@@ -1341,7 +1373,7 @@ struct Index {
             }
             .width('100%')
             .layoutWeight(1)
-            .backgroundColor('#FFFDF7') // ponytail: tape paper white behind the index strip
+            .backgroundColor('#FFFDF7')
           }
           .width('100%')
           .height('100%')
