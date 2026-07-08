@@ -12,6 +12,7 @@ import { common } from '@kit.AbilityKit'
 import { reminderAgentManager } from '@kit.BackgroundTasksKit'
 import { notificationManager } from '@kit.NotificationKit'
 import { appProfile } from '../AppProfile'
+import { TimerDoneFeedback } from '../runtime/TimerDoneFeedback'
 
 interface PresetTimer {
   emoji: string
@@ -38,17 +39,17 @@ interface TimerSnapshot {
   completedAt?: number
 }
 
-@Observed
+@ObservedV2
 class KitchenTimer {
   id: number
   label: string
   emoji: string
-  seconds: number
-  remaining: number
-  running: boolean
-  done: boolean
-  endAt: number
-  completedAt: number
+  @Trace seconds: number
+  @Trace remaining: number
+  @Trace running: boolean
+  @Trace done: boolean
+  @Trace endAt: number
+  @Trace completedAt: number
 
   constructor(id: number, label: string, emoji: string, seconds: number, remaining: number, running: boolean, done: boolean, endAt: number, completedAt: number) {
     this.id = id
@@ -105,15 +106,14 @@ function displayLabel(context: common.Context | undefined, label: string): strin
   }
 }
 
-@Component
+@ComponentV2
 struct Burner {
-  @ObjectLink timer: KitchenTimer
-  @Prop
-  nowMs: number = Date.now()
-  onTap: (id: number) => void = (_id: number) => {}
-  onAddMinute: (id: number) => void = (_id: number) => {}
-  onRestart: (id: number) => void = (_id: number) => {}
-  onCancel: (id: number) => void = (_id: number) => {}
+  @Require @Param timer: KitchenTimer
+  @Param nowMs: number = Date.now()
+  @Param onTap: (id: number) => void = (_id: number) => {}
+  @Param onAddMinute: (id: number) => void = (_id: number) => {}
+  @Param onRestart: (id: number) => void = (_id: number) => {}
+  @Param onCancel: (id: number) => void = (_id: number) => {}
 
   private timerText(seconds: number): string {
     const total = Math.max(0, Math.round(seconds))
@@ -141,26 +141,14 @@ struct Burner {
     return Math.max(0, Math.min(100, Math.round((1 - this.timer.remaining / this.timer.seconds) * 100)))
   }
 
-  private ringDash(): number[] {
-    const circumference = 2 * Math.PI * 67
-    return [circumference * this.progress() / 100, circumference]
-  }
-
   build() {
     Column({ space: SunSpacing.sm }) {
       Stack() {
-        Circle({ width: 142, height: 142 })
-          .fillOpacity(0)
-          .stroke(SunColor.border)
-          .strokeWidth(8)
-
-        Circle({ width: 142, height: 142 })
-          .fillOpacity(0)
-          .stroke(this.timer.done ? SunColor.sun : SunColor.ink)
-          .strokeWidth(8)
-          .strokeLineCap(LineCapStyle.Round)
-          .strokeDashArray(this.ringDash())
-          .rotate({ x: 0, y: 0, z: 1, angle: -90 })
+        Progress({ value: this.progress(), total: 100, type: ProgressType.Ring })
+          .style({ strokeWidth: 8 })
+          .color(this.timer.done ? SunColor.sun : SunColor.ink)
+          .width(142)
+          .height(142)
 
         Column({ space: SunSpacing.xs }) {
           Text(this.timer.emoji)
@@ -194,45 +182,46 @@ struct Burner {
       .width(150)
       .height(150)
       .onClick(() => this.onTap(this.timer.id))
+      .bindContextMenu(this.burnerMenu, ResponseType.LongPress)
 
-      Text(displayLabel(this.getUIContext().getHostContext(), this.timer.label).toUpperCase())
-        .fontSize(11)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(SunColor.pebble)
-        .letterSpacing(1)
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
+      Row() {
+        Text(displayLabel(this.getUIContext().getHostContext(), this.timer.label).toUpperCase())
+          .fontSize(11)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(SunColor.pebble)
+          .letterSpacing(1)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .layoutWeight(1)
 
-      Row({ space: 6 }) {
-        this.actionButton($r('app.string.simmer_action_add_minute'), () => this.onAddMinute(this.timer.id), SunColor.ink)
-        this.actionButton($r('app.string.simmer_action_restart'), () => this.onRestart(this.timer.id), SunColor.ink)
-        this.actionButton($r('app.string.simmer_action_cancel'), () => this.onCancel(this.timer.id), SunColor.danger)
+        Text('⋯')
+          .fontSize(14)
+          .opacity(0.4)
+          .fontColor(SunColor.pebble)
       }
       .width('100%')
-      .justifyContent(FlexAlign.Center)
     }
     .width(190)
     .height(250)
     .justifyContent(FlexAlign.Center)
+    .transition({ type: TransitionType.All, opacity: 0, scale: { x: 0.9, y: 0.9 } })
   }
 
   @Builder
-  private actionButton(label: ResourceStr, action: () => void, color: string) {
-    Button(label)
-      .height(30)
-      .padding({ left: 8, right: 8 })
-      .borderRadius(SunRadius.pill)
-      .backgroundColor(SunColor.white)
-      .fontColor(color)
-      .fontSize(10)
-      .fontWeight(FontWeight.Bold)
-      .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
-      .onClick(action)
+  private burnerMenu() {
+    Menu() {
+      MenuItem({ content: $r('app.string.simmer_action_add_minute') })
+        .onClick(() => this.onAddMinute(this.timer.id))
+      MenuItem({ content: $r('app.string.simmer_action_restart') })
+        .onClick(() => this.onRestart(this.timer.id))
+      MenuItem({ content: $r('app.string.simmer_action_delete') })
+        .onClick(() => this.onCancel(this.timer.id))
+    }
   }
 }
 
 @Entry
-@Component
+@ComponentV2
 struct Index {
   private presets: PresetTimer[] = [
     { emoji: '🍵', label: 'Tea', seconds: 3 * 60 },
@@ -252,24 +241,34 @@ struct Index {
   private customSecondOptions: number[] = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
   private intervalId: number = -1
 
-  @StorageLink('simmer.nextId.v1') private nextId: number = 1
-  @StorageLink('simmer.timers.v1') private timersJson: string = ''
-  @StorageLink('simmer.customMinutes.v1') private customMinutes: number = 5
-  @StorageLink('simmer.customSeconds.v1') private customSeconds: number = 0
-  @StorageLink('simmer.customEmoji.v1') private customEmoji: string = '🍲'
-  @StorageLink('simmer.customLabel.v1') private customLabelText: string = ''
-  @StorageLink('simmer.savedPresets.v1') private savedPresetsJson: string = ''
-  @StorageLink('simmer.nextPresetId.v1') private nextPresetId: number = 1
-  @StorageLink('simmer.proUnlocked.v1') private proUnlocked: boolean = true
-  @State private customOpen: boolean = false
-  @State private timers: KitchenTimer[] = []
-  @State private savedPresets: SavedPresetTimer[] = []
-  @State private nowMs: number = Date.now()
-  @State private confirmingPresetId: number = -1
-  @State private customSaveAsPreset: boolean = false
-  @State private paywallOpen: boolean = false
+  @Local private nextId: number = 1
+  @Local private timersJson: string = ''
+  @Local private customMinutes: number = 5
+  @Local private customSeconds: number = 0
+  @Local private customEmoji: string = '🍲'
+  @Local private customLabelText: string = ''
+  @Local private savedPresetsJson: string = ''
+  @Local private nextPresetId: number = 1
+  @Local private proUnlocked: boolean = true
+  @Local private customOpen: boolean = false
+  @Local private timers: KitchenTimer[] = []
+  @Local private savedPresets: SavedPresetTimer[] = []
+  @Local private nowMs: number = Date.now()
+  @Local private customSaveAsPreset: boolean = false
+  @Local private paywallOpen: boolean = false
+  @Local private containerWidth: number = 0
 
   aboutToAppear(): void {
+    this.nextId = AppStorage.get<number>('simmer.nextId.v1') ?? 1
+    this.timersJson = AppStorage.get<string>('simmer.timers.v1') ?? ''
+    this.customMinutes = AppStorage.get<number>('simmer.customMinutes.v1') ?? 5
+    this.customSeconds = AppStorage.get<number>('simmer.customSeconds.v1') ?? 0
+    this.customEmoji = AppStorage.get<string>('simmer.customEmoji.v1') ?? '🍲'
+    this.customLabelText = AppStorage.get<string>('simmer.customLabel.v1') ?? ''
+    this.savedPresetsJson = AppStorage.get<string>('simmer.savedPresets.v1') ?? ''
+    this.nextPresetId = AppStorage.get<number>('simmer.nextPresetId.v1') ?? 1
+    this.proUnlocked = AppStorage.get<boolean>('simmer.proUnlocked.v1') ?? true
+
     this.loadTimers()
     this.loadSavedPresets()
     if (this.intervalId < 0) {
@@ -284,17 +283,19 @@ struct Index {
     }
   }
 
+  onPageShow(): void {
+    this.tick()
+  }
+
   private startPreset(preset: PresetTimer): void {
     this.startTimer(preset.label, preset.emoji, preset.seconds)
   }
 
   private startSavedPreset(preset: SavedPresetTimer): void {
-    this.confirmingPresetId = -1
     this.startTimer(preset.label, preset.emoji, preset.seconds)
   }
 
   private startCustom(): void {
-    this.confirmingPresetId = -1
     const nextOpen = !this.customOpen
     this.customOpen = nextOpen
     if (nextOpen) {
@@ -303,6 +304,10 @@ struct Index {
       this.customEmoji = '🍲'
       this.customLabelText = ''
       this.customSaveAsPreset = false
+      AppStorage.setOrCreate('simmer.customMinutes.v1', this.customMinutes)
+      AppStorage.setOrCreate('simmer.customSeconds.v1', this.customSeconds)
+      AppStorage.setOrCreate('simmer.customEmoji.v1', this.customEmoji)
+      AppStorage.setOrCreate('simmer.customLabel.v1', this.customLabelText)
     }
   }
 
@@ -337,7 +342,7 @@ struct Index {
     const label = this.customLabel()
     this.savedPresets = [...this.savedPresets, { id: this.nextPresetId, emoji: this.customEmoji, label, seconds }]
     this.nextPresetId += 1
-    this.confirmingPresetId = -1
+    AppStorage.setOrCreate('simmer.nextPresetId.v1', this.nextPresetId)
     this.saveSavedPresets()
     if (this.startTimer(label, this.customEmoji, seconds)) {
       this.customOpen = false
@@ -347,7 +352,6 @@ struct Index {
 
   private removeSavedPreset(id: number): void {
     this.savedPresets = this.savedPresets.filter((preset: SavedPresetTimer) => preset.id !== id)
-    this.confirmingPresetId = -1
     this.saveSavedPresets()
   }
 
@@ -368,6 +372,7 @@ struct Index {
       return normalizedPreset
     })
     this.nextPresetId = nextId
+    AppStorage.setOrCreate('simmer.nextPresetId.v1', this.nextPresetId)
     return normalized
   }
 
@@ -398,6 +403,7 @@ struct Index {
       return normalizedTimer
     })
     this.nextId = nextId
+    AppStorage.setOrCreate('simmer.nextId.v1', this.nextId)
     return normalized
   }
 
@@ -426,10 +432,12 @@ struct Index {
 
   private setCustomMinutes(minutes: number): void {
     this.customMinutes = Math.max(0, Math.min(180, Math.round(minutes)))
+    AppStorage.setOrCreate('simmer.customMinutes.v1', this.customMinutes)
   }
 
   private setCustomSeconds(seconds: number): void {
     this.customSeconds = seconds
+    AppStorage.setOrCreate('simmer.customSeconds.v1', this.customSeconds)
   }
 
   private startTimer(label: string, emoji: string, seconds: number): boolean {
@@ -439,12 +447,14 @@ struct Index {
     }
     this.timers = [...this.timers, new KitchenTimer(this.nextId, label, emoji, seconds, seconds, true, false, Date.now() + seconds * 1000, 0)]
     this.nextId += 1
+    AppStorage.setOrCreate('simmer.nextId.v1', this.nextId)
     this.saveTimersAndSyncReminders()
     return true
   }
 
   private unlockPro(): void {
     this.proUnlocked = true
+    AppStorage.setOrCreate('simmer.proUnlocked.v1', this.proUnlocked)
     this.paywallOpen = false
     this.showToast($r('app.string.simmer_toast_pro_unlocked'))
   }
@@ -555,6 +565,7 @@ struct Index {
       }
 
       this.showDone(timer.label)
+      TimerDoneFeedback.fire()
       timer.remaining = 0
       timer.running = false
       timer.done = true
@@ -610,7 +621,13 @@ struct Index {
   }
 
   private saveTimers(): void {
-    this.timersJson = JSON.stringify(this.timers)
+    const snapshots: TimerSnapshot[] = this.timers.map((t: KitchenTimer): TimerSnapshot => ({
+      id: t.id, label: t.label, emoji: t.emoji, seconds: t.seconds,
+      remaining: t.remaining, running: t.running, done: t.done,
+      endAt: t.endAt, completedAt: t.completedAt
+    }))
+    this.timersJson = JSON.stringify(snapshots)
+    AppStorage.setOrCreate('simmer.timers.v1', this.timersJson)
   }
 
   private saveTimersAndSyncReminders(): void {
@@ -620,6 +637,7 @@ struct Index {
 
   private saveSavedPresets(): void {
     this.savedPresetsJson = JSON.stringify(this.savedPresets)
+    AppStorage.setOrCreate('simmer.savedPresets.v1', this.savedPresetsJson)
   }
 
   private remainingFromEnd(timer: KitchenTimer, now: number = Date.now()): number {
@@ -647,7 +665,6 @@ struct Index {
         await reminderAgentManager.publishReminder(request)
       }
     } catch (_error) {
-      // ponytail: visible timers are source of truth; reminders rebuild on the next timer edit.
     }
   }
 
@@ -686,7 +703,6 @@ struct Index {
         duration: 2000
       })
     } catch (_error) {
-      // ponytail: visible state is the fallback if toast is unavailable.
     }
   }
 
@@ -728,23 +744,41 @@ struct Index {
     .justifyContent(FlexAlign.Center)
   }
 
+  private gridColumns(): string {
+    if (this.containerWidth >= 840) {
+      return '1fr 1fr 1fr'
+    }
+    if (this.containerWidth >= 600) {
+      return '1fr 1fr'
+    }
+    return '1fr'
+  }
+
   @Builder
   private burnerList() {
     Scroll() {
-      Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
+      Grid() {
         ForEach(this.timers, (timer: KitchenTimer) => {
-          Burner({
-            timer: timer,
-            nowMs: this.nowMs,
-            onTap: (id: number) => this.handleTimerTap(id),
-            onAddMinute: (id: number) => this.addMinute(id),
-            onRestart: (id: number) => this.restartTimer(id),
-            onCancel: (id: number) => this.deleteTimer(id)
-          })
+          GridItem() {
+            Burner({
+              timer: timer,
+              nowMs: this.nowMs,
+              onTap: (id: number) => this.handleTimerTap(id),
+              onAddMinute: (id: number) => this.addMinute(id),
+              onRestart: (id: number) => this.restartTimer(id),
+              onCancel: (id: number) => this.deleteTimer(id)
+            })
+          }
         }, (timer: KitchenTimer) => timer.id.toString())
       }
+      .columnsTemplate(this.gridColumns())
+      .columnsGap(SunSpacing.lg)
+      .rowsGap(SunSpacing.lg)
       .padding(SunSpacing.xl)
       .width('100%')
+      .onAreaChange((_old: Area, newArea: Area) => {
+        this.containerWidth = newArea.width as number
+      })
     }
     .width('100%')
     .layoutWeight(1)
@@ -775,7 +809,10 @@ struct Index {
               .padding(0)
               .borderRadius(999)
               .backgroundColor(this.customEmoji === emoji ? SunColor.sun : SunColor.white)
-              .onClick(() => this.customEmoji = emoji)
+              .onClick(() => {
+                this.customEmoji = emoji
+                AppStorage.setOrCreate('simmer.customEmoji.v1', this.customEmoji)
+              })
             }, (emoji: string) => emoji)
           }
         }
@@ -819,8 +856,11 @@ struct Index {
           .fontColor(SunColor.ink)
           .backgroundColor(SunColor.white)
           .borderRadius(8)
-          .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
-          .onChange((value: string) => this.customLabelText = value)
+          .border({ width: 1, color: SunColor.hairline })
+          .onChange((value: string) => {
+            this.customLabelText = value
+            AppStorage.setOrCreate('simmer.customLabel.v1', this.customLabelText)
+          })
 
         if (this.proUnlocked) {
           Button($r('app.string.simmer_save_as_preset'))
@@ -831,7 +871,7 @@ struct Index {
             .fontColor(SunColor.ink)
             .fontSize(12)
             .fontWeight(FontWeight.Bold)
-            .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
+            .border({ width: 1, color: SunColor.hairline })
             .onClick(() => this.customSaveAsPreset = !this.customSaveAsPreset)
         }
 
@@ -855,7 +895,7 @@ struct Index {
           .fontColor(SunColor.ink)
           .fontSize(12)
           .fontWeight(FontWeight.Bold)
-          .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
+          .border({ width: 1, color: SunColor.hairline })
           .onClick(() => {
             this.customOpen = false
             this.customSaveAsPreset = false
@@ -864,9 +904,67 @@ struct Index {
       }
       .width('100%')
       .padding(SunSpacing.lg)
-      .backgroundColor('#F7F0E5') // ponytail: no SunColor token for #F7F0E5 panel tint
-      .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
+      .backgroundColor(SunColor.panelTint)
+      .border({ width: 1, color: SunColor.hairline })
       .borderRadius(18)
+    }
+  }
+
+  @Builder
+  private deleteSwipeAction(id: number) {
+    Button($r('app.string.simmer_action_delete'))
+      .height('100%')
+      .padding({ left: 16, right: 16 })
+      .backgroundColor(SunColor.danger)
+      .fontColor(SunColor.white)
+      .fontSize(13)
+      .fontWeight(FontWeight.Bold)
+      .onClick(() => this.removeSavedPreset(id))
+  }
+
+  @Builder
+  private savedPresetsBlock() {
+    if (this.savedPresets.length > 0) {
+      Column({ space: SunSpacing.sm }) {
+        Text($r('app.string.simmer_saved_presets_title'))
+          .fontSize(12)
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(2)
+          .fontColor(SunColor.pebble)
+
+        List({ space: SunSpacing.sm }) {
+          ForEach(this.savedPresets, (preset: SavedPresetTimer) => {
+            ListItem() {
+              Row({ space: 8 }) {
+                Text(preset.emoji).fontSize(20)
+                Text(this.labelText(preset.label))
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(SunColor.ink)
+                  .layoutWeight(1)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                Text(this.timerText(preset.seconds))
+                  .fontSize(13)
+                  .fontColor(SunColor.pebble)
+              }
+              .width('100%')
+              .height(48)
+              .padding({ left: 16, right: 16 })
+              .borderRadius(SunRadius.md)
+              .backgroundColor(SunColor.white)
+              .border({ width: 1, color: SunColor.border })
+              .onClick(() => this.startSavedPreset(preset))
+            }
+            .swipeAction({
+              end: { builder: () => this.deleteSwipeAction(preset.id) }
+            })
+          }, (preset: SavedPresetTimer) => preset.id.toString())
+        }
+        .width('100%')
+      }
+      .width('100%')
+      .padding({ left: SunSpacing.xl, right: SunSpacing.xl, bottom: SunSpacing.sm })
     }
   }
 
@@ -885,63 +983,6 @@ struct Index {
           .border({ width: 1, color: SunColor.pebble })
           .onClick(() => this.startCustom())
 
-        ForEach(this.savedPresets, (preset: SavedPresetTimer) => {
-          if (this.confirmingPresetId === preset.id) {
-            Row({ space: 4 }) {
-              Button($r('app.string.simmer_remove_preset'))
-                .height(34)
-                .padding({ left: 12, right: 12 })
-                .borderRadius(999)
-                .backgroundColor(SunColor.danger)
-                .fontColor(SunColor.white)
-                .fontSize(12)
-                .fontWeight(FontWeight.Bold)
-                .onClick(() => this.removeSavedPreset(preset.id))
-
-              Button($r('app.string.simmer_action_cancel'))
-                .height(34)
-                .padding({ left: 12, right: 12 })
-                .borderRadius(999)
-                .backgroundColor(SunColor.white)
-                .fontColor(SunColor.ink)
-                .fontSize(12)
-                .fontWeight(FontWeight.Bold)
-                .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
-                .onClick(() => this.confirmingPresetId = -1)
-            }
-            .height(56)
-          } else {
-            Row({ space: 4 }) {
-              Button({ type: ButtonType.Normal }) {
-                Text(`${preset.emoji} ${this.labelText(preset.label)} · ${this.timerText(preset.seconds)}`)
-                  .fontSize(13)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor(SunColor.ink)
-                  .maxLines(1)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-                  .constraintSize({ maxWidth: 220 })
-              }
-              .height(44)
-              .padding({ left: 16, right: 12 })
-              .borderRadius(SunRadius.pill)
-              .backgroundColor(SunColor.sun)
-              .onClick(() => this.startSavedPreset(preset))
-
-              Button('×')
-                .width(34)
-                .height(34)
-                .borderRadius(999)
-                .backgroundColor(SunColor.white)
-                .fontColor(SunColor.danger)
-                .fontSize(16)
-                .fontWeight(FontWeight.Bold)
-                .border({ width: 1, color: '#D8CFBD' }) // ponytail: no SunColor token for #D8CFBD hairline
-                .onClick(() => this.confirmingPresetId = preset.id)
-            }
-            .height(56)
-          }
-        }, (preset: SavedPresetTimer) => preset.id.toString())
-
         ForEach(this.presets, (preset: PresetTimer) => {
           Button({ type: ButtonType.Normal }) {
             Text(`${preset.emoji} ${this.labelText(preset.label)} · ${this.timerText(preset.seconds)}`)
@@ -955,7 +996,7 @@ struct Index {
             .height(44)
             .padding({ left: 16, right: 16 })
             .borderRadius(SunRadius.pill)
-            .backgroundColor('#F7F0E5')
+            .backgroundColor(SunColor.panelTint)
             .onClick(() => this.startPreset(preset))
         }, (preset: PresetTimer) => preset.label)
       }
@@ -1048,6 +1089,8 @@ struct Index {
           } else {
             this.burnerList()
           }
+
+          this.savedPresetsBlock()
 
           this.customPanel()
           this.presetBar()

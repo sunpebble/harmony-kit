@@ -1,15 +1,15 @@
 import { SunColor, SunSpacing, SunType } from '../tokens/SunTheme'
 import { SunButton, SunButtonRole } from './SunButton'
 
-@Component
+@ComponentV2
 export struct SunEmptyState {
-  @Prop
+  @Param
   title: ResourceStr = ''
-  @Prop
+  @Param
   message: ResourceStr = ''
-  @Prop
+  @Param
   actionLabel: ResourceStr = ''
-  onAction: () => void = () => {}
+  @Param onAction: () => void = () => {}
 
   build() {
     Column({ space: SunSpacing.md }) {

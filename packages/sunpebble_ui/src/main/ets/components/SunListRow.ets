@@ -1,14 +1,14 @@
 import { SunColor, SunSpacing, SunType } from '../tokens/SunTheme'
 
-@Component
+@ComponentV2
 export struct SunListRow {
-  @Prop
+  @Param
   title: ResourceStr = ''
-  @Prop
+  @Param
   value: ResourceStr = ''
-  @Prop
+  @Param
   caption: ResourceStr = ''
-  action: () => void = () => {}
+  @Param action: () => void = () => {}
 
   build() {
     Row({ space: SunSpacing.md }) {

@@ -89,6 +89,10 @@
       "value": "Cancel"
     },
     {
+      "name": "simmer_action_delete",
+      "value": "Delete"
+    },
+    {
       "name": "simmer_empty_title",
       "value": "Nothing on the stove"
     },
@@ -117,16 +121,16 @@
       "value": "SAVE AS PRESET"
     },
     {
+      "name": "simmer_saved_presets_title",
+      "value": "MY PRESETS"
+    },
+    {
       "name": "simmer_start",
       "value": "START"
     },
     {
       "name": "simmer_custom_button",
       "value": "+ Custom"
-    },
-    {
-      "name": "simmer_remove_preset",
-      "value": "Remove Preset"
     },
     {
       "name": "simmer_pro_title",

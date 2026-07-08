@@ -9,9 +9,9 @@ export interface SunTabItem {
   label: ResourceStr
 }
 
-@Component
+@ComponentV2
 export struct SunTabShell {
-  manifest: SunAppManifest = {
+  @Param manifest: SunAppManifest = {
     name: 'Sunpebble',
     tagline: '',
     primaryAction: '',
@@ -19,11 +19,10 @@ export struct SunTabShell {
     mode: SunMode.Light
   }
 
-  tabs: SunTabItem[] = []
-  @Prop
-  activeTab: string = ''
+  @Param tabs: SunTabItem[] = []
+  @Param activeTab: string = ''
 
-  onTabChange: (tabId: string) => void = () => {}
+  @Param onTabChange: (tabId: string) => void = () => {}
 
   @BuilderParam tabBody: (tabId: string) => void = emptyTabBody
 

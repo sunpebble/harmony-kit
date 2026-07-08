@@ -1,19 +1,16 @@
 import { SunAppManifest, SunColor, SunMode, SunSpacing, SunType } from '../tokens/SunTheme'
 
-@Component
+@ComponentV2
 export struct SunAppHeader {
-  manifest: SunAppManifest = {
+  @Param manifest: SunAppManifest = {
     name: 'Sunpebble',
     tagline: '',
     primaryAction: '',
     accent: SunColor.sun,
     mode: SunMode.Light
   }
-
-  @Prop
-  showPro: boolean = false
-
-  onPro: () => void = () => {}
+  @Param showPro: boolean = false
+  @Param onPro: () => void = () => {}
 
   private foreground(): ResourceColor {
     return this.manifest.mode === SunMode.Dark ? SunColor.cream : SunColor.ink

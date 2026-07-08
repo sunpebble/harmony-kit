@@ -1,20 +1,18 @@
+import { AppStorageV2 } from '@kit.ArkUI'
 import { SunColor, SunMode } from '../tokens/SunTheme'
+import { SunWindowInsetsModel } from '../runtime/SunWindowInsets'
 
 @Builder
 function emptySafeBody() {}
 
-@Component
+@ComponentV2
 export struct SunSafeRoot {
-  @Prop
-  mode: SunMode = SunMode.Light
+  @Param mode: SunMode = SunMode.Light
 
   @BuilderParam body: () => void = emptySafeBody
 
-  @StorageLink('sun.inset.top.vp')
-  private insetTop: number = 0
-
-  @StorageLink('sun.inset.bottom.vp')
-  private insetBottom: number = 0
+  @Local insets: SunWindowInsetsModel =
+    AppStorageV2.connect(SunWindowInsetsModel, 'sun.insets.v2', () => new SunWindowInsetsModel())!
 
   private rootBackground(): ResourceColor {
     return this.mode === SunMode.Dark ? SunColor.night : SunColor.cream
@@ -27,8 +25,8 @@ export struct SunSafeRoot {
     .width('100%')
     .height('100%')
     .padding({
-      top: this.insetTop,
-      bottom: this.insetBottom
+      top: this.insets.topVp,
+      bottom: this.insets.bottomVp
     })
     .backgroundColor(this.rootBackground())
   }

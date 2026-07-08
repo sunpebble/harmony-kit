@@ -13,6 +13,9 @@
     "requestPermissions": [
       {
         "name": "ohos.permission.PUBLISH_AGENT_REMINDER"
+      },
+      {
+        "name": "ohos.permission.VIBRATE"
       }
     ],
     "pages": "$profile:main_pages",

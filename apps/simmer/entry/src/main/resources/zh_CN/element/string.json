@@ -77,6 +77,10 @@
       "value": "取消"
     },
     {
+      "name": "simmer_action_delete",
+      "value": "删除"
+    },
+    {
       "name": "simmer_empty_title",
       "value": "炉子上空空如也"
     },
@@ -105,16 +109,16 @@
       "value": "存为预设"
     },
     {
+      "name": "simmer_saved_presets_title",
+      "value": "我的预设"
+    },
+    {
       "name": "simmer_start",
       "value": "开始"
     },
     {
       "name": "simmer_custom_button",
       "value": "+ 自定义"
-    },
-    {
-      "name": "simmer_remove_preset",
-      "value": "移除预设"
     },
     {
       "name": "simmer_paywall_feature_unlimited",

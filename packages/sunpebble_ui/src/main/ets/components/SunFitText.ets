@@ -1,29 +1,29 @@
 import { SunColor } from '../tokens/SunTheme'
 
-@Component
+@ComponentV2
 export struct SunFitText {
-  @Prop
+  @Param
   text: ResourceStr = ''
 
-  @Prop
+  @Param
   maxFontSize: number = 12
 
-  @Prop
+  @Param
   minFontSize: number = 8
 
-  @Prop
+  @Param
   fontColor: ResourceColor = SunColor.ink
 
-  @Prop
+  @Param
   fontWeight: FontWeight = FontWeight.Regular
 
-  @Prop
+  @Param
   maxLines: number = 1
 
-  @Prop
+  @Param
   textAlign: TextAlign = TextAlign.Start
 
-  @Prop
+  @Param
   letterSpacing: number = 0
 
   build() {
