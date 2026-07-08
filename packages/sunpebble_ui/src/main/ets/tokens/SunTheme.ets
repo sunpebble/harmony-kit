@@ -45,7 +45,6 @@ export interface SunAppManifest {
   name: ResourceStr
   tagline: ResourceStr
   primaryAction: ResourceStr
-  // ponytail: accent is app-identity data; intentionally NOT consumed by SunToolShell
   // button color, to prevent per-app styling drift (PRODUCT.md). Surfaced for widgets/future use.
   accent: ResourceColor
   mode: SunMode
