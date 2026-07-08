@@ -12,10 +12,15 @@ interface RollEntry {
 export struct CalendarView {
   @Param entries: RollEntry[] = []
   @Param calMonth: string = ''
+  @Param fmtLocale: string = ''
   @Event onMonthChange: (month: string) => void = () => {}
   @Event onPickDay: (dateKey: string) => void = () => {}
 
   private moods: string[] = ['😄', '🙂', '😐', '😞', '😣']
+
+  private locale(): string {
+    return this.fmtLocale.length > 0 ? this.fmtLocale : new intl.Locale().toString()
+  }
 
   private pad(n: number): string {
     return n < 10 ? `0${n}` : `${n}`
@@ -35,7 +40,7 @@ export struct CalendarView {
   }
 
   private mondayStart(): boolean {
-    return new intl.Locale().toString().toLowerCase().startsWith('zh')
+    return this.locale().toLowerCase().startsWith('zh')
   }
 
   private daysInMonth(): number {
@@ -47,7 +52,7 @@ export struct CalendarView {
     return this.mondayStart() ? (firstDow + 6) % 7 : firstDow
   }
 
-  // 42 格（6 周）：前导空 + 1..daysInMonth + 末尾空，空用 '' 占位
+  // 前导空 + 1..daysInMonth + 末尾补空到 7 的倍数（整周），空用 '' 占位
   private cells(): string[] {
     const out: string[] = []
     const lead = this.leadBlanks()
@@ -65,7 +70,7 @@ export struct CalendarView {
   }
 
   private weekdayLabels(): string[] {
-    const fmt = new intl.DateTimeFormat(new intl.Locale().toString(),
+    const fmt = new intl.DateTimeFormat(this.locale(),
       { weekday: 'narrow' } as intl.DateTimeOptions)
     // 2024-01-07 是周日、2024-01-08 是周一
     const base = this.mondayStart() ? 8 : 7
@@ -117,7 +122,7 @@ export struct CalendarView {
     const key = `${monthKey}-${this.pad(day)}`
     const mood = this.moodFor(key)
     if (mood.length > 0) {
-      return Math.max(1, this.moodScore(mood))
+      return this.moodScore(mood)
     }
     return this.hasEntry(key) ? 1 : 0
   }
@@ -136,7 +141,7 @@ export struct CalendarView {
   }
 
   private monthTitle(): string {
-    const fmt = new intl.DateTimeFormat(new intl.Locale().toString(),
+    const fmt = new intl.DateTimeFormat(this.locale(),
       { year: 'numeric', month: 'long' } as intl.DateTimeOptions)
     return fmt.format(new Date(this.year(), this.month0(), 1))
   }

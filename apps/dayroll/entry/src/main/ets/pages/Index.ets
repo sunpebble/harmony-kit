@@ -1198,6 +1198,7 @@ struct Index {
       CalendarView({
         entries: this.entries,
         calMonth: this.calMonth,
+        fmtLocale: this.fmtLocale,
         onMonthChange: (month: string) => { this.calMonth = month },
         onPickDay: (dateKey: string) => { this.pickDayFromCalendar(dateKey) }
       })
