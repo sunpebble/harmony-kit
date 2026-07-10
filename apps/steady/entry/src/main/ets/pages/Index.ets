@@ -149,6 +149,7 @@ struct Index {
   @Local private paywallOpen: boolean = false
   @Local private confirmingTimelineDeleteKey: string = ''
   @Local private quickActionsOpen: boolean = false
+  @Local private inputFocused: boolean = false
   private usedEntityIds: number[] = []
 
   aboutToAppear(): void {
@@ -455,7 +456,9 @@ struct Index {
       if (args.length === 0) {
         return context.resourceManager.getStringSync(resource)
       }
-      return context.resourceManager.getStringSync(resource.id, ...args)
+      // HarmonyOS getStringSync format args must be strings; bare numbers can mis-substitute.
+      const stringArgs = args.map((arg: string | number) => `${arg}`)
+      return context.resourceManager.getStringSync(resource.id, ...stringArgs)
     } catch (_error) {
       return ''
     }
@@ -815,10 +818,6 @@ struct Index {
     this.medRevision += 1
   }
 
-  private startDeleteMedication(target: Medication): void {
-    this.confirmingDeleteMedKey = this.medKey(target)
-  }
-
   private deleteMedication(target: Medication): void {
     const targetKey = this.medKey(target)
     this.meds = this.meds.map((med: Medication) => this.medKey(med) === targetKey ? {
@@ -1028,12 +1027,25 @@ struct Index {
   }
 
   private trendSummary(kind: string): string {
-    const readings = this.trendReadings(kind)
+    const readings = this.numericTrendReadings(kind)
     if (readings.length === 0) {
       return this.t($r('app.string.steady_trend_no_data'))
     }
     if (!this.hasTargetRange(kind)) {
       return this.tp($r('app.plural.steady_trend_logs'), readings.length)
+    }
+    const stats = this.inRangeStats(kind)
+    return this.t($r('app.string.steady_trend_in_range_format'), stats[0], stats[1])
+  }
+
+  private numericTrendReadings(kind: string): Reading[] {
+    return this.trendReadings(kind).filter((reading: Reading) => !Number.isNaN(this.readingNumber(reading)))
+  }
+
+  private inRangeStats(kind: string): number[] {
+    const readings = this.numericTrendReadings(kind)
+    if (readings.length === 0 || !this.hasTargetRange(kind)) {
+      return [0, 0]
     }
     const low = Number(this.targetLowForKind(kind))
     const high = Number(this.targetHighForKind(kind))
@@ -1041,7 +1053,7 @@ struct Index {
       const value = this.readingNumber(reading)
       return value >= low && value <= high
     }).length
-    return this.t($r('app.string.steady_trend_in_range_format'), inRange, readings.length)
+    return [inRange, readings.length]
   }
 
   private trendReadings(kind: string): Reading[] {
@@ -1058,8 +1070,7 @@ struct Index {
   }
 
   private trendChartReadings(): Reading[] {
-    return [...this.selectedTrendReadings()]
-      .filter((reading: Reading) => !Number.isNaN(this.readingNumber(reading)))
+    return [...this.numericTrendReadings(this.trendKind)]
       .sort((a: Reading, b: Reading) => this.dateTime(a.date) - this.dateTime(b.date))
   }
 
@@ -1136,17 +1147,14 @@ struct Index {
   }
 
   private selectedTrendTargetValue(): string {
-    const readings = this.selectedTrendReadings()
-    if (readings.length === 0 || !this.hasTargetRange(this.trendKind)) {
+    if (!this.hasTargetRange(this.trendKind)) {
       return ''
     }
-    const low = Number(this.targetLowForKind(this.trendKind))
-    const high = Number(this.targetHighForKind(this.trendKind))
-    const inRange = readings.filter((reading: Reading) => {
-      const value = this.readingNumber(reading)
-      return value >= low && value <= high
-    }).length
-    return this.t($r('app.string.steady_ratio_format'), inRange, readings.length)
+    const stats = this.inRangeStats(this.trendKind)
+    if (stats[1] === 0) {
+      return ''
+    }
+    return this.t($r('app.string.steady_ratio_format'), stats[0], stats[1])
   }
 
   // 依从率分母：createdAt 之前的天数不该计入，否则新加的药会立刻把完成率拉低
@@ -1432,6 +1440,7 @@ struct Index {
             content: this.t($r('app.string.steady_reminder_med_content_format'), med.dose.length > 0 ? med.dose : med.name),
             expiredContent: this.t($r('app.string.steady_reminder_med_missed_format'), med.name),
             notificationId,
+            wantAgent: this.reminderWantAgent(),
             tapDismissed: true
           }
           notificationId += 1
@@ -1448,6 +1457,7 @@ struct Index {
           content: this.t($r('app.string.steady_reminder_measure_content')),
           expiredContent: this.t($r('app.string.steady_reminder_measure_missed')),
           notificationId: 2001,
+          wantAgent: this.reminderWantAgent(),
           tapDismissed: true
         }
         await reminderAgentManager.publishReminder(request)
@@ -1479,6 +1489,16 @@ struct Index {
   }
 
   private async requestNotificationAccess(): Promise<boolean> {
+    // requestEnableNotification() is a one-shot prompt: once dismissed/denied it rejects forever —
+    // even after the user enables notifications in Settings. Check the live state first, only
+    // prompt when actually disabled, and re-check after a rejection to catch that case.
+    try {
+      if (await notificationManager.isNotificationEnabled()) {
+        return true
+      }
+    } catch (_error) {
+      // fall through to the prompt
+    }
     const context = this.getUIContext().getHostContext()
     if (!context) {
       return false
@@ -1487,7 +1507,18 @@ struct Index {
       await notificationManager.requestEnableNotification(context as common.UIAbilityContext)
       return true
     } catch (_error) {
-      return false
+      try {
+        return await notificationManager.isNotificationEnabled()
+      } catch (_err) {
+        return false
+      }
+    }
+  }
+
+  private reminderWantAgent(): reminderAgentManager.WantAgent {
+    return {
+      pkgName: 'com.sunpebble.steady',
+      abilityName: 'EntryAbility'
     }
   }
 
@@ -1702,6 +1733,8 @@ struct Index {
               .borderRadius(8)
               .border({ width: 1, color: SunColor.border })
               .type(InputType.NUMBER_DECIMAL)
+              .onFocus(() => this.markInputFocused(true))
+              .onBlur(() => this.markInputFocused(false))
               .onChange((value: string) => {
                 this.draftPrimary = value
                 AppStorage.setOrCreate('steady.draftPrimary.v1', this.draftPrimary)
@@ -1716,6 +1749,8 @@ struct Index {
               .borderRadius(8)
               .border({ width: 1, color: SunColor.border })
               .type(InputType.NUMBER_DECIMAL)
+              .onFocus(() => this.markInputFocused(true))
+              .onBlur(() => this.markInputFocused(false))
               .onChange((value: string) => {
                 this.draftSecondary = value
                 AppStorage.setOrCreate('steady.draftSecondary.v1', this.draftSecondary)
@@ -1732,10 +1767,12 @@ struct Index {
             .borderRadius(8)
             .border({ width: 1, color: SunColor.border })
             .type(InputType.NUMBER_DECIMAL)
-              .onChange((value: string) => {
-                this.draftPrimary = value
-                AppStorage.setOrCreate('steady.draftPrimary.v1', this.draftPrimary)
-              })
+            .onFocus(() => this.markInputFocused(true))
+            .onBlur(() => this.markInputFocused(false))
+            .onChange((value: string) => {
+              this.draftPrimary = value
+              AppStorage.setOrCreate('steady.draftPrimary.v1', this.draftPrimary)
+            })
         }
 
         if (this.selectedKind === 'Blood glucose') {
@@ -1766,6 +1803,8 @@ struct Index {
           .backgroundColor(SunColor.white)
           .borderRadius(8)
           .border({ width: 1, color: SunColor.border })
+          .onFocus(() => this.markInputFocused(true))
+          .onBlur(() => this.markInputFocused(false))
           .onChange((value: string) => {
             this.draftNote = value
             AppStorage.setOrCreate('steady.draftNote.v1', this.draftNote)
@@ -1799,6 +1838,8 @@ struct Index {
           .backgroundColor(SunColor.white)
           .borderRadius(8)
           .border({ width: 1, color: SunColor.border })
+          .onFocus(() => this.markInputFocused(true))
+          .onBlur(() => this.markInputFocused(false))
           .onChange((value: string) => this.symptomName = value)
 
         Row({ space: SunSpacing.sm }) {
@@ -1816,6 +1857,8 @@ struct Index {
           .backgroundColor(SunColor.white)
           .borderRadius(8)
           .border({ width: 1, color: SunColor.border })
+          .onFocus(() => this.markInputFocused(true))
+          .onBlur(() => this.markInputFocused(false))
           .onChange((value: string) => this.symptomNote = value)
 
         SunButton({
@@ -1899,55 +1942,34 @@ struct Index {
               Column({ space: SunSpacing.xs }) {
                 SunListRow({
                   title: item.title,
-                  caption: item.caption
+                  caption: item.caption,
+                  action: () => {
+                    this.confirmingTimelineDeleteKey =
+                      this.confirmingTimelineDeleteKey === item.key ? '' : item.key
+                  }
                 })
 
-                if (item.kind === 'Reading') {
-                  if (this.confirmingTimelineDeleteKey === item.key) {
-                    Row({ space: SunSpacing.sm }) {
-                      SunButton({
-                        label: $r('app.string.steady_confirm_delete'),
-                        role: SunButtonRole.Danger,
-                        action: () => this.deleteReading(item.readingId)
-                      })
-
-                      SunButton({
-                        label: $r('app.string.steady_cancel'),
-                        role: SunButtonRole.Secondary,
-                        action: () => this.confirmingTimelineDeleteKey = ''
-                      })
-                    }
-                    .width('100%')
-                  } else {
+                if (this.confirmingTimelineDeleteKey === item.key) {
+                  Row({ space: SunSpacing.sm }) {
                     SunButton({
-                      label: $r('app.string.steady_delete'),
+                      label: $r('app.string.steady_confirm_delete'),
                       role: SunButtonRole.Danger,
-                      action: () => this.confirmingTimelineDeleteKey = item.key
+                      action: () => {
+                        if (item.kind === 'Reading') {
+                          this.deleteReading(item.readingId)
+                        } else {
+                          this.deleteSymptom(item.symptomId)
+                        }
+                      }
+                    })
+
+                    SunButton({
+                      label: $r('app.string.steady_cancel'),
+                      role: SunButtonRole.Secondary,
+                      action: () => this.confirmingTimelineDeleteKey = ''
                     })
                   }
-                } else if (item.kind === 'Symptom') {
-                  if (this.confirmingTimelineDeleteKey === item.key) {
-                    Row({ space: SunSpacing.sm }) {
-                      SunButton({
-                        label: $r('app.string.steady_confirm_delete'),
-                        role: SunButtonRole.Danger,
-                        action: () => this.deleteSymptom(item.symptomId)
-                      })
-
-                      SunButton({
-                        label: $r('app.string.steady_cancel'),
-                        role: SunButtonRole.Secondary,
-                        action: () => this.confirmingTimelineDeleteKey = ''
-                      })
-                    }
-                    .width('100%')
-                  } else {
-                    SunButton({
-                      label: $r('app.string.steady_delete'),
-                      role: SunButtonRole.Danger,
-                      action: () => this.confirmingTimelineDeleteKey = item.key
-                    })
-                  }
+                  .width('100%')
                 }
               }
               .width('100%')
@@ -2151,29 +2173,6 @@ struct Index {
               ForEach(this.medTimesFor(med), (time: string) => {
                 this.medDoseRow(med.name, this.medKey(med), time, this.takenSlotsFor(med).includes(time))
               }, (time: string) => `${this.medKey(med)}-${time}-${this.medRevision}`)
-
-              if (this.confirmingDeleteMedKey === this.medKey(med)) {
-                Row({ space: SunSpacing.sm }) {
-                  SunButton({
-                    label: $r('app.string.steady_confirm_delete'),
-                    role: SunButtonRole.Danger,
-                    action: () => this.deleteMedication(med)
-                  })
-
-                  SunButton({
-                    label: $r('app.string.steady_cancel'),
-                    role: SunButtonRole.Secondary,
-                    action: () => this.confirmingDeleteMedKey = ''
-                  })
-                }
-                .width('100%')
-              } else {
-                SunButton({
-                  label: $r('app.string.steady_delete'),
-                  role: SunButtonRole.Danger,
-                  action: () => this.startDeleteMedication(med)
-                })
-              }
             }
             .width('100%')
             .padding({ bottom: SunSpacing.sm })
@@ -2214,6 +2213,8 @@ struct Index {
             .backgroundColor(SunColor.white)
             .borderRadius(8)
             .border({ width: 1, color: SunColor.border })
+            .onFocus(() => this.markInputFocused(true))
+            .onBlur(() => this.markInputFocused(false))
             .onChange((value: string) => this.medName = value)
 
           TextInput({ placeholder: $r('app.string.steady_placeholder_med_dose'), text: this.medDose })
@@ -2224,6 +2225,8 @@ struct Index {
             .backgroundColor(SunColor.white)
             .borderRadius(8)
             .border({ width: 1, color: SunColor.border })
+            .onFocus(() => this.markInputFocused(true))
+            .onBlur(() => this.markInputFocused(false))
             .onChange((value: string) => this.medDose = value)
 
           Row({ space: SunSpacing.sm }) {
@@ -2256,6 +2259,34 @@ struct Index {
           })
 
           if (this.editingMedKey.length > 0) {
+            if (this.confirmingDeleteMedKey === this.editingMedKey) {
+              Row({ space: SunSpacing.sm }) {
+                SunButton({
+                  label: $r('app.string.steady_confirm_delete'),
+                  role: SunButtonRole.Danger,
+                  action: () => {
+                    const target = this.activeMeds().find((med: Medication) => this.medKey(med) === this.editingMedKey)
+                    if (target) {
+                      this.deleteMedication(target)
+                    }
+                  }
+                })
+
+                SunButton({
+                  label: $r('app.string.steady_cancel'),
+                  role: SunButtonRole.Secondary,
+                  action: () => this.confirmingDeleteMedKey = ''
+                })
+              }
+              .width('100%')
+            } else {
+              SunButton({
+                label: $r('app.string.steady_delete'),
+                role: SunButtonRole.Danger,
+                action: () => this.confirmingDeleteMedKey = this.editingMedKey
+              })
+            }
+
             SunButton({
               label: $r('app.string.steady_cancel_edit'),
               role: SunButtonRole.Secondary,
@@ -2498,6 +2529,22 @@ struct Index {
     ]
   }
 
+  private shouldShowFab(): boolean {
+    // Hide while typing so the FAB does not cover inputs above the keyboard.
+    // Meds/Settings have their own forms — the quick-log FAB is Timeline/Trends only.
+    if (this.inputFocused) {
+      return false
+    }
+    return this.tab === 'Timeline' || this.tab === 'Trends'
+  }
+
+  private markInputFocused(focused: boolean): void {
+    this.inputFocused = focused
+    if (focused) {
+      this.quickActionsOpen = false
+    }
+  }
+
   @Builder
   private steadyTabBody(tabId: string) {
     Scroll() {
@@ -2534,6 +2581,9 @@ struct Index {
           this.tab = tabId
           AppStorage.setOrCreate('steady.tab.v1', this.tab)
           this.quickActionsOpen = false
+          this.inputFocused = false
+          this.confirmingTimelineDeleteKey = ''
+          this.confirmingDeleteMedKey = ''
         },
         tabBody: (tabId: string) => {
           this.steadyTabBody(tabId)
@@ -2564,16 +2614,18 @@ struct Index {
           .border({ width: 1, color: SunColor.border })
         }
 
-        Button(this.quickActionsOpen ? '×' : '+')
-          .width(56)
-          .height(56)
-          .borderRadius(999)
-          .backgroundColor(SunColor.sun)
-          .fontColor(SunColor.ink)
-          .fontSize(28)
-          .fontWeight(FontWeight.Bold)
-          .shadow({ radius: 8, color: '#00000022', offsetY: 2 })
-          .onClick(() => this.quickActionsOpen = !this.quickActionsOpen)
+        if (this.shouldShowFab()) {
+          Button(this.quickActionsOpen ? '×' : '+')
+            .width(56)
+            .height(56)
+            .borderRadius(999)
+            .backgroundColor(SunColor.sun)
+            .fontColor(SunColor.ink)
+            .fontSize(28)
+            .fontWeight(FontWeight.Bold)
+            .shadow({ radius: 8, color: '#00000022', offsetY: 2 })
+            .onClick(() => this.quickActionsOpen = !this.quickActionsOpen)
+        }
       }
         .alignItems(HorizontalAlign.End)
         // 56 = SunTabShell barHeight，抬 FAB 到 tab bar 之上，避免遮住 Settings 标签
